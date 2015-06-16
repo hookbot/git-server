@@ -92,6 +92,8 @@ use strict;
 use warnings;
 use Cwd qw(abs_path);
 
+our $VERSION = "0.001";
+
 die "Only SSH allowed!\n" unless $ENV{SSH_CONNECTION};
 
 my $git_op_hook = {

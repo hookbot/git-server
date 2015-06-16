@@ -1,0 +1,9 @@
+Changes
+Makefile.PL
+MANIFEST
+README.md
+git-server
+contrib/pre-read
+contrib/post-read
+contrib/pre-write
+contrib/post-write
