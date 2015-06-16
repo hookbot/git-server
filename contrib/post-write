@@ -1,0 +1,7 @@
+#!/usr/bin/perl
+
+warn localtime().": [$0] Running hook ...\n";
+$ENV{KEY} ||= "UNKNOWN";
+mkdir "logs" unless -d "logs";
+system q{echo `date` PUSH $SSH_CLIENT key=$KEY $ARGV[0] >> logs/access_log};
+exit 0;

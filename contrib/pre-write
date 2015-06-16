@@ -1,0 +1,8 @@
+e!/usr/bin/perl
+
+warn localtime().": [$0] Running hook ...\n";
+sleep 1;
+my $KEY = $ENV{KEY} || "UNKNOWN";
+die "$ENV{GIT_DIR}: (KEY=$KEY) Sorry, you cannot push this repository.\n" unless $KEY eq "hookbot";
+warn localtime().": [$0] You are safe to proceed\n";
+exit 0;
