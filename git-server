@@ -88,6 +88,8 @@ This library is free software; you can redistribute it and/or modify it under th
 
 use strict;
 use warnings;
+use Cwd qw(abs_path);
+
 die "Only SSH allowed!\n" unless $ENV{SSH_CONNECTION};
 
 my $git_op_hook = {
@@ -127,6 +129,7 @@ if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
     foreach my $try ("$repo.git/.git", "$repo/.git", "$repo.git", $repo) {
         if (-d $try) {
             $dir = $try;
+            $ENV{GIT_DIR} = abs_path $dir;
             last;
         }
     }
