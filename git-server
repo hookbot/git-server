@@ -101,11 +101,12 @@ my $git_op_hook = {
 
 my $cmd = undef;
 if (@ARGV == 2 and $ARGV[0] eq "-c") {
-    # GITSHELL Method:
-    $cmd = $ARGV[1]; # i.e., "git-upload-pack 'rcx'"
+    # Advanced Method:
+    shift; # -c
+    $cmd = shift; # i.e., "git-upload-pack 'project'"
 }
-elsif (my $o = $ENV{SSH_ORIGINAL_COMMAND}) {
-    # GITLAB Method:
+elsif (my $o = delete $ENV{SSH_ORIGINAL_COMMAND}) {
+    # Standard Method:
     $cmd = $o;
     foreach my $pair (@ARGV) {
         if ($pair =~ /^(\w+)=(.*)$/) {
@@ -115,6 +116,9 @@ elsif (my $o = $ENV{SSH_ORIGINAL_COMMAND}) {
             die "Invalid ENV setting [$pair]\n";
         }
     }
+}
+else {
+    die "fatal: What do you think I am? A shell?\n";
 }
 
 die "fatal: What do you think I am? A shell?\n" unless $cmd;
