@@ -1,0 +1,181 @@
+#!/usr/bin/perl
+
+=pod
+
+=head1 NAME
+
+git-server - Secure Git Server with more granular hooks capabilities than default git.
+
+=head1 SYNOPSIS
+
+  Standard Method:
+  With SHELL=/bin/bash, use the following format in ~/.ssh/authorized_keys:
+  command="git-server KEY=USER1" ssh-rsa AAAA___blah_pub__ user1@workstation
+
+   -- OR --
+
+  Advanced Method:
+  Set SHELL=/usr/bin/git-server (in etc/passwd) and
+  Set "PermitUserEnvironment yes" (in etc/ssh/sshd_config)
+  Then use the following format in ~/.ssh/authorized_keys:
+  environment="KEY=USER1" ssh-rsa AAAA___blah_pub__ user1@workstation
+
+=head1 ENV
+
+You can set as many %ENV variables as you want
+within the authorized_keys configuration.
+
+=head1 INSTALL
+
+This can be used with any existing git repositories or as a drop-in replacement for git-shell or you can create a fresh git repo:
+
+  git init project
+
+Then add whatever hooks you want:
+
+  vi project/.git/hooks/pre-read
+
+Each hook can read the ENV settings defined in authorized_keys.
+
+=head1 HOOKS
+
+All the normal git hooks will continue to work, plus the following:
+
+=head2 hooks/pre-read
+
+Executed before any repository read operation,
+such as "git clone" or "git pull".
+If the pre-read exit status is non-zero,
+then the read operation will be aborted.
+
+=head2 hooks/post-read
+
+Executed after the git operation completes even if it was successful.
+There will be one argument "exit=$EXIT" passed to post-read,
+which is the exit status of the git operation.
+The post-read hook can parse this parameter if it needs to
+determine if the git operation was successful or not.
+
+=head2 hooks/pre-write
+
+Executed before any repository modification attempt,
+such as "git push".
+Unlike the hooks/update hook, this hooks/pre-write
+will always be triggered for write operations, even
+if there are no actual changes that need to be made.
+
+=head2 hooks/post-write
+
+Same as hooks/post-read except for write operations.
+
+=head1 SEE ALSO
+
+Similar functionality to the following:
+
+  gitlab-shell, gitolite, git-shell
+
+=head1 AUTHOR
+
+Rob Brown <bbb@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2015 by Rob Brown <bbb@cpan.org>
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut
+
+use strict;
+use warnings;
+die "Only SSH allowed!\n" unless $ENV{SSH_CONNECTION};
+
+my $git_op_hook = {
+    "git-upload-pack" => "read", # i.e., clone, pull
+    "git-receive-pack" => "write", # i.e., push
+};
+
+my $cmd = undef;
+if (@ARGV == 2 and $ARGV[0] eq "-c") {
+    # GITSHELL Method:
+    $cmd = $ARGV[1]; # i.e., "git-upload-pack 'rcx'"
+}
+elsif (my $o = $ENV{SSH_ORIGINAL_COMMAND}) {
+    # GITLAB Method:
+    $cmd = $o;
+    foreach my $pair (@ARGV) {
+        if ($pair =~ /^(\w+)=(.*)$/) {
+            $ENV{$1} = $2;
+        }
+        else {
+            die "Invalid ENV setting [$pair]\n";
+        }
+    }
+}
+
+die "fatal: What do you think I am? A shell?\n" unless $cmd;
+
+my $dir = undef;
+my $hook = undef;
+if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
+    my $op = $1;
+    my $repo = $2;
+    if (my $found = $git_op_hook->{$op}) {
+        $hook = $found;
+    }
+    $repo = $1 if $repo =~ /^'(.+)'$/;
+    foreach my $try ("$repo.git/.git", "$repo/.git", "$repo.git", $repo) {
+        if (-d $try) {
+            $dir = $try;
+            last;
+        }
+    }
+    die "fatal: '$repo' does not appear to be a git repository\n" unless $dir;
+}
+else {
+    die "fatal: unrecognized command '$cmd'\n";
+}
+
+if ($hook and -x "$dir/hooks/pre-$hook") {
+    if (my $failed = spawn($dir, "hooks/pre-$hook")) {
+        warn "pre-$hook: failed!\n";
+        exit $failed;
+    }
+}
+
+my $res = system "git-shell", "-c", $cmd;
+
+if ($hook and -x "$dir/hooks/post-$hook") {
+    if (my $failed = spawn($dir, "hooks/post-$hook", "exit=$res")) {
+        warn "post-$hook: failed!\n";
+        exit $failed;
+    }
+}
+
+exit $res;
+
+# spawn( $chdir, $cmd, [ @args ] )
+# chdir $chdir
+# close STDIN
+# before running cmd.
+# Returns the exit status
+sub spawn {
+    my $chdir = shift;
+    my @cmd = @_;
+    my $pid = fork;
+    if ($pid) {
+        # Parent
+        waitpid($pid, 0);
+        my $status = $?;
+        return $status >> 8;
+    }
+    elsif (!defined $pid) {
+        die "fork: $!\n";
+    }
+    else {
+        # Child
+        chdir($dir) or die "$dir: chdir: $!\n";
+        close STDIN;
+        exec @cmd or die "$dir/$cmd[0]: exec: $!";
+    }
+}
