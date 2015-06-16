@@ -37,6 +37,8 @@ Then add whatever hooks you want:
 
 Each hook can read the ENV settings defined in authorized_keys.
 
+See contrib/* for some working "hooks" examples.
+
 =head1 HOOKS
 
 All the normal git hooks will continue to work, plus the following:
