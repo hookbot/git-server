@@ -4,7 +4,10 @@ INSTALL
 =======
 
 Put something like the following in ~git/.ssh/authorized_keys:
+
+```
 command="git-server KEY=USER1" ssh-rsa AAAA___blah_pub__ user1@workstation
+```
 
 This can be used with any existing git repositories
 or you can create a fresh git repo:
