@@ -13,13 +13,15 @@ This can be used with any existing git repositories
 or you can create a fresh git repo:
 
 ```
-  git init project
+sudo useradd git
+sudo su - git
+git init projectx
 ```
 
 Then add whatever hooks you want:
 
 ```
-  vi project/.git/hooks/pre-read
+vi projectx/.git/hooks/pre-read
 ```
 
 Each hook can read the ENV settings defined in authorized_keys.
