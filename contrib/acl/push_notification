@@ -1,0 +1,48 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Fcntl qw(O_CREAT O_RDWR LOCK_EX LOCK_NB);
+use IO::Handle; # autoflush
+
+# Maximum number of seconds to wait for the next worker to take over.
+my $MAX_PATIENCE = 7200;
+my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
+my ($ip) = split / /,$ssh;
+my $base = $ENV{GIT_DIR} or die "GIT hook ENV malfunction!\n";
+my $lock_dir = "$base/logs";
+mkdir $lock_dir, 0755 unless -d $lock_dir;
+$ip or die "$ssh: SSH protocol malfunction\n";
+my $lock_file = "$lock_dir/$ip.pulling";
+sysopen my $fh, $lock_file, O_CREAT|O_RDWR;
+if (!flock $fh, LOCK_NB | LOCK_EX) {
+    # Someone else is still working?
+    # Well, it looks like his shift is over so he needs to be released.
+    # Now it's my turn to clock in and wait for the push notification.
+    sleep 1; # Wait for other process to stash PIDs into lock file
+    # UNIX allows to peak into the lockfile even if it's locked.
+    chomp (my $worker = <$fh>);
+    chomp (my $sleeper = <$fh>);
+    if ($worker and $sleeper and
+        kill 0, $worker) { # Still running?
+        warn localtime().": DEBUG: [$ip] Releasing worker (pid=$worker) by killing sleeper (pid=$sleeper) ...\n";
+        kill 9, $sleeper; # WAKE UP!
+    }
+    # Upgrade to Blocking Exclusive lock
+    flock $fh, LOCK_EX or die "$lock_file: flock: Unable to acquire lock? $@\n";
+}
+if (my $sleeper = fork()) {
+    # Parent needs to log the sleeper
+    $fh->autoflush(1);
+    print $fh "$$\n";
+    print $fh "$sleeper\n";
+    truncate $fh, tell $fh;
+    warn localtime().": DEBUG: [$ip] Starting worker (pid=$$) waiting for sleeper (pid=$sleeper) to finish ...\n";
+    waitpid $sleeper, 0;
+}
+else {
+    # Child
+    # Just be patient. Hopefully someone will kill me one day.
+    exec sleep => $MAX_PATIENCE or sleep 1;
+    # If not, just exit normally;
+}

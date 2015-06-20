@@ -1,0 +1,4 @@
+#!/bin/sh
+
+mkdir -p logs
+echo `date` $SSH_CONNECTION $KEY > logs/updated

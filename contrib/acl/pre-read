@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+my $acl = {};
+my $conf = `git config --list`;
+while ($conf =~ s/^acl.(\w+)=(.*)$//m) {
+    my $param = $1;
+    my $keys = $2;
+    foreach my $key (split /,/, $keys) {
+        $acl->{$param}->{$key} = 1;
+    }
+}
+
+my $KEY = $ENV{KEY} || "UNKNOWN";
+if ($acl->{deploy}->{$KEY}) {
+    warn localtime().": [$KEY] git-server: PULL waiting for notification ...\n";
+    system "hooks/pre-notification";
+}
+warn localtime().": [$KEY] git-server: RUNNING PULL ...\n";
+# If you can write or deploy, then you can also read
+die "$KEY: You have been banned from all read operations!\n" unless $acl->{readers}->{$KEY} || $acl->{writers}->{$KEY} || $acl->{deploy}->{$KEY};
