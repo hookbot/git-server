@@ -25,6 +25,7 @@ if (!flock $fh, LOCK_NB | LOCK_EX) {
     # UNIX allows to peak into the lockfile even if it's locked.
     chomp (my $worker = <$fh>);
     chomp (my $sleeper = <$fh>);
+    seek $fh, 0, 0;
     if ($worker and $sleeper and
         kill 0, $worker) { # Still running?
         warn localtime().": DEBUG: [$ip] Releasing worker (pid=$worker) by killing sleeper (pid=$sleeper) ...\n";
@@ -53,7 +54,6 @@ open my $pull, ">", $last_pulled or die "$last_pulled: open: $!";
 print $pull localtime().": [$ssh] Pull initiated\n";
 close $pull;
 
-exit unless $should_wait;
 if (my $sleeper = fork()) {
     # Parent needs to log the sleeper
     $fh->autoflush(1);
@@ -65,7 +65,10 @@ if (my $sleeper = fork()) {
 }
 else {
     # Child
-    # Just be patient. Hopefully someone will kill me one day.
-    exec sleep => $MAX_PATIENCE or sleep 1;
-    # If not, just exit normally;
+    if ($should_wait) {
+        # Just be patient. Hopefully someone will kill me one day.
+        exec sleep => $MAX_PATIENCE or sleep 1;
+    }
+    # Otherwise, just exit normally;
+    exit;
 }
