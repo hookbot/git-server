@@ -9,12 +9,13 @@ use IO::Handle; # autoflush
 my $MAX_PATIENCE = 7200;
 my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
 my ($ip) = split / /,$ssh;
+$ip or die "$ssh: SSH protocol malfunction\n";
 my $base = $ENV{GIT_DIR} or die "GIT hook ENV malfunction!\n";
 my $lock_dir = "$base/logs";
 mkdir $lock_dir, 0755 unless -d $lock_dir;
-$ip or die "$ssh: SSH protocol malfunction\n";
-my $lock_file = "$lock_dir/$ip.pulling";
-sysopen my $fh, $lock_file, O_CREAT|O_RDWR;
+my $KEY = $ENV{KEY} || "UNKNOWN";
+my $lock_file = "$lock_dir/$ip-$KEY.lock";
+sysopen my $fh, $lock_file, O_CREAT | O_RDWR;
 if (!flock $fh, LOCK_NB | LOCK_EX) {
     # Someone else is still working?
     # Well, it looks like his shift is over so he needs to be released.
