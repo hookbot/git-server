@@ -16,7 +16,7 @@ while ($conf =~ s/^acl.(\w+)=(.*)$//m) {
 my $KEY = $ENV{KEY} || "UNKNOWN";
 if ($acl->{deploy}->{$KEY}) {
     warn localtime().": [$KEY] git-server: PULL waiting for notification ...\n";
-    system "hooks/pre-notification";
+    system "hooks/push-notification";
 }
 warn localtime().": [$KEY] git-server: RUNNING PULL ...\n";
 # If you can write or deploy, then you can also read
