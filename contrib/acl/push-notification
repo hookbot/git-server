@@ -21,10 +21,11 @@ if (!flock $fh, LOCK_NB | LOCK_EX) {
     # Someone else is still working?
     # Well, it looks like his shift is over so he needs to be released.
     # Now it's my turn to clock in and wait for the push notification.
-    sleep 1; # Wait for other process to stash PIDs into lock file
-    # UNIX allows to peak into the lockfile even if it's locked.
+    sleep 1; # Wait for the other process to stash PIDs into lock file.
+    # Hopefully, UNIX will allow me to read a file even though it's locked by someone else.
     chomp (my $worker = <$fh>);
     chomp (my $sleeper = <$fh>);
+    # Rewind back to the beginning
     seek $fh, 0, 0;
     if ($worker and $sleeper and
         kill 0, $worker) { # Still running?
@@ -65,6 +66,7 @@ if (my $sleeper = fork()) {
 }
 else {
     # Child
+    close $fh; # Let go of the lock before sleeping
     if ($should_wait) {
         # Just be patient. Hopefully someone will kill me one day.
         exec sleep => $MAX_PATIENCE or sleep 1;
