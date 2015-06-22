@@ -36,7 +36,7 @@ if (!flock $fh, LOCK_NB | LOCK_EX) {
     flock $fh, LOCK_EX or die "$lock_file: flock: Unable to acquire lock? $@\n";
 }
 my $last_pushed = "$lock_dir/updated";
-my $last_pulled = "$lock_dir/$ip.$KEY.pulled";
+my $last_pulled = "$lock_dir/$ip-$KEY.pulled";
 my $should_wait =
     # Always pause if there's never been any push yet
     !-e $last_pushed ? 1 :
