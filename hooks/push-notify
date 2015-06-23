@@ -17,8 +17,8 @@ close $fh;
 # $lock_file = "$lock_dir/$ip-$KEY.lock";
 foreach my $lock_file (glob "$lock_dir/*.lock") {
     if (open my $fh, "<", $lock_file) {
-        if (my $worker = <$fh> and
-            my $sleeper = <$fh>) {
+        if (defined (my $worker = <$fh>) and
+            defined (my $sleeper = <$fh>)) {
             chomp $worker;
             chomp $sleeper;
             if (kill 0, $worker and
