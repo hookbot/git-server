@@ -30,16 +30,17 @@ echo '
 
 # PUSH NOTIFICATION INSTANT DEPLOY SETUP
 
-To utilize the "deploy" feature, just run "git pull" from a cron regularly.
+To utilize the "deploy" feature, you need to
+run "git pull" from a cron regularly.
 
 # Create an SSH key
 
 ```
 [puller@deploy-host ~]$ ssh-keygen -t dsa
 Generating public/private dsa key pair.
-Enter file in which to save the key (/home/kim/.ssh/id_dsa): 
-Enter passphrase (empty for no passphrase): 
-Enter same passphrase again: 
+Enter file in which to save the key (/home/puller/.ssh/id_dsa):
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
 Your identification has been saved in /home/puller/.ssh/id_dsa.
 Your public key has been saved in /home/puller/.ssh/id_dsa.pub.
 [puller@deploy-host ~]$ cat ~/.ssh/id_dsa.pub
@@ -65,8 +66,9 @@ and ensure it is in the [acl] "deploy" line of the config.
 [puller@deploy-host projectz]$ git pull
 ```
 
-Hopefully, if everything is working properly, the "git pull" command should just block.
-This means it is successfully waiting for one of the "writers" to push...
+Hopefully, if everything is working properly, the "git pull"
+command should just block. This means it is successfully
+waiting for one of the "writers" to push...
 
 # Test push notification
 
@@ -75,16 +77,23 @@ Find another user with "writers" key access to perform a push:
 ```
 [alice@dev projectz]$ git push
 Tue Jun 23 07:54:45 2015: [alice] git-server: RUNNING PUSH ...
-Everything up-to-date
+Counting objects: 4, done.
+Delta compression using up to 8 threads.
+Compressing objects: 100% (2/2), done.
+Writing objects: 100% (4/4), 387 bytes | 0 bytes/s, done.
+Total 4 (delta 1), reused 0 (delta 0)
+To git@git-host:projectz
+   f60b258..d759447  master -> master
 [alice@dev projectz]$
 ```
 
 Hopefully, that other "git pull" process on deploy-host that was blocked will
-now instantly complete. Then you know everything is configured perfectly.
+immediately finish and deploy this fresh pull. Then you know everything is
+configured perfectly for the "deploy" user and for the "writers" user.
 
 # Install Deploy Cron
 
 ```
-[puller@deploy-host projectz]$ echo '0 * * * * cd ~/projectz && git pull 2>/dev/null >/dev/null' | crontab -
-[puller@deploy-host projectz]$ 
+[puller@deploy-host projectz]$ echo '0 * * * * cd ~/projectz && umask 002 && git pull 2>/dev/null >/dev/null' | crontab -
+[puller@deploy-host projectz]$
 ```
