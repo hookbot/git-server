@@ -10,7 +10,7 @@ hooks you want or just symlink the entire folder.
 
 ```
 su - git
-git clone http://github.com/hookbot/git-server ~/git-server
+git clone https://github.com/hookbot/git-server ~/git-server
 cd projectz.git
 mv -v hooks hooks.SAMPLES_OLD
 ln -s -v ~/git-server/hooks .
