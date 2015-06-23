@@ -23,7 +23,7 @@ foreach my $lock_file (glob "$lock_dir/*.lock") {
             chomp $sleeper;
             if (kill 0, $worker and
                 kill 9, $sleeper) {
-                if ($lock_file =~ /(.+).lock$/) {
+                if ($lock_file =~ m{.*/(.+).lock$}) {
                     warn localtime().": Sending push notification to $1 ...\n";
                 }
                 else {

@@ -82,6 +82,7 @@ Delta compression using up to 8 threads.
 Compressing objects: 100% (2/2), done.
 Writing objects: 100% (4/4), 387 bytes | 0 bytes/s, done.
 Total 4 (delta 1), reused 0 (delta 0)
+remote: Tue Jun 23 07:54:45 2015: Sending push notification to 104.131.69.205-push_notification_key1 ...
 To git@git-host:projectz
    f60b258..d759447  master -> master
 [alice@dev projectz]$
