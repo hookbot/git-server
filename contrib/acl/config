@@ -1,8 +1,0 @@
-[core]
-	repositoryformatversion = 0
-	filemode = true
-	bare = true
-[acl]
-	readers = hookbot,rob
-	writers = hookbot,alice,bob
-	deploy = push_notification_key1
