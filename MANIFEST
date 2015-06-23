@@ -8,3 +8,7 @@ contrib/pre-read
 contrib/post-read
 contrib/pre-write
 contrib/post-write
+hooks/pre-read
+hooks/push-notification
+hooks/pre-write
+hooks/post-update
