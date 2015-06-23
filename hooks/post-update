@@ -1,6 +1,3 @@
 #!/bin/sh
 
-mkdir -p logs
-echo `date` $SSH_CONNECTION $KEY > logs/updated
-# Temporary hack to blanket release all git pull sleepers
-killall sleep
+hooks/push-notify

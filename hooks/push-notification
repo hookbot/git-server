@@ -35,7 +35,7 @@ if (!flock $fh, LOCK_NB | LOCK_EX) {
     # Upgrade to Blocking Exclusive lock
     flock $fh, LOCK_EX or die "$lock_file: flock: Unable to acquire lock? $@\n";
 }
-my $last_pushed = "$lock_dir/updated";
+my $last_pushed = "$lock_dir/pushed";
 my $last_pulled = "$lock_dir/$ip-$KEY.pulled";
 my $should_wait =
     # Always pause if there's never been any push yet

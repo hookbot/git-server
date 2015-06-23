@@ -1,0 +1,18 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
+my $base = $ENV{GIT_DIR} or die "GIT hook ENV malfunction!\n";
+my $lock_dir = "$base/logs";
+mkdir $lock_dir, 0755 unless -d $lock_dir;
+my $KEY = $ENV{KEY} || "UNKNOWN";
+
+my $last_pushed = "$lock_dir/pushed";
+open my $fh, ">", $last_pushed or die "$last_pushed: open: $!";
+print $fh localtime()." $ssh $KEY\n";
+close $fh;
+
+# Temporary hack to blanket release all git pull sleepers
+system "killall sleep";
