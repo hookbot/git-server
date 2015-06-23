@@ -14,5 +14,23 @@ open my $fh, ">", $last_pushed or die "$last_pushed: open: $!";
 print $fh localtime()." $ssh $KEY\n";
 close $fh;
 
-# Temporary hack to blanket release all git pull sleepers
-system "killall sleep";
+# $lock_file = "$lock_dir/$ip-$KEY.lock";
+foreach my $lock_file (glob "$lock_dir/*.lock") {
+    if (open my $fh, "<", $lock_file) {
+        if (my $worker = <$fh> and
+            my $sleeper = <$fh>) {
+            chomp $worker;
+            chomp $sleeper;
+            if (kill 0, $worker and
+                kill 9, $sleeper) {
+                if ($lock_file =~ /(.+).lock$/) {
+                    warn localtime().": Sending push notification to $1 ...\n";
+                }
+                else {
+                    warn localtime().": DEBUG: Releasing sleeper (pid=$sleeper) ...\n";
+                }
+            }
+        }
+        close $fh;
+    }
+}
