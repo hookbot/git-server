@@ -28,6 +28,9 @@ echo '
 ' >> config
 ```
 
+Actually, you only need "writers" and "deploy" settings since
+both of these ACLs are given implicit "readers" access.
+
 # PUSH NOTIFICATION INSTANT DEPLOY SETUP
 
 To utilize the "deploy" feature, you need to
@@ -50,8 +53,8 @@ ssh-dss AAAAB3NzaC1W3w1Ee4nu3f03ck4OW puller@deploy-host
 
 # Install this key on the git host
 
-This of a name for this key, such as "push_notification_key1",
-and ensure it is in the [acl] "deploy" line of the config.
+Think of a name for this key, such as "push_notification_key1",
+and ensure this name is in the [acl] "deploy" line of the config.
 
 ```
 [git@git-host]$ echo 'command="~/git-server/git-server KEY=push_notification_key1" ssh-dss AAAAB3NzaC1W3w1Ee4nu3f03ck4OW puller@deploy-host' >> ~/.ssh/authorized_keys
