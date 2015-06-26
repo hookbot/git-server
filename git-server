@@ -27,9 +27,10 @@ within the authorized_keys configuration.
 
 =head1 INSTALL
 
-This can be used with any existing git repositories or as a drop-in replacement for git-shell or you can create a fresh git repo:
+This can be used with any existing git repositories or as a drop-in replacement
+for git-shell or you can create a fresh repo on the git host:
 
-  git init project
+  git init --bare project
 
 Then add whatever hooks you want:
 
@@ -37,7 +38,7 @@ Then add whatever hooks you want:
 
 Each hook can read the ENV settings defined in authorized_keys.
 
-See contrib/* for some working "hooks" examples.
+See contrib/* or hooks/* for some working "hooks" examples.
 
 =head1 HOOKS
 

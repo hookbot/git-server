@@ -20,7 +20,7 @@ If you don't already have a git server or git repo ready, then make one:
 ```
 sudo useradd git
 sudo su - git
-git init projectx
+git init --bare projectx
 ```
 
 Then add whatever hooks you want:
@@ -31,4 +31,4 @@ vi projectx/.git/hooks/pre-read
 
 Each hook can read the ENV settings defined in authorized_keys.
 
-See contrib/* for some working "hooks" examples.
+See contrib/* or hooks/* for some working "hooks" examples.
