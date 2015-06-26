@@ -38,14 +38,14 @@ if (!flock $fh, LOCK_NB | LOCK_EX) {
 my $last_pushed = "$lock_dir/pushed";
 my $last_pulled = "$lock_dir/$ip-$KEY.pulled";
 my $should_wait =
+    # Do NOT wait if this is the first time ever doing a pull
+    !-e $last_pulled ? 0 :
+
     # Always pause if there's never been any push yet
     !-e $last_pushed ? 1 :
 
     # Always wait if someone else was barely released to run the git pull
     $released_worker ? 1 :
-
-    # Do NOT wait if this is the first time ever doing a pull
-    !-e $last_pulled ? 0 :
 
     # Only wait if pulled more recently than the last push
     -M $last_pulled < -M $last_pushed;
