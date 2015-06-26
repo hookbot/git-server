@@ -168,7 +168,6 @@ exit $res;
 
 # spawn( $chdir, $cmd, [ @args ] )
 # chdir $chdir
-# close STDIN
 # before running cmd.
 # Returns the exit status
 sub spawn {
@@ -187,7 +186,6 @@ sub spawn {
     else {
         # Child
         chdir($dir) or die "$dir: chdir: $!\n";
-        close STDIN;
         exec @cmd or die "$dir/$cmd[0]: exec: $!";
     }
 }
