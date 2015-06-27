@@ -14,6 +14,7 @@ my $base = $ENV{GIT_DIR} or die "GIT hook ENV malfunction!\n";
 my $lock_dir = "$base/logs";
 mkdir $lock_dir, 0755 unless -d $lock_dir;
 my $KEY = $ENV{KEY} || "UNKNOWN";
+$SIG{PIPE} = sub { exit 1; };
 my $lock_file = "$lock_dir/$ip-$KEY.lock";
 sysopen my $fh, $lock_file, O_CREAT | O_RDWR;
 my $released_worker = 0;
@@ -63,6 +64,13 @@ if (my $sleeper = fork()) {
     truncate $fh, tell $fh;
     warn localtime().": DEBUG: [$ip] Starting worker (pid=$$) waiting for sleeper (pid=$sleeper) to finish ...\n";
     waitpid $sleeper, 0;
+    my $rbits = "\x01"; # 2 ^ (fileno(STDIN)) = 1
+    if (select $rbits, undef, undef, 0.1) {
+        # Quick probe to make sure we are still connected to the other side
+        # Normally, a "read" operation will never send anything.
+        # So if STDIN is ready to say something, then there must be a problem.
+        die "STDIN Broken Pipe or defective git client.\n";
+    }
 }
 else {
     # Child

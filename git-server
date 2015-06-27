@@ -102,6 +102,8 @@ my $git_op_hook = {
     "git-receive-pack" => "write", # i.e., push
 };
 
+$SIG{PIPE} = sub { exit 1; };
+
 my $cmd = undef;
 if (@ARGV == 2 and $ARGV[0] eq "-c") {
     # Advanced Method:
@@ -174,8 +176,7 @@ sub spawn {
     if ($pid) {
         # Parent
         waitpid($pid, 0);
-        my $status = $?;
-        return $status >> 8;
+        return $? & 127 || $? >> 8;
     }
     elsif (!defined $pid) {
         die "fork: $!\n";
