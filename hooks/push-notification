@@ -69,7 +69,7 @@ if (my $sleeper = fork()) {
         # Quick probe to make sure we are still connected to the other side
         # Normally, a "read" operation will never send anything.
         # So if STDIN is ready to say something, then there must be a problem.
-        # We need to prevent real git pull from running.
+        # We need to prevent the real git pull from actually running.
         die "STDIN Broken Pipe or defective git client.\n";
     }
 }
