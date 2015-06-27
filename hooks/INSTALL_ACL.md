@@ -104,4 +104,4 @@ configured perfectly for the "deploy" user and for the "writers" user.
 You can do this on multiple deployment systems.
 If different deployment systems will appear to come from the
 same IP from the git-server point of view, then you will need
-to create a different deployment SSH key for eaach system.
+to create a different deployment SSH key for each system.
