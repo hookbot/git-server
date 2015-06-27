@@ -120,9 +120,6 @@ elsif (my $o = delete $ENV{SSH_ORIGINAL_COMMAND}) {
         }
     }
 }
-else {
-    die "fatal: What do you think I am? A shell?\n";
-}
 
 die "fatal: What do you think I am? A shell?\n" unless $cmd;
 
