@@ -1,5 +1,9 @@
 Revision History for git-server
 
+0.004  2015-06-27 09:00:00
+ - Include example ACL configuration.
+ - Add automatic deployment instructions (instant push notification)
+
 0.003  2015-06-16 15:15:00
  - Documental Fixes
 
