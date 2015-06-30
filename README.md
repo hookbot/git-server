@@ -28,7 +28,7 @@ Then, without any hooks, this user should have full access this repo:
 
 ```
 [user1@dev ~]$ git config --global user.name 'Mr Developer User1'
-[user1@dev ~]$ git clone ssh://git@git-host:projectx
+[user1@dev ~]$ git clone git@git-host:projectx
 [user1@dev ~]$ cd projectx
 [user1@dev projectx]$ echo 'Hello world' >> README
 [user1@dev projectx]$ git add README
