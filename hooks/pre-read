@@ -18,7 +18,14 @@ $SIG{PIPE} = sub { exit 1; };
 my $KEY = $ENV{KEY} || "UNKNOWN";
 if ($acl->{deploy}->{$KEY}) {
     warn localtime().": [$KEY] git-server: PULL waiting for notification ...\n";
-    system "hooks/push-notification", $ENV{SSH_CLIENT} || "NoIP";
+    my $who = $KEY;
+    if (($ENV{SSH_CLIENT} || "") =~ /^([\d\.]+)/) {
+        $who .= "@".$1;
+    }
+    if (my $repo = $ENV{GIT_DIR}) {
+        $who .= ":$repo";
+    }
+    system "hooks/push-notification", $who;
     die "$0: notification failed ($?)\n" if $?;
 }
 warn localtime().": [$KEY] git-server: RUNNING PULL ...\n";
