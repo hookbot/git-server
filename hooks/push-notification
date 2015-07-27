@@ -89,3 +89,10 @@ while (time - (stat $last_pushed)[9] < 3) {
     warn localtime().": PUSH NOTIFICATION: Waiting for recent commit to complete ...\n";
     sleep 1;
 }
+
+# Throw a warning if started pull before the push was sent.
+if (-M $last_pulled > -M $last_pushed) {
+    warn localtime().": PUSH NOTIFICATION: Recent commit requires another pull ...\n";
+    # git client will probably see the following spewage:
+    # Cannot rebase onto multiple branches
+}
