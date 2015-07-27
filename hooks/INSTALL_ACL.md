@@ -97,7 +97,7 @@ configured perfectly for the "deploy" user and for the "writers" user.
 # Install Deploy Cron
 
 ```
-[puller@deploy-host projectz]$ echo '0 * * * * cd ~/projectz && umask 002 && git pull --rebase 2>&1 | grep -q -i "recent commit" && (git pull --rebase && git pull --rebase) 2>&1 | cat >/dev/null' | crontab -e
+[puller@deploy-host projectz]$ echo '0 * * * * cd ~/projectz && umask 002 && git pull --rebase 2>&1 | grep -q -i "recent commit" && git pull --rebase >/dev/null 2>/dev/null' | crontab -e
 [puller@deploy-host projectz]$
 ```
 
