@@ -63,7 +63,7 @@ ensure this name is in the [acl] "deploy" line of the $GIT_DIR/config.
 # Verify this deploy key was installed properly
 
 ```
-[puller@deploy-host ~]$ git clone git@git-host:projectz
+[puller@deploy-host ~]$ git clone ssh://git@git-host/~/projectz
 [puller@deploy-host ~]$ cd projectz
 [puller@deploy-host projectz]$ git pull
 ```
