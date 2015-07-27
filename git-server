@@ -141,12 +141,15 @@ if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
             $ENV{GIT_DIR} = abs_path $dir;
             last;
         }
-        if ($try =~ s{^~/}{$home/}) {
-            if (-d $try) {
-                $dir = $try;
-                $ENV{GIT_DIR} = abs_path $dir;
-                last;
-            }
+        if ($try =~ s{^/+}{$home/} and -d $try) {
+            $dir = $try;
+            $ENV{GIT_DIR} = abs_path $dir;
+            last;
+        }
+        if ($try =~ s{^~/}{$home/} and -d $try) {
+            $dir = $try;
+            $ENV{GIT_DIR} = abs_path $dir;
+            last;
         }
     }
     die "fatal: '$repo' does not appear to be a git repository\n" unless $dir;
