@@ -141,7 +141,7 @@ if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
             $ENV{GIT_DIR} = abs_path $dir;
             last;
         }
-        if ($try =~ s{^/+}{$home/} and -d $try) {
+        if ($try =~ s{^/+}{} and -d $try) {
             $dir = $try;
             $ENV{GIT_DIR} = abs_path $dir;
             last;
