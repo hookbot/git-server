@@ -150,6 +150,7 @@ if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
         }
     }
     die "fatal: '$repo' does not appear to be a git repository\n" unless $dir;
+    $cmd = "$op '$ENV{GIT_DIR}'";
 }
 else {
     die "fatal: unrecognized command '$cmd'\n";
