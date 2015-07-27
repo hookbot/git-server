@@ -38,6 +38,7 @@ if (!flock $fh, LOCK_NB | LOCK_EX) {
 }
 my $last_pushed = "$lock_dir/pushed";
 my $last_pulled = "$lock_dir/$ip-$KEY.pulled";
+my $M_last_pushed = -M $last_pushed || 0;
 my $should_wait =
     # Do NOT wait if this is the first time ever doing a pull
     !-e $last_pulled ? 0 :
@@ -49,7 +50,7 @@ my $should_wait =
     $released_worker ? 1 :
 
     # Only wait if pulled more recently than the last push
-    -M $last_pulled < -M $last_pushed;
+    -M $last_pulled < $M_last_pushed;
 
 # Update Last Pull Timestamp
 open my $pull, ">", $last_pulled or die "$last_pulled: open: $!";
@@ -85,13 +86,13 @@ else {
 }
 
 # Wait for push to fall far enough away to provide safely distinct timestamps
-while (time - (stat $last_pushed)[9] < 3) {
+while (time - (stat $last_pushed)[9] < 1) {
     warn localtime().": PUSH NOTIFICATION: Waiting for recent commit to complete ...\n";
     sleep 1;
 }
 
-# Throw a warning if started pull before the push was sent.
-if (-M $last_pulled > -M $last_pushed) {
+# Throw a warning if a new push was sent after this pull already started.
+if ($M_last_pushed > -M $last_pushed) {
     warn localtime().": PUSH NOTIFICATION: Recent commit requires another pull ...\n";
     # git client will probably see the following spewage:
     # Cannot rebase onto multiple branches
