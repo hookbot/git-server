@@ -1,5 +1,10 @@
 Revision History for git-server
 
+0.006  2015-07-27 12:00:00
+ - Fix instant push
+ - Handle case where repo URL starts with tilde ("~")
+ - Handle SSH repo URL with relative path
+
 0.005  2015-07-01 20:00:00
  - Minor cosmetic changes
 
