@@ -110,9 +110,11 @@ if (@ARGV == 2 and $ARGV[0] eq "-c") {
     shift; # -c
     $cmd = shift; # i.e., "git-upload-pack 'project'"
 }
-elsif (my $o = delete $ENV{SSH_ORIGINAL_COMMAND}) {
+else {
     # Standard Method:
-    $cmd = $o;
+    if (my $o = delete $ENV{SSH_ORIGINAL_COMMAND}) {
+        $cmd = $o;
+    }
     foreach my $pair (@ARGV) {
         if ($pair =~ /^(\w+)=(.*)$/) {
             $ENV{$1} = $2;
