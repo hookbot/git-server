@@ -123,7 +123,9 @@ elsif (my $o = delete $ENV{SSH_ORIGINAL_COMMAND}) {
     }
 }
 
-die "fatal: What do you think I am? A shell?\n" unless $cmd;
+my $KEY = $ENV{KEY} || "FATAL";
+
+die "$KEY: You don't have shell access!\n" unless $cmd;
 
 my $dir = undef;
 my $hook = undef;
@@ -152,11 +154,11 @@ if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
             last;
         }
     }
-    die "fatal: '$repo' does not appear to be a git repository\n" unless $dir;
+    die "$KEY: You can't access '$repo' git repository\n" unless $dir;
     $cmd = "$op '$ENV{GIT_DIR}'";
 }
 else {
-    die "fatal: unrecognized command '$cmd'\n";
+    die "$KEY: fatal: You can't run the command '$cmd'\n";
 }
 
 if ($hook and -x "$dir/hooks/pre-$hook") {
