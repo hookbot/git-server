@@ -28,13 +28,21 @@ if (!flock $fh, LOCK_NB | LOCK_EX) {
     chomp (my $sleeper = <$fh>);
     # Rewind back to the beginning
     seek $fh, 0, 0;
-    if ($worker and $sleeper and
-        kill 0, $worker) { # Still running?
+    if ($worker and $sleeper and kill 0, $worker) {
+        # Still running?
         warn localtime().": DEBUG: [$ip] Releasing worker (pid=$worker) by killing sleeper (pid=$sleeper) ...\n";
         $released_worker = kill 9, $sleeper; # WAKE UP!
     }
-    # Upgrade to Blocking Exclusive lock
-    flock $fh, LOCK_EX or die "$lock_file: flock: Unable to acquire lock? $@\n";
+    if ($released_worker) {
+        # Upgrade to Blocking Exclusive lock
+        flock $fh, LOCK_EX or die "$lock_file: flock: Unable to acquire lock? $@\n";
+    }
+    else {
+        # Failed to release someone else?
+        # Then we can't try to take the flock() baton.
+        # Just git out of here
+        exit;
+    }
 }
 my $last_pushed = "$lock_dir/pushed";
 my $last_pulled = "$lock_dir/$ip-$KEY.pulled";
