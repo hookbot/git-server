@@ -7,6 +7,8 @@ use IO::Handle; # autoflush
 
 # Maximum number of seconds to wait for the next worker to take over.
 my $MAX_PATIENCE = 7200;
+# Minimum delay after push that is required to wait before sleeping.
+my $MIN_PUSH_DELAY = 30;
 my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
 my ($ip) = split / /,$ssh;
 $ip or die "$ssh: SSH protocol malfunction\n";
@@ -46,7 +48,8 @@ if (!flock $fh, LOCK_NB | LOCK_EX) {
 }
 my $last_pushed = "$lock_dir/pushed";
 my $last_pulled = "$lock_dir/$ip-$KEY.pulled";
-my $M_last_pushed = -M $last_pushed || 0;
+my $WHEN_last_pulled = (stat $last_pulled)[9] || 0;
+my $WHEN_last_pushed = (stat $last_pushed)[9] || 0;
 my $should_wait =
     # Do NOT wait if this is the first time ever doing a pull
     !-e $last_pulled ? 0 :
@@ -57,8 +60,8 @@ my $should_wait =
     # Always wait if someone else was barely released to run the git pull
     $released_worker ? 1 :
 
-    # Only wait if pulled more recently than the last push
-    -M $last_pulled < $M_last_pushed;
+    # Only wait if pulled much more recently than the last push
+    $WHEN_last_pulled > $WHEN_last_pushed + $MIN_PUSH_DELAY;
 
 # Update Last Pull Timestamp
 open my $pull, ">", $last_pulled or die "$last_pulled: open: $!";
@@ -99,8 +102,9 @@ while (time - (stat $last_pushed)[9] < 1) {
     sleep 1;
 }
 
-# Throw a warning if a new push was sent after this pull already started.
-if ($M_last_pushed > -M $last_pushed) {
+# Throw a warning if a push was too recent.
+if ($WHEN_last_pushed < (stat $last_pushed)[9] or
+    time - (stat $last_pushed)[9] < $MIN_PUSH_DELAY) {
     warn localtime().": PUSH NOTIFICATION: Recent commit requires another pull ...\n";
     # git client will probably see the following spewage:
     # Cannot rebase onto multiple branches
