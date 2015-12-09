@@ -8,7 +8,7 @@ use IO::Handle; # autoflush
 # Maximum number of seconds to wait for the next worker to take over.
 my $MAX_PATIENCE = 7200;
 # Minimum delay after push that is required to wait before sleeping.
-my $MIN_PUSH_DELAY = 30;
+my $MIN_PUSH_DELAY = 60;
 my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
 my ($ip) = split / /,$ssh;
 $ip or die "$ssh: SSH protocol malfunction\n";
