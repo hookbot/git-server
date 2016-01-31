@@ -1,5 +1,8 @@
 Revision History for git-server
 
+0.007  2016-01-30 22:00:00
+ - Allow git client to checkout repo.git too
+
 0.006  2015-07-27 12:00:00
  - Fix instant push
  - Handle case where repo URL starts with tilde ("~")
