@@ -138,6 +138,7 @@ if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
         $hook = $found;
     }
     $repo = $1 if $repo =~ /^'(.+)'$/;
+    $repo =~ s/\.git$//;
     my $home = $ENV{HOME} || (getpwuid $<)[7];
     foreach my $try ("$repo.git/.git", "$repo/.git", "$repo.git", $repo) {
         if (-d $try) {
