@@ -103,9 +103,8 @@ while (time - (stat $last_pushed)[9] < 1) {
 }
 
 # Throw a warning if a push was too recent.
-if ($WHEN_last_pushed < (stat $last_pushed)[9] or
-    time - (stat $last_pushed)[9] < $MIN_PUSH_DELAY) {
-    warn localtime().": PUSH NOTIFICATION: Recent commit requires another pull ...\n";
+if (!$should_wait) {
+    warn localtime().": PUSH NOTIFICATION: Releasing pull due to recent commit. Please pull again ...\n";
     # git client will probably see the following spewage:
     # Cannot rebase onto multiple branches
 }
