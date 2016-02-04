@@ -1,5 +1,8 @@
 Revision History for git-server
 
+0.008  2016-02-03 17:00:00
+ - Notify client when quick pulling.
+
 0.007  2016-01-30 22:00:00
  - Allow git client to checkout repo.git too
 
