@@ -1,0 +1,83 @@
+#!/usr/bin/env perl
+
+=pod
+
+=head1 NAME
+
+git-client - Git Client Wrapper
+
+=head1 DESCRIPTION
+
+Wrapper around the real git to allow
+unlimited .gitconfig descent override
+instead of only looking at ~/.gitconfig
+
+=head1 INSTALL
+
+  cp -p -i git-client /usr/local/bin/git
+
+Just make sure this program comes BEFORE the
+real "git" program in the PATH.
+
+=head1 SYNOPSIS
+
+  cd ~/src/github/project
+  touch ../.gitconfig
+  git config --global user.email 'hookbot@github.com'
+  git config --global --list
+
+=head1 PURPOSE
+
+Allows you to use many different .gitconfig files
+within each folder of git repos. If there is no
+.gitconfig within the directory descend structure,
+then it will behave exactly like the normal git.
+
+=head1 AUTHOR
+
+Rob Brown <bbb@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2016 by Rob Brown <bbb@cpan.org>
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut
+
+use strict;
+use Cwd qw(abs_path);
+
+my $myself = (stat $0)[1] or die "$0: Can't find my inode?\n";
+my $real_git = "/usr/bin/git";
+foreach my $path (split /:/,$ENV{PATH}) {
+    my $try = "$path/git";
+    if (my @stat = stat $try) {
+        if ($stat[1] == $myself) {
+            # Ignore myself
+        }
+        else {
+            # First executable one in the path that isn't me is the winner
+            $real_git = $try;
+            last;
+        }
+    }
+}
+
+-x $real_git or die "$real_git: Unable to execute\n";
+
+my $last = ".";
+$ENV{HOME} ||= (getpwnam $<)[7];
+while (my $scan = abs_path("$last/..")) {
+    last if $scan eq $last or $scan eq $ENV{HOME};
+    $last = $scan;
+    if (-r "$scan/.gitconfig") {
+        if (!$ENV{HOME} or system "diff -q $ENV{HOME}/.gitconfig $scan/.gitconfig >/dev/null") {
+            $ENV{HOME} = $scan;
+            warn "$scan/.gitconfig: Descent override!\n";
+        }
+        last;
+    }
+}
+
+exec $real_git, @ARGV unless $ENV{GIT_SCANNER_WRAPPER}++;
