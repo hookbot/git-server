@@ -1,0 +1,78 @@
+#!/usr/bin/env perl
+
+=pod
+
+=head1 NAME
+
+git-deploy - Client for push notification deployment
+
+=head1 DESCRIPTION
+
+git-deploy runs as a git client daemon
+to pull the changes from the git server
+instantly after a push is triggered.
+
+=head1 INSTALL
+
+As super user:
+
+  [root@deploy-host ~]# wget https://raw.githubusercontent.com/hookbot/git-server/master/git-deploy
+  [root@deploy-host ~]# chmod 755 git-deploy
+  [root@deploy-host ~]# mv git-deploy /usr/local/bin/.
+  [root@deploy-host ~]#
+
+As deploy user:
+
+  [puller@deploy-host projectz]$ git deploy master
+  [puller@deploy-host projectz]$ echo '0 * * * * cd ~/projectz && git deploy >/dev/null 2>/dev/null' | crontab -
+  [puller@deploy-host projectz]$
+
+=head1 SYNOPSIS
+
+  git deploy [ branch ]
+
+=head1 AUTHOR
+
+Rob Brown <bbb@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2015-2016 by Rob Brown <bbb@cpan.org>
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut
+
+use strict;
+use FindBin qw($Script);
+
+my $branch = shift || "master";
+
+umask 0002;
+$0 = "$Script - Initial checkout";
+system "git checkout $branch";
+sleep 1;
+while (1) {
+    $0 = "$Script - Waiting for push notification ...";
+    my $update = `(git fetch ; git checkout $branch ; git rebase origin/$branch) 2>&1`;
+    $0 = "$Script - Scanning updates";
+    if ($update =~ /You have unstaged changes/) {
+        # Rebase can't work if there are local changes.
+        # Make sure there aren't multiple pullers choking on the repo
+        warn $update;
+        my $running = `ps fauwwx`;
+        exit if $running =~ /$Script - Waiting/;
+        my $monkey = "";
+        $monkey = ": $1" if $update =~ /^M\s+(\S+)/m;
+        $0 = "$Script - Waiting because of local modifications$monkey";
+        sleep 60;
+    }
+    last if $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
+    if ($update =~ /Current branch.*is up to date/) {
+        $0 = "$Script - Waiting because everything is updated ...";
+        print "Everything was updated perfectly. Sleeping ...\n";
+        sleep 60;
+    }
+    $0 = "$Script - Update complete";
+    sleep 1;
+}
