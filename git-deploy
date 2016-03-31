@@ -12,6 +12,21 @@ git-deploy runs as a git client daemon
 to pull the changes from the git server
 instantly after a push is triggered.
 
+=head1 SYNOPSIS
+
+  git deploy [ --build='make -C src/.' ] [ branch ]
+
+=head2 branch
+
+If a <branch> is specified, then it will update to that branch.
+By default, the "master" branch is used.
+
+=head2 build
+
+The --build argument is any command you want to execute
+after any files are pulled or updated from git.
+By default, no command is run.
+
 =head1 INSTALL
 
 As super user:
@@ -27,10 +42,6 @@ As deploy user:
   [puller@deploy-host projectz]$ echo '0 * * * * cd ~/projectz && git deploy >/dev/null 2>/dev/null' | crontab -
   [puller@deploy-host projectz]$
 
-=head1 SYNOPSIS
-
-  git deploy [ branch ]
-
 =head1 AUTHOR
 
 Rob Brown <bbb@cpan.org>
@@ -45,13 +56,27 @@ This library is free software; you can redistribute it and/or modify it under th
 
 use strict;
 use FindBin qw($Script);
+use Getopt::Long qw(GetOptions);
+
+my $build = undef;
+GetOptions
+    "build:s" => \$build,
+    or exec perldoc => $0;
 
 my $branch = shift || "master";
+
+sub rebuild {
+    if (defined $build) {
+        $0 = "$Script - Running build hook ...";
+        system $build;
+    }
+}
 
 umask 0002;
 $0 = "$Script - Initial checkout";
 system "git checkout $branch";
 sleep 1;
+rebuild;
 while (1) {
     $0 = "$Script - Waiting for push notification ...";
     my $update = `(git fetch ; git checkout $branch ; git rebase origin/$branch) 2>&1`;
@@ -61,7 +86,7 @@ while (1) {
         # Make sure there aren't multiple pullers choking on the repo
         warn $update;
         my $running = `ps fauwwx`;
-        exit if $running =~ /$Script - Waiting/;
+        last if $running =~ /$Script - Waiting/;
         my $monkey = "";
         $monkey = ": $1" if $update =~ /^M\s+(\S+)/m;
         $0 = "$Script - Waiting because of local modifications$monkey";
@@ -75,4 +100,7 @@ while (1) {
     }
     $0 = "$Script - Update complete";
     sleep 1;
+    rebuild;
 }
+
+rebuild;
