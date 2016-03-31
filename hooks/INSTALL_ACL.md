@@ -63,10 +63,11 @@ Think of a name for this key, such as "push_notification_key1", and
 ensure this name is in the [acl] "deploy" line of the $GIT_DIR/config.
 
 ```
-[git@git-host]$ echo 'command="~/git-server/git-server KEY=push_notification_key1" ssh-dss AAAAB3NzaC1W3w1Ee4nu3f03ck4OW puller@deploy-host' >> ~/.ssh/authorized_keys
-[git@git-host]$ grep push_notification_key1 ~/projectz.git/config
-	deploy = push_notification_key1
-[git@git-host]$
+[git@git-host ~]$ echo 'command="~/git-server/git-server KEY=push_notification_key1" ssh-dss AAAAB3NzaC1W3w1Ee4nu3f03ck4OW puller@deploy-host' >> ~/.ssh/authorized_keys
+[git@git-host ~]$ cd ~/projectz.git
+[git@git-host projectz.git]$ git config --list | grep push_notification_key1
+acl.deploy=push_notification_key1
+[git@git-host projectz.git]$
 ```
 
 # Verify this deploy key was installed properly
