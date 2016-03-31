@@ -16,3 +16,4 @@ hooks/push-notification
 hooks/pre-write
 hooks/post-update
 hooks/INSTALL_ACL.md
+t/00_compile.t
