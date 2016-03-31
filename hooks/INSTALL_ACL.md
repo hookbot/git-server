@@ -33,6 +33,15 @@ since both of these ACLs are given implicit "readers" access.
 
 # PUSH NOTIFICATION INSTANT DEPLOY SETUP
 
+# Install git-deploy
+
+```
+[root@deploy-host ~]# wget https://raw.githubusercontent.com/hookbot/git-server/master/git-deploy
+[root@deploy-host ~]# chmod 755 git-deploy
+[root@deploy-host ~]# mv git-deploy /usr/local/bin/.
+[root@deploy-host ~]#
+```
+
 # Create an SSH key
 
 ```
@@ -65,10 +74,10 @@ ensure this name is in the [acl] "deploy" line of the $GIT_DIR/config.
 ```
 [puller@deploy-host ~]$ git clone ssh://git@git-host/projectz
 [puller@deploy-host ~]$ cd projectz
-[puller@deploy-host projectz]$ git pull
+[puller@deploy-host projectz]$ git deploy &
 ```
 
-Hopefully, if everything is working properly, the "git pull"
+Hopefully, if everything is working properly, the "git deploy"
 command should just block. This means it is successfully
 waiting for one of the "writers" to push...
 
@@ -93,11 +102,12 @@ To git@git-host:projectz
 Hopefully, that other "git pull" process on deploy-host that was blocked will
 immediately finish and deploy this fresh pull. Then you know everything is
 configured perfectly for the "deploy" user and for the "writers" user.
+And you can install a cron to keep the deployment daemon running.
 
 # Install Deploy Cron
 
 ```
-[puller@deploy-host projectz]$ echo '0 * * * * cd ~/projectz && umask 002 && git pull --rebase 2>&1 | grep -q -i "recent commit" && git pull --rebase >/dev/null 2>/dev/null' | crontab -e
+[puller@deploy-host projectz]$ echo '0 * * * * cd ~/projectz && git deploy >/dev/null 2>/dev/null' | crontab -
 [puller@deploy-host projectz]$
 ```
 
