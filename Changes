@@ -1,5 +1,10 @@
 Revision History for git-server
 
+0.009  2016-03-31 12:00:00
+ - Add "git deploy" feature.
+ - Add git-client convenience wrapper.
+ - Add optional log.logfile support.
+
 0.008  2016-02-03 17:00:00
  - Notify client when quick pulling.
 
