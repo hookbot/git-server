@@ -4,6 +4,8 @@ MANIFEST
 README.md
 INSTALL.md
 git-server
+git-client
+git-deploy
 contrib/pre-read
 contrib/post-read
 contrib/pre-write
