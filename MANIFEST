@@ -9,6 +9,7 @@ contrib/post-read
 contrib/pre-write
 contrib/post-write
 hooks/pre-read
+hooks/push-notify
 hooks/push-notification
 hooks/pre-write
 hooks/post-update
