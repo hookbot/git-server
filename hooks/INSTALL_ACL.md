@@ -70,7 +70,14 @@ acl.deploy=push_notification_key1
 [git@git-host projectz.git]$
 ```
 
-# Verify this deploy key was installed properly
+# Optional logfile to log all git operations on the server:
+
+```
+[git@git-host projectz.git]$ git config log.logfile "logs/access_log"
+[git@git-host projectz.git]$
+```
+
+# Verify the deploy key was installed properly:
 
 ```
 [puller@deploy-host ~]$ git clone ssh://git@git-host/projectz
