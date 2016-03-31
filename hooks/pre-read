@@ -3,7 +3,10 @@
 use strict;
 use warnings;
 
+my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
+my $base = $ENV{GIT_DIR} or die "GIT hook ENV malfunction!\n";
 my $acl = {};
+my $log = {};
 my $conf = `git config --list`;
 while ($conf =~ s/^acl.(\w+)=(.*)$//m) {
     my $param = $1;
@@ -11,6 +14,9 @@ while ($conf =~ s/^acl.(\w+)=(.*)$//m) {
     foreach my $key (split /,/, $keys) {
         $acl->{$param}->{$key} = 1;
     }
+}
+while ($conf =~ s/^log.(\w+)=(.*)$//m) {
+    $log->{$1} = $2;
 }
 
 $SIG{PIPE} = sub { exit 1; };
@@ -30,4 +36,25 @@ if ($acl->{deploy}->{$KEY}) {
 }
 warn localtime().": [$KEY] git-server: RUNNING PULL ...\n";
 # If you can write or deploy, then you can also read
-die "$KEY: You have been banned from all read operations!\n" unless $acl->{readers}->{$KEY} || $acl->{writers}->{$KEY} || $acl->{deploy}->{$KEY};
+my $allowed = $acl->{readers}->{$KEY} || $acl->{writers}->{$KEY} || $acl->{deploy}->{$KEY};
+# Check for logfile:
+if (my $file = $log->{logfile}) {
+    if ($file =~ m{^[^/]}) {
+        # Force start with a / for absolute patth
+        $file = "$base/$file";
+    }
+    if ($file =~ m{^(.*)/[^/]+$}) {
+        my $log_dir = $1;
+        system mkdir => -p => $log_dir if !-d $log_dir;
+        if (open my $fh, ">>", $file) {
+            my ($ip) = split / /,$ssh;
+            if ($allowed) {
+                print $fh localtime().": [$ip] $KEY: pulled\n";
+            }
+            else {
+                print $fh localtime().": [$ip] $KEY: pull attempt blocked!\n";
+            }
+        }
+    }
+}
+die "$KEY: You have been banned from all read operations!\n" unless $allowed;
