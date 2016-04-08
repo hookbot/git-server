@@ -14,10 +14,16 @@ instead of only looking at ~/.gitconfig
 
 =head1 INSTALL
 
-  cp -p -i git-client /usr/local/bin/git
-
 Just make sure this program comes BEFORE the
 real "git" program in the PATH.
+
+For example, you could do this as super user:
+
+  [root@deploy-host ~]# wget https://raw.githubusercontent.com/hookbot/git-server/master/git-client
+  [root@deploy-host ~]# chmod 755 git-client
+  [root@deploy-host ~]# mv -i git-client /usr/local/bin/git
+  [root@deploy-host ~]#
+
 
 =head1 SYNOPSIS
 
