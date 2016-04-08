@@ -1,5 +1,9 @@
 Revision History for git-server
 
+0.010  2016-04-08 10:00:00
+ - Make "git deploy" default to current branch.
+ - Minor INSTALL doc fixes.
+
 0.009  2016-03-31 12:00:00
  - Add "git deploy" feature.
  - Add git-client convenience wrapper.
