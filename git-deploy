@@ -19,7 +19,7 @@ instantly after a push is triggered.
 =head2 branch
 
 If a <branch> is specified, then it will update to that branch.
-By default, the "master" branch is used.
+By default, the current branch is used.
 
 =head2 build
 
@@ -63,7 +63,9 @@ GetOptions
     "build:s" => \$build,
     or exec perldoc => $0;
 
-my $branch = shift || "master";
+my $branch = shift || (
+    `git branch 2>/dev/null` =~ /^\* (\S+)/m ? $1 : "master"
+);
 
 sub rebuild {
     if (defined $build) {
