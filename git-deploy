@@ -33,7 +33,7 @@ As super user:
 
   [root@deploy-host ~]# wget https://raw.githubusercontent.com/hookbot/git-server/master/git-deploy
   [root@deploy-host ~]# chmod 755 git-deploy
-  [root@deploy-host ~]# mv git-deploy /usr/local/bin/.
+  [root@deploy-host ~]# mv git-deploy /usr/bin/.
   [root@deploy-host ~]#
 
 As deploy user:
