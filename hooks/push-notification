@@ -97,7 +97,7 @@ else {
 }
 
 # Wait for push to fall far enough away to provide safely distinct timestamps
-while (time - (stat $last_pushed)[9] < 1) {
+while (time - ((stat $last_pushed)[9] || 0) < 1) {
     warn localtime().": PUSH NOTIFICATION: Waiting for recent commit to complete ...\n";
     sleep 1;
 }
