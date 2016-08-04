@@ -14,7 +14,7 @@ instantly after a push is triggered.
 
 =head1 SYNOPSIS
 
-  git deploy [ --build='make -C src/.' ] [ branch ]
+  git deploy [ --build='make -C src/.' ] [ --fix-nasty ] [ branch ]
 
 =head2 branch
 
@@ -26,6 +26,13 @@ By default, the current branch is used.
 The --build argument is any command you want to execute
 after any files are pulled or updated from git.
 By default, no command is run.
+
+=head2 fix-nasty
+
+The --fix-nasty argument will automatically remove the offending
+SSH host entry for the git server from known_hosts. Only use this
+flag if you've changed the SSH server key on the git server host.
+By default, this option is disabled for better security.
 
 =head1 INSTALL
 
@@ -59,8 +66,10 @@ use FindBin qw($Script);
 use Getopt::Long qw(GetOptions);
 
 my $build = undef;
+my $fix_nasty = undef;
 GetOptions
     "build:s" => \$build,
+    "fix-nasty" => \$fix_nasty,
     or exec perldoc => $0;
 
 my $branch = shift || (
@@ -83,6 +92,18 @@ while (1) {
     $0 = "$Script - Waiting for push notification ...";
     my $update = `(git fetch ; git checkout $branch ; git rebase origin/$branch) 2>&1`;
     $0 = "$Script - Scanning updates";
+    if ($update =~ /POSSIBLE.*SOMEONE.*DOING.*NASTY/) {
+        warn $update;
+        if ($fix_nasty && $update =~ /host key for (\S+) has changed and you have requested strict checking/) {
+            my $nasty = $1;
+            warn "--fix-nasty: $nasty: Clearing known_hosts ...\n";
+            system "ssh-keygen", "-R", $nasty;
+        }
+        else {
+            warn "To force deploy to continue anyway, run this: $Script --fix-nasty\n";
+        }
+        last;
+    }
     if ($update =~ /You have unstaged changes/) {
         # Rebase can't work if there are local changes.
         # Make sure there aren't multiple pullers choking on the repo
