@@ -97,7 +97,13 @@ while (1) {
         if ($fix_nasty && $update =~ /host key for (\S+) has changed and you have requested strict checking/) {
             my $nasty = $1;
             warn "--fix-nasty: $nasty: Clearing known_hosts ...\n";
-            system "ssh-keygen", "-R", $nasty;
+            if (0 == system "ssh-keygen", "-R", $nasty) {
+                require Socket;
+                if (my $ip = Socket::inet_ntoa(Socket::inet_aton($nasty))) {
+                    $nasty .= ",$ip";
+                }
+                system "ssh-keyscan -t rsa,dsa $nasty | tee -a ~/.ssh/known_hosts";
+            }
         }
         else {
             warn "To force deploy to continue anyway, run this: $Script --fix-nasty\n";
