@@ -119,13 +119,13 @@ while (1) {
         my $monkey = "";
         $monkey = ": $1" if $update =~ /^M\s+(\S+)/m;
         $0 = "$Script - Waiting because of local modifications$monkey";
-        sleep 60;
+        system "sleep 60";
     }
     last if $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
     if ($update =~ /Current branch.*is up to date/) {
         $0 = "$Script - Waiting because everything is updated ...";
         print "Everything was updated perfectly. Sleeping ...\n";
-        sleep 60;
+        system "sleep 60";
     }
     $0 = "$Script - Update complete";
     sleep 1;
