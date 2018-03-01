@@ -73,7 +73,7 @@ GetOptions
     or exec perldoc => $0;
 
 my $branch = shift || (
-    `git branch 2>/dev/null` =~ /^\* (\S+)/m ? $1 : "master"
+    `git branch 2>/dev/null` =~ m{^\* ([\w/]+)}m ? $1 : "master"
 );
 
 sub rebuild {
