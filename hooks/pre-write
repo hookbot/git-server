@@ -19,6 +19,8 @@ while ($conf =~ s/^log.(\w+)=(.*)$//m) {
     $log->{$1} = $2;
 }
 
+$SIG{PIPE} = sub { exit 1; };
+
 my $KEY = $ENV{KEY} || "UNKNOWN";
 warn localtime().": [$KEY] git-server: RUNNING PUSH ...\n";
 # Cannot pass without writers access:
