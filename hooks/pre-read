@@ -40,7 +40,7 @@ my $allowed = $acl->{readers}->{$KEY} || $acl->{writers}->{$KEY} || $acl->{deplo
 # Check for logfile:
 if (my $file = $log->{logfile}) {
     if ($file =~ m{^[^/]}) {
-        # Force start with a / for absolute patth
+        # Force start with a / for absolute path
         $file = "$base/$file";
     }
     if ($file =~ m{^(.*)/[^/]+$}) {
