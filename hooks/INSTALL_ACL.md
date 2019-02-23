@@ -25,6 +25,8 @@ echo '
 	readers = hookbot,rob
 	writers = hookbot,alice,bob
 	deploy = push_notification_key1
+[log]
+	logfile = logs/access_log
 ' >> config
 ```
 
