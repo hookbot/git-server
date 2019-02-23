@@ -6,6 +6,7 @@ use warnings;
 my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
 my $base = $ENV{GIT_DIR} or die "GIT hook ENV malfunction!\n";
 my $acl = {};
+my $restricted_branch = {};
 my $log = {};
 my $conf = `git config --list`;
 while ($conf =~ s/^acl.(\w+)=(.*)$//m) {
@@ -13,6 +14,14 @@ while ($conf =~ s/^acl.(\w+)=(.*)$//m) {
     my $keys = $2;
     foreach my $key (split /,/, $keys) {
         $acl->{$param}->{$key} = 1;
+    }
+}
+
+while ($conf =~ s/^restrictedbranch\.(\S+)\.pushers=(.*)$//m) {
+    my $branch = $1;
+    my $keys = $2;
+    foreach my $key (split /,/, $keys) {
+        $restricted_branch->{$branch}->{$key} = 1;
     }
 }
 while ($conf =~ s/^log.(\w+)=(.*)$//m) {
@@ -25,6 +34,35 @@ my $KEY = $ENV{KEY} || "UNKNOWN";
 warn localtime().": [$KEY] git-server: RUNNING PUSH ...\n";
 # Cannot pass without writers access:
 my $allowed = $acl->{writers}->{$KEY};
+
+if ($allowed) {
+    # Log all restricted_branch locks
+    my $block_branch = [];
+    my $parent = getppid();
+    my $lock_file = "branches.$parent.locked";
+    foreach my $branch (keys %$restricted_branch) {
+        if (!$restricted_branch->{$branch}->{$KEY}) {
+            die "$branch: Unable to restrict non-existent branch!\n" if !-e "refs/heads/$branch";
+            push @$block_branch, $branch;
+        }
+    }
+    if (@$block_branch) {
+        require POSIX;
+        sysopen my $fh, $lock_file, POSIX::O_CREAT()|POSIX::O_EXCL()|POSIX::O_RDWR() or die "Unable to log restricted branches.\n";
+        foreach my $branch (@$block_branch) {
+            sysopen my $lock, "refs/heads/$branch.lock", POSIX::O_CREAT()|POSIX::O_EXCL()|POSIX::O_RDWR() or do {
+                close $fh;
+                system "rm -f `cat $lock_file` $lock_file";
+                die "$branch: Branch already locked?\n";
+            };
+            print $lock "RESTRICTED:\n";
+            close $lock;
+            print $fh "refs/heads/$branch.lock\n";
+        }
+        close $fh;
+    }
+}
+
 # Check for logfile:
 if (my $file = $log->{logfile}) {
     if ($file =~ m{^[^/]}) {
