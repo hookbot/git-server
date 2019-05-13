@@ -121,6 +121,22 @@ while (1) {
         $0 = "$Script - Waiting because of local modifications$monkey";
         system "sleep 60";
     }
+    elsif ($update =~ m{fatal: Unable to create '(.+?)': File exists.}) {
+        # Updates cannot work while lock file exists
+        warn $update;
+        my $broken_lock = $1;
+        $0 = "$Script - Choking Locked: $broken_lock";
+        my $running = `ps fauwwx`;
+        last if $running =~ /$Script - Waiting/;
+        if ($running !~ /git rebase/) {
+            # No other conflicting git process running
+            # So lock file is safe enough to be removed
+            unlink $broken_lock;
+        }
+        else {
+            system "sleep 60";
+        }
+    }
     last if $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
     if ($update =~ /Current branch.*is up to date/) {
         $0 = "$Script - Waiting because everything is updated ...";
