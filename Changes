@@ -1,5 +1,13 @@
 Revision History for git-server
 
+0.011  2019-05-13 12:00:00
+ - Add --fix-nasty option
+ - Use external sleep for easy bypass
+ - Handle special detached commit
+ - Add sample [log] config
+ - Add [restrictedbranch] support
+ - Recover from "fatal: File exists" crash
+
 0.010  2016-04-08 10:00:00
  - Make "git deploy" default to current branch.
  - Minor INSTALL doc fixes.

@@ -93,7 +93,7 @@ use strict;
 use warnings;
 use Cwd qw(abs_path);
 
-our $VERSION = "0.010";
+our $VERSION = "0.011";
 
 die "Only SSH allowed!\n" unless $ENV{SSH_CONNECTION};
 
