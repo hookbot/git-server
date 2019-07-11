@@ -36,7 +36,7 @@ For example, you could do this as super user:
 
 Allows you to use many different .gitconfig files
 within each folder of git repos. If there is no
-.gitconfig within the directory descend structure,
+.gitconfig within the directory descent structure,
 then it will behave exactly like the normal git.
 
 =head1 AUTHOR
