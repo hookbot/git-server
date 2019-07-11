@@ -1,5 +1,8 @@
 Revision History for git-server
 
+0.012  2019-07-11 14:00:00
+ - Fix "git clone" .gitconfig override
+
 0.011  2019-05-13 12:00:00
  - Add --fix-nasty option
  - Use external sleep for easy bypass
