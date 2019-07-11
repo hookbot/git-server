@@ -74,7 +74,8 @@ foreach my $path (split /:/,$ENV{PATH}) {
 
 my $last = ".";
 $ENV{HOME} ||= (getpwnam $<)[7];
-while (my $scan = abs_path("$last/..")) {
+while (1) {
+    my $scan = abs_path( $last eq "." && !-d "$last/.git" ? $last : "$last/.." );
     last if $scan eq $last or $scan eq $ENV{HOME};
     $last = $scan;
     if (-r "$scan/.gitconfig") {
