@@ -38,9 +38,8 @@ By default, this option is disabled for better security.
 
 As super user:
 
-  [root@deploy-host ~]# wget https://raw.githubusercontent.com/hookbot/git-server/master/git-deploy
-  [root@deploy-host ~]# chmod 755 git-deploy
-  [root@deploy-host ~]# mv git-deploy /usr/bin/.
+  [root@deploy-host ~]# wget -N -P /usr/bin https://raw.githubusercontent.com/hookbot/git-server/master/git-deploy
+  [root@deploy-host ~]# chmod 755 /usr/bin/git-deploy
   [root@deploy-host ~]#
 
 As deploy user:
