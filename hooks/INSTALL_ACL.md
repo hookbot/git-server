@@ -40,9 +40,8 @@ since both of these ACLs are given implicit "readers" access.
 # Install git-deploy
 
 ```
-[root@deploy-host ~]# wget https://raw.githubusercontent.com/hookbot/git-server/master/git-deploy
-[root@deploy-host ~]# chmod 755 git-deploy
-[root@deploy-host ~]# mv git-deploy /usr/local/bin/.
+[root@deploy-host ~]# wget -N -P /usr/bin https://raw.githubusercontent.com/hookbot/git-server/master/git-deploy
+[root@deploy-host ~]# chmod 755 /usr/bin/git-deploy
 [root@deploy-host ~]#
 ```
 
