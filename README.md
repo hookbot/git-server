@@ -14,6 +14,7 @@ If you do not already have a git server or git repo ready, then make one:
 ```
 [admin@git-host ~]$ sudo useradd git
 [admin@git-host ~]$ sudo su - git -c 'git init --bare projectx'
+hint: Using 'master' as the name for the initial branch.
 Initialized empty Git repository in /home/git/projectx/
 [admin@git-host ~]$
 ```
@@ -24,7 +25,7 @@ Put something like the following in ~git/.ssh/authorized_keys:
 command="git-server KEY=USER1" ssh-rsa AAAA___blah_pub__ user1@workstation
 ```
 
-Then, without any hooks, this user should have full access this repo:
+Then, without any hooks, this user should have full access to this repo:
 
 ```
 [user1@dev ~]$ git config --global user.name 'Mr Developer User1'
