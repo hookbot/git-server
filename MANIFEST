@@ -10,6 +10,7 @@ contrib/pre-read
 contrib/post-read
 contrib/pre-write
 contrib/post-write
+contrib/authorized_keys
 hooks/pre-read
 hooks/push-notify
 hooks/push-notification

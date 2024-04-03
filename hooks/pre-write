@@ -31,7 +31,8 @@ while ($conf =~ s/^log.(\w+)=(.*)$//m) {
 $SIG{PIPE} = sub { exit 1; };
 
 my $KEY = $ENV{KEY} || "UNKNOWN";
-warn localtime().": [$KEY] git-server: RUNNING PUSH ...\n";
+my $ip = $ssh =~ /^([\d\.:]+) / ? $1 : "UNKNOWN";
+warn localtime().": [$KEY] git-server: [$ip] RUNNING PUSH ...\n";
 # Cannot pass without writers access:
 my $allowed = $acl->{writers}->{$KEY};
 
@@ -73,7 +74,6 @@ if (my $file = $log->{logfile}) {
         my $log_dir = $1;
         system mkdir => -p => $log_dir if !-d $log_dir;
         if (open my $fh, ">>", $file) {
-            my ($ip) = split / /,$ssh;
             if ($allowed) {
                 print $fh localtime().": [$ip] $KEY: pushed\n";
             }

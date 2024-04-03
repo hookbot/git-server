@@ -22,19 +22,14 @@ while ($conf =~ s/^log.(\w+)=(.*)$//m) {
 $SIG{PIPE} = sub { exit 1; };
 
 my $KEY = $ENV{KEY} || "UNKNOWN";
+my $ip = $ssh =~ /^([\d\.:]+) / ? $1 : "UNKNOWN";
 if ($acl->{deploy}->{$KEY}) {
-    warn localtime().": [$KEY] git-server: PULL waiting for notification ...\n";
-    my $who = $KEY;
-    if (($ENV{SSH_CLIENT} || "") =~ /^([\d\.]+)/) {
-        $who .= "@".$1;
-    }
-    if (my $repo = $ENV{GIT_DIR}) {
-        $who .= ":$repo";
-    }
+    warn localtime().": [$KEY] git-server: [$ip] PULL waiting for notification ...\n";
+    my $who = "$KEY\@$ip:$base";
     system "hooks/push-notification", $who;
     die "$0: notification failed ($?)\n" if $?;
 }
-warn localtime().": [$KEY] git-server: RUNNING PULL ...\n";
+warn localtime().": [$KEY] git-server: [$ip] RUNNING PULL ...\n";
 # If you can write or deploy, then you can also read
 my $allowed = $acl->{readers}->{$KEY} || $acl->{writers}->{$KEY} || $acl->{deploy}->{$KEY};
 # Check for logfile:
@@ -47,7 +42,6 @@ if (my $file = $log->{logfile}) {
         my $log_dir = $1;
         system mkdir => -p => $log_dir if !-d $log_dir;
         if (open my $fh, ">>", $file) {
-            my ($ip) = split / /,$ssh;
             if ($allowed) {
                 print $fh localtime().": [$ip] $KEY: pulled\n";
             }

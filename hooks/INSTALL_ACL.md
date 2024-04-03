@@ -11,7 +11,7 @@ It is easiest to just symlink the entire folder. For example:
 ```
 su - git
 git clone https://github.com/hookbot/git-server ~/git-server
-cd projectz.git
+cd ProjX/.
 mv -v hooks hooks.SAMPLES_OLD
 ln -s -v ~/git-server/hooks .
 ```
