@@ -2,6 +2,7 @@ Revision History for git-server
 
 0.013  2024-03-19 19:00:00
  - Update INSTALL recipe
+ - Detect and block: git push --force
 
 0.012  2019-07-11 14:00:00
  - Fix "git clone" .gitconfig override
