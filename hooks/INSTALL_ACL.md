@@ -104,10 +104,13 @@ acl.deploy=srv7,push_notification_key1
 [git@gitsrvhost ProjX]$
 ```
 
-# Verify the deploy key was installed properly:
+Verify Clients:
+---------------
+
+# Test to ensure the deploy KEY was installed properly:
 
 ```
-[puller@deploy-host ~]$ git clone ssh://git@git-host/ProjX
+[puller@deploy-host ~]$ git clone ssh://git@gitsrvhost/ProjX
 [puller@deploy-host ~]$ cd ProjX
 [puller@deploy-host ProjX]$ git deploy &
 ```
@@ -131,18 +134,18 @@ Total 4 (delta 1), reused 0 (delta 0)
 remote: Tue Jun 23 07:54:45 2015: Sending push notification to 222.222.222.222-push_notification_key1 ...
 To git@git-host:projectz
    f60b258..d759447  master -> master
-[alice@dev projectz]$
+[alice@dev ProjX]$
 ```
 
 Hopefully, that other "git pull" process on deploy-host that was blocked will
-immediately finish and deploy this fresh pull. Then you know everything is
+immediately finish and deploy this fresh push. Then you know everything is
 configured perfectly for the "deploy" user and for the "writers" user.
 And you can append a cron to keep the deployment daemon running.
 
 # Install Deploy Cron
 
 ```
-[puller@deploy-host ProjX]$ (crontab -l ; echo "0 * * * * cd ~/ProjX && git deploy >/dev/null 2>/dev/null") | crontab -
+[puller@deploy-host ProjX]$ (crontab -l 2>/dev/null ; echo ; echo "0 * * * * cd ~/ProjX && git deploy >/dev/null 2>/dev/null") | crontab -
 [puller@deploy-host ProjX]$
 ```
 
