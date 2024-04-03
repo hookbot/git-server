@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+my $r = "\x01"; # enable bit 2^(fileno STDIN)
+die "$0: Commandline Execution Worked!\n" if !select $r, undef, undef, 0.2;
+my $push_info = <STDIN>;
+my ($old,$new,$ref) = $push_info =~ m{^(\w+) (\w+) ([\w/]+)} or die "$0: Invalid syntax!\n";
+if (!`git log $new -- 2>&1 | grep '^commit $old'`) {
+    my $branch = ($ref =~ m{^refs/heads/(.+)} || $ref =~ m{.*/([^/]+)}) ? $1 : $ref;
+    die localtime().": [$$] PRE-RECEIVE: REVERSE LEAPFROG HACKING BLOCKED! You must have branch '$branch' tip '$old' in your 'git log' then you can 'git push' after that. You can try 'git pull --rebase' or 'git pull' to clean your local repo. Please do not use 'git push --force' to ruin the server.\n";
+}
+#print localtime().": [$$] PRE-RECEIVE found $old within $new log descent. Looks safe!\n";
