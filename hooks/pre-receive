@@ -11,10 +11,13 @@ my ($old,$new,$ref) = $push_info =~ m{^(\w+) (\w+) ([\w/]+)} or die "$0: Invalid
 if ($ref) {
     my $branch = ($ref =~ m{^refs/heads/(.+)} || $ref =~ m{.*/([^/]+)}) ? $1 : $ref;
     if ($old =~ /^0+$/) {
-        print localtime().": $user: Creating new branch [$branch]\n";
+        print localtime().": [$user] Creating new branch [$branch]\n";
+    }
+    elsif ($new =~ /^0+$/) {
+        die localtime().": [$user] Do not delete branch [$branch]\n";
     }
     elsif (`git log $new -- 2>&1 | grep '^commit $old'`) {
-        #print localtime().": $user: Pushing $new changes to [$branch] tip without --force\n";
+        #print localtime().": [$user] Pushing $new changes to [$branch] tip without --force\n";
         # XXX - Do we need to check for restrictedbranch?
     }
     else {
