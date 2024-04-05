@@ -22,7 +22,7 @@ while ($conf =~ s/^log.(\w+)=(.*)$//m) {
 $SIG{PIPE} = sub { exit 1; };
 
 my $KEY = $ENV{KEY} || "UNKNOWN";
-my $ip = $ssh =~ /^([\d\.:]+) / ? $1 : "UNKNOWN";
+my $ip = $ssh =~ /^([\da-f\.:]+) / ? $1 : "UNKNOWN";
 if ($acl->{deploy}->{$KEY}) {
     warn localtime().": [$KEY] git-server: [$ip] PULL waiting for notification ...\n";
     my $who = "$KEY\@$ip:$base";
