@@ -23,7 +23,7 @@ while ($conf =~ s/^log.(\w+)=(.*)$//m) {
 $SIG{PIPE} = sub { exit 1; };
 
 my $KEY = $ENV{KEY} || "UNKNOWN";
-my $ip = $ssh =~ /^([\d\.:]+) / ? $1 : "UNKNOWN";
+my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
 warn localtime().": [$KEY] git-server: [$ip] RUNNING PUSH ...\n";
 # Cannot pass without writers access:
 my $allowed = $acl->{writers}->{$KEY};
