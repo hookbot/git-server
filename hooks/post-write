@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 
+# XXX: Can we get rid of this lock wiper code?
 my $parent = getppid();
 my $lock_file = "branches.$parent.locked";
 

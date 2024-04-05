@@ -10,17 +10,27 @@ my $push_info = <STDIN>;
 my ($old,$new,$ref) = $push_info =~ m{^(\w+) (\w+) ([\w/]+)} or die "$0: Invalid syntax!\n";
 if ($ref) {
     my $branch = ($ref =~ m{^refs/heads/(.+)} || $ref =~ m{.*/([^/]+)}) ? $1 : $ref;
+    my $restrict_branch_users = {};
+    my $conf = `git config --list`;
+    while ($conf =~ s/^restrictbranch\.\Q$branch\E=(.+)$//m) {
+        my $keys = $1;
+        foreach my $key (split /,/, $keys) {
+            $restrict_branch_users->{$key} = 1;
+        }
+    }
+    if (%$restrict_branch_users and !$restrict_branch_users->{$user}) {
+        die localtime().": [$user] Unable to write to restricted branch [$branch]\n";
+    }
     if ($old =~ /^0+$/) {
         print localtime().": [$user] Creating new branch [$branch]\n";
     }
     elsif ($new =~ /^0+$/) {
-        die localtime().": [$user] Do not delete branch [$branch]\n";
+        die localtime().": [$user] You cannot delete branch [$branch]\n";
     }
     elsif (`git log $new -- 2>&1 | grep '^commit $old'`) {
         #print localtime().": [$user] Pushing $new changes to [$branch] tip without --force\n";
-        # XXX - Do we need to check for restrictedbranch?
     }
     else {
-        die localtime().": [$user] You can try 'git pull --rebase' or 'git pull' to clean your local repo, but do not use 'git push --force' on branch: $branch\n";
+        die localtime().": [$user] You cannot use 'git push --force' on branch [$branch] to rewrite history. You can try 'git pull --rebase' or 'git pull' to clean up your local repo first.\n";
     }
 }

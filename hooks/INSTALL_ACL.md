@@ -31,10 +31,10 @@ ACL settings you wish. For example:
 [git@gitsrvhost ProjX]$ git config acl.readers hookbot,rob
 [git@gitsrvhost ProjX]$ git config acl.writers hookbot,alice,bob
 [git@gitsrvhost ProjX]$ git config acl.deploy push_notification_key1
-[git@gitsrvhost ProjX]$ git config restrictedbranch.master.pushers bob
+[git@gitsrvhost ProjX]$ git config restrictbranch.master admin
+[git@gitsrvhost ProjX]$ git config restrictbranch.dev/main admin,bob
 [git@gitsrvhost ProjX]$ git config log.logfile logs/access_log
 [git@gitsrvhost ProjX]$ cd
-[git@gitsrvhost ~]$
 [git@gitsrvhost ~]$
 ```
 
@@ -62,15 +62,15 @@ Client Side:
 
 ```
 [root@deploy-host ~]# su - puller
-[puller@deploy-host ~]$ ssh-keygen -t dsa
+[puller@deploy-host ~]$ ssh-keygen -t rsa
 Generating public/private dsa key pair.
-Enter file in which to save the key (/home/puller/.ssh/id_dsa):
+Enter file in which to save the key (/home/puller/.ssh/id_rsa):
 Enter passphrase (empty for no passphrase):
 Enter same passphrase again:
-Your identification has been saved in /home/puller/.ssh/id_dsa.
-Your public key has been saved in /home/puller/.ssh/id_dsa.pub.
-[puller@deploy-host ~]$ cat ~/.ssh/id_dsa.pub
-ssh-dss AAAAB3NzaC1W3w1Ee4nu3f03ck4OW puller@deploy-host
+Your identification has been saved in /home/puller/.ssh/id_rsa.
+Your public key has been saved in /home/puller/.ssh/id_rsa.pub.
+[puller@deploy-host ~]$ cat ~/.ssh/id_rsa.pub
+ssh-rsa AAAAB3NzaC1W3w1Ee4nu3f03ck4OW puller@deploy-host
 [puller@deploy-host ~]$
 ```
 
@@ -84,7 +84,7 @@ ensure this name is in the acl.deploy comma-delimited list.
 
 ```
 [admin@gitsrvhost ~]$ sudo su - git
-[git@gitsrvhost ~]$ echo 'command="~/git-server/git-server KEY=push_notification_key1" ssh-dss AAAAB3NzaC1W3w1Ee4nu3f03ck4OW puller@deploy-host' >> ~/.ssh/authorized_keys
+[git@gitsrvhost ~]$ echo 'command="~/git-server/git-server KEY=push_notification_key1" ssh-rsa AAAAB3NzaC1W3w1Ee4nu3f03ck4OW puller@deploy-host' >> ~/.ssh/authorized_keys
 [git@gitsrvhost ~]$ cd ~/ProjX
 [git@gitsrvhost ProjX]$ git config acl.deploy
 srv7
