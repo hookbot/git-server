@@ -32,18 +32,20 @@ if (!flock $fh, LOCK_NB | LOCK_EX) {
     seek $fh, 0, 0;
     if ($worker and $sleeper and kill 0, $worker) {
         # Still running?
-        warn localtime().": DEBUG: [$ip] Releasing worker (pid=$worker) by killing sleeper (pid=$sleeper) ...\n";
+        warn localtime().": [$KEY] git-server: [$ip] Releasing worker (pid=$worker) by killing sleeper (pid=$sleeper) ...\n";
         $released_worker = kill 9, $sleeper; # WAKE UP!
     }
-    if ($released_worker) {
-        # Upgrade to Blocking Exclusive lock
-        flock $fh, LOCK_EX or die "$lock_file: flock: Unable to acquire lock? $@\n";
+    # Try to upgrade to Exclusive lock
+    if ($released_worker and
+        sleep 1 and
+        flock $fh, LOCK_NB | LOCK_EX) {
+        # Acquired Exclusive Lock!
+        # Safe to continue
     }
     else {
         # Failed to release someone else?
-        # Then we can't try to take the flock() baton.
-        # Just git out of here
-        exit;
+        # Just git out of here!
+        die localtime().": [$KEY] git-server: [$ip] Unable to steal pull lock! Tried worker (pid=$worker) and sleeper (pid=$sleeper). $!\n";
     }
 }
 my $last_pushed = "$lock_dir/pushed";
@@ -98,13 +100,13 @@ else {
 
 # Wait for push to fall far enough away to provide safely distinct timestamps
 while (time - ((stat $last_pushed)[9] || 0) < 1) {
-    warn localtime().": PUSH NOTIFICATION: Waiting for recent commit to complete ...\n";
+    warn localtime().": [$KEY] git-server: [$ip] PUSH NOTIFICATION: Waiting for recent commit to complete ...\n";
     sleep 1;
 }
 
 # Throw a warning if a push was too recent.
 if (!$should_wait) {
-    warn localtime().": PUSH NOTIFICATION: Releasing pull due to recent commit. Please pull again ...\n";
+    warn localtime().": [$KEY] git-server: [$ip] PUSH NOTIFICATION: Releasing pull due to recent commit. Please pull again ...\n";
     # git client will probably see the following spewage:
     # Cannot rebase onto multiple branches
 }
