@@ -47,4 +47,4 @@ if (my $file = $log->{logfile}) {
         }
     }
 }
-die "$KEY: You have been banned from all update operations!\n" unless $allowed;
+die localtime().": [$KEY] git-server: [$ip] You cannot push changes.\n" unless $allowed;

@@ -14,7 +14,8 @@ open my $fh, ">", $last_pushed or die "$last_pushed: open: $!";
 print $fh localtime()." $ssh $KEY\n";
 close $fh;
 
-# $lock_file = "$lock_dir/$ip-$KEY.lock";
+my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
+# $lock_file = "$lock_dir/$ip-$KEY.lock"; # Created by push-notification
 foreach my $lock_file (glob "$lock_dir/*.lock") {
     if (open my $fh, "<", $lock_file) {
         if (defined (my $worker = <$fh>) and
@@ -24,10 +25,10 @@ foreach my $lock_file (glob "$lock_dir/*.lock") {
             if (kill 0, $worker and
                 kill 9, $sleeper) {
                 if ($lock_file =~ m{.*/(.+).lock$}) {
-                    warn localtime().": Sending push notification to $1 ...\n";
+                    warn localtime().": [$KEY] git-server: [$ip] Sending push notification to $1 ...\n";
                 }
                 else {
-                    warn localtime().": DEBUG: Releasing sleeper (pid=$sleeper) ...\n";
+                    warn localtime().": DEBUG [$KEY] git-server: [$ip] Releasing strange sleeper (pid=$sleeper) ...\n";
                 }
             }
         }

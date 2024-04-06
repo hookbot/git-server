@@ -26,8 +26,9 @@ my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
 if ($acl->{deploy}->{$KEY}) {
     warn localtime().": [$KEY] git-server: [$ip] PULL waiting for notification ...\n";
     my $who = "$KEY\@$ip:$base";
-    system "hooks/push-notification", $who;
-    die "$0: notification failed ($?)\n" if $?;
+    if (my $notification_error = system "hooks/push-notification", $who or $?) {
+        die localtime().": [$KEY] git-server: [$ip] Too many other concurrent reads. Try again later. (ERROR: $notification_error-$?)\n";
+    }
 }
 warn localtime().": [$KEY] git-server: [$ip] RUNNING PULL ...\n";
 # If you can write or deploy, then you can also read
