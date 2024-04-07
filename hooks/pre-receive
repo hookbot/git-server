@@ -70,7 +70,7 @@ if ($ref) {
             die localtime().": [$user] git-server: [$ip] Moving $type [$branch] form $old to $new\n";
         }
         else {
-            die localtime().": [$user] git-server: [$ip] You cannot move tag [$branch] that already exists. First remove it: 'git push origin :$branch'\n";
+            die localtime().": [$user] git-server: [$ip] You cannot move protected tag [$branch]. Do not run 'git push --force origin $branch'\n";
         }
     }
     elsif (`git log $new -- 2>&1 | grep '^commit $old'`) {
