@@ -10,36 +10,67 @@ my $push_info = <STDIN>;
 my ($old,$new,$ref) = $push_info =~ m{^(\w+) (\w+) ([\w/]+)} or die "$0: Invalid syntax!\n";
 if ($ref) {
     my $ip = $ENV{SSH_CLIENT} =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
-    my $branch = ($ref =~ m{^refs/heads/(.+)} || $ref =~ m{.*/([^/]+)}) ? $1 : $ref;
-    my $allowed_users = {};
+    my $branch = ($ref =~ m{^refs/(?:heads|tags)/(.+)} || $ref =~ m{.*/([^/]+)}) ? $1 : $ref;
     my $conf = `git config --list`;
+    my $allowed_users = {};
     while ($conf =~ s/^restrictedbranch\.(.+)\.pushers=(.+)$//m) {
         my $sniff = $1;
         my $keys = $2;
         my $regex = $sniff =~ m{^/(.+)/$} ? qr{$1} : eval {
             my $wild = $sniff;
+            $wild =~ s/\./\\./g;
             $wild =~ s/\*/.+/g;
             return qr{^$wild$};
         } or die localtime().": [$user] git-server: [$ip] Unimplemented restrictedbranch syntax? [$sniff]\n";
         if ($branch =~ $regex) {
             foreach my $key (split /,/, $keys) {
-                $allowed_users->{$key} = 1;
+                $allowed_users->{$key} = $sniff;
             }
         }
     }
     if (%$allowed_users and !$allowed_users->{$user}) {
-        die localtime().": [$user] git-server: [$ip] Unable to write to restricted branch [$branch]\n";
+        die localtime().": [$user] git-server: [$ip] Failed to modify restricted branch [$branch]\n";
     }
+    my $rewrite_users = {};
+    while ($conf =~ s/^protectedbranch\.(.+)\.forcers=(.+)$//m) {
+        my $sniff = $1;
+        my $keys = $2;
+        my $regex = $sniff =~ m{^/(.+)/$} ? qr{$1} : eval {
+            my $wild = $sniff;
+            $wild =~ s/\./\\./g;
+            $wild =~ s/\*/.+/g;
+            return qr{^$wild$};
+        } or die localtime().": [$user] git-server: [$ip] Unimplemented protectedbranch syntax? [$sniff]\n";
+        if ($branch =~ $regex) {
+            foreach my $key (split /,/, $keys) {
+                $rewrite_users->{$key} = $sniff;
+            }
+        }
+    }
+    my $can_change_history = !%$rewrite_users || $rewrite_users->{$user};
     if ($old =~ /^0+$/) {
-        print localtime().": [$user] git-server: [$ip] Creating new branch [$branch]\n";
+        if ($can_change_history) {
+            warn localtime().": [$user] git-server: [$ip] Creating new branch [$branch]\n";
+        }
+        elsif ($ref =~ m{^refs/tags/}) {
+            die localtime().": [$user] git-server: [$ip] Unable to create protected tag [$branch]\n";
+        }
+        else {
+            warn localtime().": [$user] git-server: [$ip] Creating PERMANENTLY protected branch [$branch] which you can never remove!\n";
+        }
     }
     elsif ($new =~ /^0+$/) {
-        die localtime().": [$user] git-server: [$ip] You cannot delete branch [$branch]\n";
+        if ($can_change_history) {
+            warn localtime().": [$user] git-server: [$ip] Modifying git history by deleting entire branch [$branch]!\n";
+        }
+        else {
+            die localtime().": [$user] git-server: [$ip] You cannot delete protected branch [$branch]\n";
+        }
     }
     elsif (`git log $new -- 2>&1 | grep '^commit $old'`) {
-        #print localtime().": [$user] git-server: [$ip] Pushing $new changes to [$branch] tip without --force\n";
+        #warn localtime().": [$user] git-server: [$ip] Pushing $new changes to [$branch] tip without --force\n";
     }
     else {
-        die localtime().": [$user] git-server: [$ip] You cannot use 'git push --force' on branch [$branch] to rewrite history. You can try 'git pull --rebase' or 'git pull' to clean up your local repo first.\n";
+        die localtime().": [$user] git-server: [$ip] You cannot rewrite git history on protected branch [$branch]. You can 'git pull --rebase' or 'git pull' to clean up your local repo, but do not 'git push --force'.\n";
     }
 }

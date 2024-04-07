@@ -34,6 +34,7 @@ ACL settings you wish. For example:
 [git@gitsrvhost ProjX]$ git config restrictedbranch.'master'.pushers admin
 [git@gitsrvhost ProjX]$ git config restrictedbranch.'release/*'.pushers admin,qa
 [git@gitsrvhost ProjX]$ git config restrictedbranch.'users/alice'.pushers alice
+[git@gitsrvhost ProjX]$ git config protectedbranch.'master'.forcers NOBODY
 [git@gitsrvhost ProjX]$ git config log.logfile logs/access_log
 [git@gitsrvhost ProjX]$ cd
 [git@gitsrvhost ~]$
