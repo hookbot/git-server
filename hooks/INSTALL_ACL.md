@@ -32,19 +32,79 @@ ACL settings you wish. For example:
 [git@gitsrvhost ProjX]$ git config acl.writers hookbot,alice,bob
 [git@gitsrvhost ProjX]$ git config acl.deploy push_notification_key1
 [git@gitsrvhost ProjX]$ git config restrictedbranch.'master'.pushers admin
-[git@gitsrvhost ProjX]$ git config restrictedbranch.'release/*'.pushers admin,qa
-[git@gitsrvhost ProjX]$ git config restrictedbranch.'users/alice'.pushers alice
 [git@gitsrvhost ProjX]$ git config protectedbranch.'master'.forcers NOBODY
 [git@gitsrvhost ProjX]$ git config log.logfile logs/access_log
 [git@gitsrvhost ProjX]$ cd
 [git@gitsrvhost ~]$
 ```
 
-FYI: Actually, you only need "writers" and "deploy" settings
-since both of these ACLs are given implicit "readers" access.
-Just don't put the same user KEY in both "writers" and "deploy"
-settings at the same time.
+Config Directives
+-----------------
 
+On the git server host, make sure you get into the --bare repo
+folder of the unprivileged user (created above) before
+configuring any directives.
+
+> [admin@box ~]$ ssh git@gitsrvhost #  OR
+> [admin@gitsrvhost ~]$ sudo su - git
+> Last login: [...]
+> [git@gitsrvhost ~]$ cd ~/ProjX
+> [git@gitsrvhost ProjX]$ git config --list
+
+### acl.readers
+
+Comma-delimited list of KEY settings from ~/.ssh/authorized_keys
+for all users you wish to allow read access to the repository.
+
+For example, these users can run: `git pull`
+
+> git config acl.readers 'jr,display'
+
+### acl.deploy
+
+Comma-delimited list of users who you wish to receive instant
+updates immediately after someone pushes a change.
+All **deploy** users will also implicitly have **readers** access
+since they are required to read from the repository.
+
+For example, these users can run: `git deploy`
+
+> git config acl.deploy 'deploykeywww1'
+
+### acl.writers
+
+Comma-delimited list of users allowed to make changes to the
+respository. All **writers** users will implicitly have **readers**
+access since they must be able to read in order to make changes.
+
+For example, these users will be able to run: `git push`
+
+> [git@gitsrvhost ProjX]$ git config acl.writers 'admin,seniordev'
+
+### log.logfile
+
+Optional path to logfile where timestamps and operations and
+IP addresses for git server operation will be logged.
+
+> git config log.logfile 'logs/access_log'
+
+### restrictedbranch.BRANCH.pushers
+
+Specify which branches to block all **writers** from making
+changes to unless allowed in the pushers comma-delimited list.
+
+> git config restrictedbranch.'master'.pushers 'alice'           # Only `alice` can make any changes to `master` branch.
+> git config restrictedbranch.'release/*'.pushers 'bob,qa'       # Only `bob` and `qa` users will be able to push to any branch beginning with `release/` such as `release/v2.00.09`.
+> git config restrictedbranch.'/^jira\/\d+/'.pushers 'bugmaster' # Use RegularExpression to determine that no branch or tag beneath the jira/ reference can be modified except by the 'bugmaster' user
+
+### protectedbranch.BRANCH.forcers
+
+Specify which branches to prevent history from being rewritten
+to unless allowed in the forcers comma-delimited list.
+
+> git config protectedbranch.'main'.forcers NOBODY  # Prevent anyone from using 'git push --force' to rewrite the 'main' branch git history (since there isn't any user with KEY=NOBODY)
+> git config protectedbranch.'*'.forcers NOBODY     # Block everyone from using 'git push --force' to rewrite git history on any branch.
+> git config protectedbranch.'/permanent/'.forcers admin # Block all **writers** except for the 'admin' user from rewriting git history for any branch or tag matching the RegExp.
 
 Client Side:
 ------------
