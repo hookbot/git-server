@@ -3,17 +3,5 @@
 use strict;
 use warnings;
 
-# XXX: Can we get rid of this lock wiper code?
-my $parent = getppid();
-my $lock_file = "branches.$parent.locked";
-
-if (-s $lock_file) {
-    if (open my $fh, "<", $lock_file) {
-        while (<$fh>) {
-            chomp;
-            unlink $_;
-        }
-        close $fh;
-        unlink $lock_file;
-    }
-}
+# Nothing to do
+exit;
