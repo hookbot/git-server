@@ -11,23 +11,23 @@ my ($old,$new,$ref) = $push_info =~ m{^(\w+) (\w+) ([\w/]+)} or die "$0: Invalid
 if ($ref) {
     my $ip = $ENV{SSH_CLIENT} =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
     my $branch = ($ref =~ m{^refs/heads/(.+)} || $ref =~ m{.*/([^/]+)}) ? $1 : $ref;
-    my $restrict_branch_users = {};
+    my $allowed_users = {};
     my $conf = `git config --list`;
-    while ($conf =~ s/^restrictbranch\.(.+)=(.+)$//m) {
+    while ($conf =~ s/^restrictedbranch\.(.+)\.pushers=(.+)$//m) {
         my $sniff = $1;
         my $keys = $2;
         my $regex = $sniff =~ m{^/(.+)/$} ? qr{$1} : eval {
             my $wild = $sniff;
             $wild =~ s/\*/.+/g;
             return qr{^$wild$};
-        } or die localtime().": [$user] git-server: [$ip] Unimplemented restrictbranch syntax [$sniff]\n";
+        } or die localtime().": [$user] git-server: [$ip] Unimplemented restrictedbranch syntax? [$sniff]\n";
         if ($branch =~ $regex) {
             foreach my $key (split /,/, $keys) {
-                $restrict_branch_users->{$key} = 1;
+                $allowed_users->{$key} = 1;
             }
         }
     }
-    if (%$restrict_branch_users and !$restrict_branch_users->{$user}) {
+    if (%$allowed_users and !$allowed_users->{$user}) {
         die localtime().": [$user] git-server: [$ip] Unable to write to restricted branch [$branch]\n";
     }
     if ($old =~ /^0+$/) {

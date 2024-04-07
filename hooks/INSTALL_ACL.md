@@ -31,9 +31,9 @@ ACL settings you wish. For example:
 [git@gitsrvhost ProjX]$ git config acl.readers hookbot,rob
 [git@gitsrvhost ProjX]$ git config acl.writers hookbot,alice,bob
 [git@gitsrvhost ProjX]$ git config acl.deploy push_notification_key1
-[git@gitsrvhost ProjX]$ git config restrictbranch.'master' admin
-[git@gitsrvhost ProjX]$ git config restrictbranch.'release/*' admin,qa
-[git@gitsrvhost ProjX]$ git config restrictbranch.'users/alice' alice
+[git@gitsrvhost ProjX]$ git config restrictedbranch.'master'.pushers admin
+[git@gitsrvhost ProjX]$ git config restrictedbranch.'release/*'.pushers admin,qa
+[git@gitsrvhost ProjX]$ git config restrictedbranch.'users/alice'.pushers alice
 [git@gitsrvhost ProjX]$ git config log.logfile logs/access_log
 [git@gitsrvhost ProjX]$ cd
 [git@gitsrvhost ~]$
