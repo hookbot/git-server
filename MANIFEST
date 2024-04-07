@@ -15,6 +15,7 @@ hooks/pre-read
 hooks/push-notify
 hooks/push-notification
 hooks/pre-write
-hooks/post-update
+hooks/pre-receive
+hooks/post-write
 hooks/INSTALL_ACL.md
 t/00_compile.t
