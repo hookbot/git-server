@@ -35,18 +35,19 @@ if (!flock $fh, LOCK_NB | LOCK_EX) {
         warn localtime().": [$KEY] git-server: [$ip] Releasing worker (pid=$worker) by killing sleeper (pid=$sleeper) ...\n";
         $released_worker = kill 9, $sleeper; # WAKE UP!
     }
-    # Try to upgrade to Exclusive lock
-    if ($released_worker and
-        sleep 1 and
-        flock $fh, LOCK_NB | LOCK_EX) {
-        # Acquired Exclusive Lock!
-        # Safe to continue
-    }
-    else {
-        # Failed to release someone else?
+    # Try one more time to acquire lock
+    if (!$released_worker or
+        !sleep 1 or
+        !flock $fh, LOCK_NB | LOCK_EX) {
+        close $fh; # Let go of lock file
+        # Failed to release someone else or someone else still has the lock?
+        # Then we can't take the flock() baton.
         # Just git out of here!
-        die localtime().": [$KEY] git-server: [$ip] Unable to steal pull lock! Tried worker (pid=$worker) and sleeper (pid=$sleeper). $!\n";
+        warn localtime().": [$KEY] git-server: [$ip] Unable to steal pull lock so proceeding immediately.\n";
+        exit;
     }
+    # Acquired Exclusive Lock!
+    # Safe to continue
 }
 my $last_pushed = "$lock_dir/pushed";
 my $last_pulled = "$lock_dir/$ip-$KEY.pulled";
@@ -76,7 +77,7 @@ if (my $sleeper = fork()) {
     print $fh "$$\n";
     print $fh "$sleeper\n";
     truncate $fh, tell $fh;
-    warn localtime().": DEBUG: [$ip] Starting worker (pid=$$) waiting for sleeper (pid=$sleeper) to finish ...\n";
+    warn localtime().": [$KEY] git-server: [$ip] Starting worker (pid=$$) waiting for sleeper (pid=$sleeper) to finish ...\n";
     waitpid $sleeper, 0;
     my $rbits = "\x01"; # 2 ^ (fileno(STDIN)) = 1
     if (select $rbits, undef, undef, 0.1) {
