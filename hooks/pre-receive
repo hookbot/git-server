@@ -11,6 +11,7 @@ my ($old,$new,$ref) = $push_info =~ m{^(\w+) (\w+) ([\w/\.\-]+)} or die "$0: Inv
 if ($ref) {
     my $ip = $ENV{SSH_CLIENT} =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
     my $branch = ($ref =~ m{^refs/(?:heads|tags)/(.+)} || $ref =~ m{.*/([^/]+)}) ? $1 : $ref;
+    my $type = ($ref =~ m{^refs/tags/}) ? "tag" : "branch";
     my $conf = `git config --list`;
     my $allowed_users = {};
     while ($conf =~ s/^restrictedbranch\.(.+)\.pushers=(.+)$//m) {
@@ -29,7 +30,7 @@ if ($ref) {
         }
     }
     if (%$allowed_users and !$allowed_users->{$user}) {
-        die localtime().": [$user] git-server: [$ip] Failed to modify restricted branch [$branch]\n";
+        die localtime().": [$user] git-server: [$ip] Failed to modify restricted $type [$branch]\n";
     }
     my $rewrite_users = {};
     while ($conf =~ s/^protectedbranch\.(.+)\.forcers=(.+)$//m) {
@@ -50,27 +51,28 @@ if ($ref) {
     my $can_change_history = !%$rewrite_users || $rewrite_users->{$user};
     if ($old =~ /^0+$/) {
         if ($can_change_history) {
-            warn localtime().": [$user] git-server: [$ip] Creating new branch [$branch]\n";
-        }
-        elsif ($ref =~ m{^refs/tags/}) {
-            die localtime().": [$user] git-server: [$ip] Unable to create protected tag [$branch]\n";
+            warn localtime().": [$user] git-server: [$ip] Creating new $type [$branch]\n";
         }
         else {
-            warn localtime().": [$user] git-server: [$ip] Creating PERMANENTLY protected branch [$branch] which you can never remove!\n";
+            die localtime().": [$user] git-server: [$ip] Unable to create protected $type [$branch]\n";
         }
     }
     elsif ($new =~ /^0+$/) {
         if ($can_change_history) {
-            warn localtime().": [$user] git-server: [$ip] Modifying git history by deleting entire branch [$branch]!\n";
+            warn localtime().": [$user] git-server: [$ip] Modifying git history by deleting $type [$branch]!\n";
         }
         else {
-            die localtime().": [$user] git-server: [$ip] You cannot delete protected branch [$branch]\n";
+            die localtime().": [$user] git-server: [$ip] You cannot delete protected $type [$branch]. Do not run 'git push --delete origin $branch'.\n";
         }
     }
+    elsif ($type eq "tag") {
+        # XXX: Is it possible to get here?
+        die localtime().": [$user] git-server: [$ip] You cannot move tag [$branch] that already exists. First remove it: 'git push origin :$branch'\n";
+    }
     elsif (`git log $new -- 2>&1 | grep '^commit $old'`) {
-        #warn localtime().": [$user] git-server: [$ip] Pushing $new changes to [$branch] tip without --force\n";
+        #warn localtime().": [$user] git-server: [$ip] Pushing $new changes to $type [$branch] tip without --force\n";
     }
     else {
-        die localtime().": [$user] git-server: [$ip] You cannot rewrite git history on protected branch [$branch]. You can 'git pull --rebase' or 'git pull' to clean up your local repo, but do not 'git push --force'.\n";
+        die localtime().": [$user] git-server: [$ip] Don't 'git push --force' because you can't rewrite git history for protected $type [$branch]. Try 'git pull --rebase' or 'git pull' to clean up your local repo.\n";
     }
 }
