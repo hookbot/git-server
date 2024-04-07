@@ -67,7 +67,7 @@ if ($ref) {
     }
     elsif ($type eq "tag") {
         if ($can_change_history) {
-            die localtime().": [$user] git-server: [$ip] Moving $type [$branch] form $old to $new\n";
+            warn localtime().": [$user] git-server: [$ip] Moving $type [$branch] from $old to $new\n";
         }
         else {
             die localtime().": [$user] git-server: [$ip] You cannot move protected tag [$branch]. Do not run 'git push --force origin $branch'\n";
