@@ -66,8 +66,12 @@ if ($ref) {
         }
     }
     elsif ($type eq "tag") {
-        # XXX: Is it possible to get here?
-        die localtime().": [$user] git-server: [$ip] You cannot move tag [$branch] that already exists. First remove it: 'git push origin :$branch'\n";
+        if ($can_change_history) {
+            die localtime().": [$user] git-server: [$ip] Moving $type [$branch] form $old to $new\n";
+        }
+        else {
+            die localtime().": [$user] git-server: [$ip] You cannot move tag [$branch] that already exists. First remove it: 'git push origin :$branch'\n";
+        }
     }
     elsif (`git log $new -- 2>&1 | grep '^commit $old'`) {
         #warn localtime().": [$user] git-server: [$ip] Pushing $new changes to $type [$branch] tip without --force\n";
