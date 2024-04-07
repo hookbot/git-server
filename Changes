@@ -1,8 +1,8 @@
 Revision History for git-server
 
-0.013  2024-04-06 21:00:00
+0.013  2024-04-07 12:00:00
  - Update INSTALL recipe
- - Initial add of [protectedbranch] feature to prevent
+ - Initial add of [forcers] feature to prevent
    unauthorized users from rewriting git history,
    such as: git push --force
  - Include more examples in hooks/INSTALL_ACL.md

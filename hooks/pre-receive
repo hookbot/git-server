@@ -22,7 +22,7 @@ if ($ref) {
             $wild =~ s/\./\\./g;
             $wild =~ s/\*/.+/g;
             return qr{^$wild$};
-        } or die localtime().": [$user] git-server: [$ip] Unimplemented restrictedbranch syntax? [$sniff]\n";
+        } or die localtime().": [$user] git-server: [$ip] Unimplemented [restrictedbranch.pushers] syntax? [$sniff]=>[$keys]\n";
         if ($branch =~ $regex) {
             foreach my $key (split /,/, $keys) {
                 $allowed_users->{$key} = $sniff;
@@ -30,10 +30,10 @@ if ($ref) {
         }
     }
     if (%$allowed_users and !$allowed_users->{$user}) {
-        die localtime().": [$user] git-server: [$ip] Failed to modify restricted $type [$branch]\n";
+        die localtime().": [$user] git-server: [$ip] Missing [restrictedbranch.pushers] permission! Failed to modify restricted $type [$branch].\n";
     }
     my $rewrite_users = {};
-    while ($conf =~ s/^protectedbranch\.(.+)\.forcers=(.+)$//m) {
+    while ($conf =~ s/^restrictedbranch\.(.+)\.forcers=(.+)$//m) {
         my $sniff = $1;
         my $keys = $2;
         my $regex = $sniff =~ m{^/(.+)/$} ? qr{$1} : eval {
@@ -41,7 +41,7 @@ if ($ref) {
             $wild =~ s/\./\\./g;
             $wild =~ s/\*/.+/g;
             return qr{^$wild$};
-        } or die localtime().": [$user] git-server: [$ip] Unimplemented protectedbranch syntax? [$sniff]\n";
+        } or die localtime().": [$user] git-server: [$ip] Unimplemented [restrictedbranchbranch.forcers] syntax? [$sniff]=>[$keys]\n";
         if ($branch =~ $regex) {
             foreach my $key (split /,/, $keys) {
                 $rewrite_users->{$key} = $sniff;
@@ -54,15 +54,20 @@ if ($ref) {
             warn localtime().": [$user] git-server: [$ip] Creating new $type [$branch]\n";
         }
         else {
-            die localtime().": [$user] git-server: [$ip] Unable to create protected $type [$branch]\n";
+            warn localtime().": [$user] git-server: [$ip] Creating unremovable $type [$branch]. (You will not be able to delete it without [restrictedbranch.forcers] permission.)\n";
         }
     }
     elsif ($new =~ /^0+$/) {
         if ($can_change_history) {
-            warn localtime().": [$user] git-server: [$ip] Modifying git history by deleting $type [$branch]!\n";
+            if ($type eq "tag") {
+                warn localtime().": [$user] git-server: [$ip] Deleting tag $type [$branch] from [$old]\n";
+            }
+            else {
+                warn localtime().": [$user] git-server: [$ip] DANGER! Pruning entire branch [$branch] from [$old]!\n";
+            }
         }
         else {
-            die localtime().": [$user] git-server: [$ip] You cannot delete protected $type [$branch]. Do not run 'git push --delete origin $branch'.\n";
+            die localtime().": [$user] git-server: [$ip] Missing [restrictedbranch.forcers] permission! Unable to prune git history on restricted $type [$branch]. Do not run 'git push --delete origin $branch'.\n";
         }
     }
     elsif ($type eq "tag") {
@@ -70,13 +75,18 @@ if ($ref) {
             warn localtime().": [$user] git-server: [$ip] FORCE moving existing $type [$branch] from $old to $new\n";
         }
         else {
-            die localtime().": [$user] git-server: [$ip] You cannot move protected tag [$branch]. Do not run 'git push --force origin $branch'\n";
+            die localtime().": [$user] git-server: [$ip] Missing [restrictedbranch.forcers] permission! You cannot move restricted tag [$branch]. Do not run 'git push --force origin $branch'\n";
         }
     }
     elsif (`git log $new -- 2>&1 | grep '^commit $old'`) {
         #warn localtime().": [$user] git-server: [$ip] Pushing $new changes to $type [$branch] tip without --force\n";
     }
     else {
-        die localtime().": [$user] git-server: [$ip] Don't 'git push --force' because you can't rewrite git history for protected $type [$branch]. Try 'git pull --rebase' or 'git pull' to clean up your local repo.\n";
+        if ($can_change_history) {
+            warn localtime().": [$user] git-server: [$ip] DANGER! Rewriting git history using 'git push --force' by destroying old tip [$old] on $type [$branch].\n";
+        }
+        else {
+            die localtime().": [$user] git-server: [$ip] Missing [restrictedbranch.forcers] permission! Failed to rewrite git history for restricted $type [$branch]. Do not run 'git push --force'. Try 'git pull --rebase' or 'git pull' to clean up your local repo.\n";
+        }
     }
 }

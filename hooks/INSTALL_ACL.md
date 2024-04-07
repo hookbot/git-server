@@ -32,7 +32,7 @@ ACL settings you wish. For example:
 [git@gitsrvhost ProjX]$ git config acl.writers hookbot,alice,bob
 [git@gitsrvhost ProjX]$ git config acl.deploy push_notification_key1
 [git@gitsrvhost ProjX]$ git config restrictedbranch.'master'.pushers admin
-[git@gitsrvhost ProjX]$ git config protectedbranch.'master'.forcers NOBODY
+[git@gitsrvhost ProjX]$ git config restrictedbranch.'master'.forcers NOBODY
 [git@gitsrvhost ProjX]$ git config log.logfile logs/access_log
 [git@gitsrvhost ProjX]$ cd
 [git@gitsrvhost ~]$
@@ -79,7 +79,7 @@ access since they must be able to read in order to make changes.
 
 For example, these users will be able to run: `git push`
 
-> [git@gitsrvhost ProjX]$ git config acl.writers 'admin,seniordev'
+> git config acl.writers 'admin,seniordev'
 
 ### log.logfile
 
@@ -97,14 +97,21 @@ changes to unless allowed in the pushers comma-delimited list.
 > git config restrictedbranch.'release/*'.pushers 'bob,qa'       # Only `bob` and `qa` users will be able to push to any branch beginning with `release/` such as `release/v2.00.09`.
 > git config restrictedbranch.'/^jira\/\d+/'.pushers 'bugmaster' # Use RegularExpression to determine that no branch or tag beneath the jira/ reference can be modified except by the 'bugmaster' user
 
-### protectedbranch.BRANCH.forcers
+### restrictedbranch.BRANCH.forcers
 
-Specify which branches to prevent history from being rewritten
-to unless allowed in the forcers comma-delimited list.
+Block --force from being used on specified branch.
+Warning: Those in the [forcers] comma-delimited list will be able
+to rewrite git history by editing previously-pushed comments and
+edit authors and can even undo commits by rolling backwards.
+Any branches NOT protected with [forcers] will be exposed to the
+security danger of some commits on the branch being overwritten
+or lost forever and may diminish proof of work.
 
-> git config protectedbranch.'main'.forcers NOBODY  # Prevent anyone from using 'git push --force' to rewrite the 'main' branch git history (since there isn't any user with KEY=NOBODY)
-> git config protectedbranch.'*'.forcers NOBODY     # Block everyone from using 'git push --force' to rewrite git history on any branch.
-> git config protectedbranch.'/permanent/'.forcers admin # Block all **writers** except for the 'admin' user from rewriting git history for any branch or tag matching the RegExp.
+> git config restrictedbranch.'*'.forcers NOBODY          # Block everyone from using 'git push --force' to rewrite git history on any branch (since KEY=NOBODY doesn't exist).
+> git config restrictedbranch.'main'.forcers NOBODY       # Prevent anyone from using 'git push --force' to rewrite the 'main' branch git history.
+> git config restrictedbranch.'/permanent/'.forcers admin # Block all **writers** except for the 'admin' user from rewriting git history for any branch or tag matching the RegExp.
+> git config restrictedbranch.'release/*'.forcers NOBODY  # Block everyone from losing or reverting any commits already pushed into any of the branches beginning with 'release/'.
+
 
 Client Side:
 ------------
