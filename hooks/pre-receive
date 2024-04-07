@@ -13,10 +13,18 @@ if ($ref) {
     my $branch = ($ref =~ m{^refs/heads/(.+)} || $ref =~ m{.*/([^/]+)}) ? $1 : $ref;
     my $restrict_branch_users = {};
     my $conf = `git config --list`;
-    while ($conf =~ s/^restrictbranch\.\Q$branch\E=(.+)$//m) {
-        my $keys = $1;
-        foreach my $key (split /,/, $keys) {
-            $restrict_branch_users->{$key} = 1;
+    while ($conf =~ s/^restrictbranch\.(.+)=(.+)$//m) {
+        my $sniff = $1;
+        my $keys = $2;
+        my $regex = $sniff =~ m{^/(.+)/$} ? qr{$1} : eval {
+            my $wild = $sniff;
+            $wild =~ s/\*/.+/g;
+            return qr{^$wild$};
+        } or die localtime().": [$user] git-server: [$ip] Unimplemented restrictbranch syntax [$sniff]\n";
+        if ($branch =~ $regex) {
+            foreach my $key (split /,/, $keys) {
+                $restrict_branch_users->{$key} = 1;
+            }
         }
     }
     if (%$restrict_branch_users and !$restrict_branch_users->{$user}) {

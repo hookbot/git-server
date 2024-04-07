@@ -15,10 +15,10 @@ It is easiest to just symlink the entire folder. For example:
 [admin@gitsrvhost ~]$ sudo su - git
 [git@gitsrvhost ~]$ git init --bare ProjX
 Initialized empty Git repository in /home/git/ProjX/
-[git@gitsrvhost ~]$ cd ProjX/.git
-[git@gitsrvhost .git]$ mv -v hooks hooks.SAMPLES_OLD
-[git@gitsrvhost .git]$ ln -s -v ~/git-server/hooks .
-[git@gitsrvhost .git]$ cd
+[git@gitsrvhost ~]$ cd ProjX
+[git@gitsrvhost ProjX]$ mv -v hooks hooks.SAMPLES_OLD
+[git@gitsrvhost ProjX]$ ln -s -v ~/git-server/hooks .
+[git@gitsrvhost ProjX]$ cd
 [git@gitsrvhost ~]$
 ```
 
@@ -31,8 +31,9 @@ ACL settings you wish. For example:
 [git@gitsrvhost ProjX]$ git config acl.readers hookbot,rob
 [git@gitsrvhost ProjX]$ git config acl.writers hookbot,alice,bob
 [git@gitsrvhost ProjX]$ git config acl.deploy push_notification_key1
-[git@gitsrvhost ProjX]$ git config restrictbranch.master admin
-[git@gitsrvhost ProjX]$ git config restrictbranch.dev/main admin,bob
+[git@gitsrvhost ProjX]$ git config restrictbranch.'master' admin
+[git@gitsrvhost ProjX]$ git config restrictbranch.'release/*' admin,qa
+[git@gitsrvhost ProjX]$ git config restrictbranch.'users/alice' alice
 [git@gitsrvhost ProjX]$ git config log.logfile logs/access_log
 [git@gitsrvhost ProjX]$ cd
 [git@gitsrvhost ~]$
