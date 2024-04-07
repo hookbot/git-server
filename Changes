@@ -6,6 +6,9 @@ Revision History for git-server
    unauthorized users from rewriting git history,
    such as: git push --force
  - Include more examples in hooks/INSTALL_ACL.md
+ - Fix Git-Deploy to handle reverted chokes:
+   CRASH: Your branch and origin have
+   diverged and have different commits.
 
 0.012  2019-07-11 14:00:00
  - Fix "git clone" .gitconfig override
