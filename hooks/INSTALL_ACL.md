@@ -45,10 +45,10 @@ On the git server host, make sure you get into the --bare repo
 folder of the unprivileged user (created above) before
 configuring any directives.
 
-`[admin@box ~]$ ssh git@gitsrvhost #  OR`
-`[admin@gitsrvhost ~]$ sudo su - git`
+   `[admin@box ~]$ ssh git@gitsrvhost #  OR`
+   `[admin@gitsrvhost ~]$ sudo su - git`
+   `Last login: [...]`
 ```
-Last login: [...]
 [git@gitsrvhost ~]$ cd ~/ProjX
 [git@gitsrvhost ProjX]$ git config --list
 ```
