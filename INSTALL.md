@@ -95,6 +95,7 @@ Client Side
 
 1. To utilize the git server, clone a repository:
 
+```
 [user1@devbox ~]$ git clone git@gitsrvhost:ProjX
 remote[...]
 Receiving[...]
@@ -102,6 +103,7 @@ Receiving[...]
 [user1@devbox ProjX]$ git status
 [user1@devbox ProjX]$ git log
 [user1@devbox ProjX]$
+```
 
 2. Optional Wrapper
 
