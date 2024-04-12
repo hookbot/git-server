@@ -45,10 +45,10 @@ On the git server host, make sure you get into the --bare repo
 folder of the unprivileged user (created above) before
 configuring any directives.
 
-    `[admin@box ~]$ ssh git@gitsrvhost #  OR`
-    `[admin@gitsrvhost ~]$ sudo su - git`
-    `Last login: [...]`
 ```
+[admin@box ~]$ ssh git@gitsrvhost #  OR
+[admin@gitsrvhost ~]$ sudo su - git
+Last login: [...]
 [git@gitsrvhost ~]$ cd ~/ProjX
 [git@gitsrvhost ProjX]$ git config --list
 ```
@@ -60,7 +60,9 @@ for all users you wish to allow read access to the repository.
 
 For example, these users can run: `git pull`
 
->   git config acl.readers 'jr,display'
+```
+git config acl.readers 'jr,leaderboard'
+```
 
 ### acl.deploy
 
@@ -71,7 +73,9 @@ since they are required to read from the repository.
 
 For example, these users can run: `git deploy`
 
->   git config acl.deploy 'deploykeywww1'
+```
+git config acl.deploy 'deploykeywww1'
+```
 
 ### acl.writers
 
@@ -81,23 +85,29 @@ access since they must be able to read in order to make changes.
 
 For example, these users will be able to run: `git push`
 
->   git config acl.writers 'admin,seniordev'
+```
+git config acl.writers 'admin,seniordev'
+```
 
 ### log.logfile
 
 Optional path to logfile where timestamps and operations and
 IP addresses for git server operation will be logged.
 
->   git config log.logfile 'logs/access_log'
+```
+git config log.logfile 'logs/access_log'
+```
 
 ### restrictedbranch.BRANCH.pushers
 
 Specify which branches to block all **writers** from making
 changes to unless allowed in the pushers comma-delimited list.
 
->   git config restrictedbranch.'master'.pushers 'alice'           # Only `alice` can make any changes to `master` branch.
->   git config restrictedbranch.'release/\*'.pushers 'bob,qa'       # Only `bob` and `qa` users will be able to push to any branch beginning with `release/` such as `release/v2.00.09`.
->   git config restrictedbranch.'/^jira\/\d+/'.pushers 'bugmaster' # Use RegularExpression to determine that no branch or tag beneath the jira/ reference can be modified except by the 'bugmaster' user
+```
+git config restrictedbranch.'master'.pushers 'alice'           # Only `alice` can make any changes to `master` branch.
+git config restrictedbranch.'release/\*'.pushers 'bob,qa'       # Only `bob` and `qa` users will be able to push to any branch beginning with `release/` such as `release/v2.00.09`.
+git config restrictedbranch.'/^jira\/\d+/'.pushers 'bugmaster' # Use RegularExpression to determine that no branch or tag beneath the jira/ reference can be modified except by the 'bugmaster' user
+```
 
 ### restrictedbranch.BRANCH.forcers
 
@@ -109,10 +119,12 @@ Any branches NOT protected with [forcers] will be exposed to the
 security danger of some commits on the branch being overwritten
 or lost forever and may diminish proof of work.
 
->   git config restrictedbranch.'\*'.forcers NOBODY          # Block everyone from using 'git push --force' to rewrite git history on any branch (since KEY=NOBODY doesn't exist).
->   git config restrictedbranch.'main'.forcers NOBODY       # Prevent anyone from using 'git push --force' to rewrite the 'main' branch git history.
->   git config restrictedbranch.'/permanent/'.forcers admin # Block all **writers** except for the 'admin' user from rewriting git history for any branch or tag matching the RegExp.
->   git config restrictedbranch.'release/\*'.forcers NOBODY  # Block everyone from losing or reverting any commits already pushed into any of the branches beginning with 'release/'.
+```
+git config restrictedbranch.'\*'.forcers NOBODY          # Block everyone from using 'git push --force' to rewrite git history on any branch (since KEY=NOBODY doesn't exist).
+git config restrictedbranch.'main'.forcers NOBODY       # Prevent anyone from using 'git push --force' to rewrite the 'main' branch git history.
+git config restrictedbranch.'/permanent/'.forcers admin # Block all **writers** except for the 'admin' user from rewriting git history for any branch or tag matching the RegExp.
+git config restrictedbranch.'release/\*'.forcers NOBODY  # Block everyone from losing or reverting any commits already pushed into any of the branches beginning with 'release/'.
+```
 
 
 Client Side:
