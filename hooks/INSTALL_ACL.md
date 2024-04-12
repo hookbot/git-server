@@ -105,7 +105,7 @@ changes to unless allowed in the pushers comma-delimited list.
 
 ```
 git config restrictedbranch.'master'.pushers 'alice'           # Only `alice` can make any changes to `master` branch.
-git config restrictedbranch.'release/\*'.pushers 'bob,qa'       # Only `bob` and `qa` users will be able to push to any branch beginning with `release/` such as `release/v2.00.09`.
+git config restrictedbranch.'release/*'.pushers 'bob,qa'       # Only `bob` and `qa` users will be able to push to any branch beginning with `release/` such as `release/v2.00.09`.
 git config restrictedbranch.'/^jira\/\d+/'.pushers 'bugmaster' # Use RegularExpression to determine that no branch or tag beneath the jira/ reference can be modified except by the 'bugmaster' user
 ```
 
@@ -120,10 +120,10 @@ security danger of some commits on the branch being overwritten
 or lost forever and may diminish proof of work.
 
 ```
-git config restrictedbranch.'\*'.forcers NOBODY          # Block everyone from using 'git push --force' to rewrite git history on any branch (since KEY=NOBODY doesn't exist).
+git config restrictedbranch.'*'.forcers NOBODY          # Block everyone from using 'git push --force' to rewrite git history on any branch (since KEY=NOBODY doesn't exist).
 git config restrictedbranch.'main'.forcers NOBODY       # Prevent anyone from using 'git push --force' to rewrite the 'main' branch git history.
 git config restrictedbranch.'/permanent/'.forcers admin # Block all **writers** except for the 'admin' user from rewriting git history for any branch or tag matching the RegExp.
-git config restrictedbranch.'release/\*'.forcers NOBODY  # Block everyone from losing or reverting any commits already pushed into any of the branches beginning with 'release/'.
+git config restrictedbranch.'release/*'.forcers NOBODY  # Block everyone from losing or reverting any commits already pushed into any of the branches beginning with 'release/'.
 ```
 
 
