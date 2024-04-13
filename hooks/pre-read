@@ -24,13 +24,13 @@ $SIG{PIPE} = sub { exit 1; };
 my $KEY = $ENV{KEY} || "UNKNOWN";
 my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
 if ($acl->{deploy}->{$KEY}) {
-    warn localtime().": [$KEY] git-server: [$ip] PULL waiting for notification ...\n";
+    warn localtime().": [$KEY\@$ip] git-server: PULL waiting for notification ...\n";
     my $who = "$KEY\@$ip:$base";
     if (my $notification_error = system "hooks/push-notification", $who or $?) {
-        die localtime().": [$KEY] git-server: [$ip] Too many other concurrent reads. Try again later. (ERROR: $notification_error-$?)\n";
+        die localtime().": [$KEY\@$ip] git-server: Too many other concurrent reads. Try again later. (ERROR: $notification_error-$?)\n";
     }
 }
-warn localtime().": [$KEY] git-server: [$ip] RUNNING PULL ...\n";
+warn localtime().": [$KEY\@$ip] git-server: RUNNING PULL ...\n";
 # If you can write or deploy, then you can also read
 my $allowed = $acl->{readers}->{$KEY} || $acl->{writers}->{$KEY} || $acl->{deploy}->{$KEY};
 # Check for logfile:
@@ -44,12 +44,12 @@ if (my $file = $log->{logfile}) {
         system mkdir => -p => $log_dir if !-d $log_dir;
         if (open my $fh, ">>", $file) {
             if ($allowed) {
-                print $fh localtime().": [$ip] $KEY: pulled\n";
+                print $fh localtime().": [$KEY\@$ip]: pulled\n";
             }
             else {
-                print $fh localtime().": [$ip] $KEY: pull attempt blocked!\n";
+                print $fh localtime().": [$KEY\@$ip]: clone attempt blocked! Missing [readers] or [deploy] permissions.\n";
             }
         }
     }
 }
-die "$KEY: You have been banned from all read operations!\n" unless $allowed;
+die "$KEY\@$ip: You have been banned from all read operations!\n" unless $allowed;

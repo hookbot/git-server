@@ -24,7 +24,7 @@ $SIG{PIPE} = sub { exit 1; };
 
 my $KEY = $ENV{KEY} || "UNKNOWN";
 my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
-warn localtime().": [$KEY] git-server: [$ip] RUNNING PUSH ...\n";
+warn localtime().": [$KEY\@$ip] git-server: RUNNING PUSH ...\n";
 # Cannot pass without writers access:
 my $allowed = $acl->{writers}->{$KEY};
 
@@ -39,12 +39,12 @@ if (my $file = $log->{logfile}) {
         system mkdir => -p => $log_dir if !-d $log_dir;
         if (open my $fh, ">>", $file) {
             if ($allowed) {
-                print $fh localtime().": [$ip] $KEY: pushed\n";
+                print $fh localtime().": [$KEY\@$ip]: pushed\n";
             }
             else {
-                print $fh localtime().": [$ip] $KEY: push attempt blocked by acl!\n";
+                print $fh localtime().": [$KEY\@$ip]: push attempt blocked by acl!\n";
             }
         }
     }
 }
-die localtime().": [$KEY] git-server: [$ip] You cannot push changes.\n" unless $allowed;
+die localtime().": [$KEY\@$ip] git-server: You cannot push changes. Missing [writers] permissons.\n" unless $allowed;
