@@ -19,6 +19,7 @@ if ($ref) {
         my $keys = $2;
         my $regex = $sniff =~ m{^/(.+)/$} ? qr{$1} : eval {
             my $wild = $sniff;
+            $wild =~ s/\\/\\\\/g;
             $wild =~ s/\./\\./g;
             $wild =~ s/\*/.+/g;
             return qr{^$wild$};
@@ -38,6 +39,7 @@ if ($ref) {
         my $keys = $2;
         my $regex = $sniff =~ m{^/(.+)/$} ? qr{$1} : eval {
             my $wild = $sniff;
+            $wild =~ s/\\/\\\\/g;
             $wild =~ s/\./\\./g;
             $wild =~ s/\*/.+/g;
             return qr{^$wild$};
