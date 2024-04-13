@@ -13,5 +13,7 @@ WriteMakefile
     },
     EXE_FILES => [qw(
         git-server
+        git-client
+        git-deploy
     )],
     ;
