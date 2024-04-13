@@ -42,7 +42,7 @@ if (my $file = $log->{logfile}) {
                 print $fh localtime().": [$KEY\@$ip]: pushed\n";
             }
             else {
-                print $fh localtime().": [$KEY\@$ip]: push attempt blocked by acl!\n";
+                print $fh localtime().": [$KEY\@$ip]: Missing [acl.writers] permission. Blocked push attempt!\n";
             }
         }
     }

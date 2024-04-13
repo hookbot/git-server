@@ -69,7 +69,12 @@ if ($ref) {
             }
         }
         else {
-            die localtime().": [$KEY\@$ip] git-server: Missing [restrictedbranch.forcers] permission! Unable to prune git history on restricted $type [$branch]. Do not run 'git push --delete origin $branch'.\n";
+            if ($type eq "tag") {
+                die localtime().": [$KEY\@$ip] git-server: Missing [restrictedbranch.forcers] permission! Unable to remove restricted $type [$branch]. Do not run 'git push --delete origin $branch'. Remaining at $old\n";
+            }
+            else {
+                die localtime().": [$KEY\@$ip] git-server: Missing [restrictedbranch.forcers] permission! Unable to prune git history on restricted $type [$branch]. Do not run 'git push --delete origin $branch'. Remaining at $old\n";
+            }
         }
     }
     elsif ($type eq "tag") {

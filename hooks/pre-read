@@ -30,9 +30,9 @@ if ($acl->{deploy}->{$KEY}) {
         die localtime().": [$KEY\@$ip] git-server: Too many other concurrent reads. Try again later. (ERROR: $notification_error-$?)\n";
     }
 }
-warn localtime().": [$KEY\@$ip] git-server: RUNNING PULL ...\n";
 # If you can write or deploy, then you can also read
 my $allowed = $acl->{readers}->{$KEY} || $acl->{writers}->{$KEY} || $acl->{deploy}->{$KEY};
+warn localtime().": [$KEY\@$ip] git-server: RUNNING PULL ...\n" if $allowed;
 # Check for logfile:
 if (my $file = $log->{logfile}) {
     if ($file =~ m{^[^/]}) {
@@ -47,9 +47,12 @@ if (my $file = $log->{logfile}) {
                 print $fh localtime().": [$KEY\@$ip]: pulled\n";
             }
             else {
-                print $fh localtime().": [$KEY\@$ip]: clone attempt blocked! Missing [readers] or [deploy] permissions.\n";
+                print $fh localtime().": [$KEY\@$ip]: Missing [acl.readers] or [acl.deploy] permission. Blocked clone or pull attempt!\n";
             }
+        }
+        else {
+            die localtime().": [$KEY\@$ip] git-server: SERVER ERROR! Unable to open log.logfile? [$file] $!\n";
         }
     }
 }
-die "$KEY\@$ip: You have been banned from all read operations!\n" unless $allowed;
+die localtime().": [$KEY\@$ip] git-server: You have been banned from clone or pull!\n" unless $allowed;
