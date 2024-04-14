@@ -89,8 +89,35 @@ if ($ref) {
         #warn localtime().": [$KEY\@$ip] git-server: Pushing $new changes to $type [$branch] tip without --force\n";
     }
     else {
+        # MUST HAVE USED: git push --force
         if ($can_change_history) {
-            warn localtime().": [$KEY\@$ip] git-server: DANGER! Rewriting git history using 'git push --force' by destroying old tip [$old] on $type [$branch].\n";
+            my $tip_hashes = `git show-ref 2>&1`;
+            $tip_hashes =~ s{ refs/\w+/}{ };
+            my $matching = {};
+            my $scan_hashes = $tip_hashes;
+            while ($scan_hashes =~ s{^\Q$old\E\s+(\S+)}{}m) {
+                $matching->{$1} = $old;
+            }
+            if (my $found = delete $matching->{$branch}) {
+                if ($found eq $new) {
+                    warn localtime().": DEBUG: GOOD! New branch [$branch] match $new\n";
+                }
+                else {
+                    die localtime().": DEBUG: BAD! Branch [$branch] shows $found instead of $new?\n";
+                }
+                if (!keys %$matching) {
+                    my (undef,undef,undef,$mday,$mon,$year) = gmtime;
+                    my $suggest = sprintf "%s-BAK_%04d-%02d-%02", $year+1900, $mon+1, $mday;
+                    die localtime().": [$KEY\@$ip] git-server: Refusing to lose $type $branch history upto $old without a backup branch or tag to hold it. Try 'git tag $suggest $old ; git push origin $suggest' or create another branch on the old tip.\n";
+                }
+                foreach my $ref (sort keys %$matching) {
+                    warn localtime().": DEBUG: GOOD! FOUND BACKUP [$ref] STILL ON [$old]\n";
+                }
+            }
+            else {
+                die localtime().": [$KEY\@$ip] git-server: SERVER BUG! Unable to find $type [$branch]\n$tip_hashes\nOperation 'push --force' failed!\n";
+            }
+            warn localtime().": [$KEY\@$ip] git-server: Rewriting git history for $type [$branch] using 'push --force' since found backup ref(s) (".join(" ",sort keys %$matching).") still on old tip [$old].\n";
         }
         else {
             die localtime().": [$KEY\@$ip] git-server: Missing [restrictedbranch.forcers] permission! Failed to rewrite git history for restricted $type [$branch]. Do not run 'git push --force'. Try 'git pull --rebase' or 'git pull' to clean up your local repo.\n";
