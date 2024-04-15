@@ -92,7 +92,7 @@ if ($ref) {
         # MUST HAVE USED: git push --force
         if ($can_change_history) {
             my $tip_hashes = `git show-ref 2>&1`;
-            $tip_hashes =~ s{ refs/\w+/}{ };
+            $tip_hashes =~ s{ refs/\w+/}{ }s;
             my $matching = {};
             my $scan_hashes = $tip_hashes;
             while ($scan_hashes =~ s{^\Q$old\E\s+(\S+)}{}m) {
