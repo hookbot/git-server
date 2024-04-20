@@ -99,19 +99,13 @@ if ($ref) {
                 $matching->{$1} = $old;
             }
             if (my $found = delete $matching->{$branch}) {
-                if ($found eq $old) {
-                    warn localtime().": DEBUG: GOOD! New branch [$branch] match $old\n";
-                }
-                else {
-                    die localtime().": DEBUG: BAD! Branch [$branch] shows $found instead of $old?\n";
+                if ($found ne $old) {
+                    die localtime().": [$KEY\@$ip] git-server: Server branch [$branch] unexpectedly shows $found instead of $old?\n";
                 }
                 if (!keys %$matching) {
                     my (undef,undef,undef,$mday,$mon,$year) = gmtime;
                     my $suggest = sprintf "%s-BAK_%04d-%02d-%02", $year+1900, $mon+1, $mday;
-                    die localtime().": [$KEY\@$ip] git-server: Refusing to lose $type $branch history upto $old without a backup branch or tag to hold it. Try 'git tag $suggest $old ; git push origin $suggest' or create another branch on the old tip.\n";
-                }
-                foreach my $ref (sort keys %$matching) {
-                    warn localtime().": DEBUG: GOOD! FOUND BACKUP [$ref] STILL ON [$old]\n";
+                    die localtime().": [$KEY\@$ip] git-server: Refusing to lose $type $branch history upto $old without a backup branch or tag to hold it. Try 'git tag $suggest $old ; git push origin $suggest' to create a branch on the old tip. If you really wish to lose these changes, then run 'git push --delete origin $suggest' after the branch $branch is pushed.\n";
                 }
             }
             else {
