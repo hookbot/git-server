@@ -123,8 +123,7 @@ while (1) {
         system "sleep 60";
     }
     elsif ($update =~ /Your branch .* diverged/) {
-        # Rebase can't work if local if there are local divergents.
-        # Make sure there aren't multiple pullers choking on the repo
+        # Rebase can't work if there are local divergents.
         warn $update;
         warn localtime.": [$$] Detected local divergence off [$branch] so doing HARD RESET ...\n";
         system "git", "reset", "--hard", "origin/$branch";
