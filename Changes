@@ -1,5 +1,13 @@
 Revision History for git-server
 
+0.014  2024-04-21 22:00:00
+ - Consistent ID Message format [$KEY@$IP]
+ - Fix perl path for installing helper scripts
+ - Fix '\' escaping in pushers & forcers syntax
+ - Require backup tag or branch before history
+   can be destroyed.
+ - Add hint that [forcers] can delete a branch.
+
 0.013  2024-04-07 12:00:00
  - Update INSTALL recipe
  - Initial add of [forcers] feature to prevent
