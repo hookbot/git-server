@@ -25,10 +25,10 @@ foreach my $lock_file (glob "$lock_dir/*.lock") {
             if (kill 0, $worker and
                 kill 9, $sleeper) {
                 if ($lock_file =~ m{.*/(.+).lock$}) {
-                    warn localtime().": [$KEY] git-server: [$ip] Sending push notification to $1 ...\n";
+                    warn localtime().": [$KEY\@$ip] git-server: Sending push notification to $1 ...\n";
                 }
                 else {
-                    warn localtime().": DEBUG [$KEY] git-server: [$ip] Releasing strange sleeper (pid=$sleeper) ...\n";
+                    die localtime().": [$KEY\@$ip] git-server: Released impossible sleeper (pid=$sleeper) ...\n";
                 }
             }
         }
