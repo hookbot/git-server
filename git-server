@@ -95,7 +95,7 @@ use Cwd qw(abs_path);
 
 our $VERSION = "0.015";
 
-die "Only SSH allowed!\n" unless $ENV{SSH_CONNECTION};
+my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
 
 my $git_op_hook = {
     "git-upload-pack" => "read", # i.e., clone, pull
@@ -125,9 +125,9 @@ else {
     }
 }
 
-my $KEY = $ENV{KEY} || "FATAL";
-
-die "$KEY: You don't have shell access!\n" unless $cmd;
+my $KEY = $ENV{KEY} || "UNKNOWN";
+my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
+die localtime().": [$KEY\@$ip] git-server: You don't have shell access!\n" unless $cmd;
 
 my $dir = undef;
 my $hook = undef;
@@ -157,11 +157,11 @@ if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
             last;
         }
     }
-    die "$KEY: You can't access '$repo' git repository\n" unless $dir;
+    die localtime().": [$KEY\@$ip] git-server: You can't access '$repo' git repository\n" unless $dir;
     $cmd = "$op '$ENV{GIT_DIR}'";
 }
 else {
-    die "$KEY: fatal: You can't run the command '$cmd'\n";
+    die localtime().": [$KEY\@$ip] git-server: You can't run the command '$cmd'\n";
 }
 
 if ($hook and -x "$dir/hooks/pre-$hook") {
