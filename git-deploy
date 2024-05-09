@@ -95,6 +95,7 @@ while (1) {
     $0 = "$Script - Waiting for push notification ...";
     my $update = `(git fetch ; git checkout $branch ; git rebase origin/$branch) 2>&1`;
     $0 = "$Script - Scanning updates";
+    $update .= `git rebase --abort 2>1` if $update =~ /fix conflicts|git rebase.*--continue|you need to resolve your|stop rebasing/;
     if ($update =~ /POSSIBLE.*SOMEONE.*DOING.*NASTY/) {
         warn $update;
         if ($fix_nasty && $update =~ /host key for (\S+) has changed and you have requested strict checking/) {
@@ -124,10 +125,11 @@ while (1) {
         $0 = "$Script - Waiting because of local modifications$monkey";
         system "sleep 60";
     }
-    elsif ($update =~ /Your branch .* diverged/) {
+    elsif ($update =~ /Your branch.*diverged/) {
         # Rebase can't work if there are local divergents.
         warn $update;
         warn localtime.": [$$] Detected local divergence off [$branch] so doing HARD RESET ...\n";
+        system "git", "checkout", $branch;
         system "git", "reset", "--hard", "origin/$branch";
         my $running = `ps fauwwx`;
         last if $running =~ /\Q$Script\E - Waiting/;
