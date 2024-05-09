@@ -5,6 +5,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Fix ID Message format to be consistent everywhere [$KEY@$IP]
 
+ - More gracefully handle diverged crashing case caused by someone using "--force" to freak out the git-deploy by destroying history.
+
  - Add IP Whitelist [restrictip] feature
 
  - Author email whitelist or RegExp
