@@ -73,9 +73,11 @@ GetOptions
     "fix-nasty" => \$fix_nasty,
     or exec perldoc => $0;
 
-my $branch = shift || (
-    `git branch 2>/dev/null` =~ m{^\* ([\w/]+)}m ? $1 : "master"
-);
+my $branch = shift || do {
+    my $scan = `git branch 2>/dev/null`;
+    $scan =~ m{^\* ([\w/]+)}m ? $1 :
+    $scan =~ m{^\s+([\w/]+)}m ? $1 : "master"
+};
 
 sub rebuild {
     if (defined $build) {
