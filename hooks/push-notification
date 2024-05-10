@@ -32,7 +32,7 @@ if (!flock $fh, LOCK_NB | LOCK_EX) {
     seek $fh, 0, 0;
     if ($worker and $sleeper and kill 0, $worker) {
         # Still running?
-        warn localtime().": [$KEY] git-server: [$ip] Releasing worker (pid=$worker) by killing sleeper (pid=$sleeper) ...\n";
+        warn localtime().": [$KEY\@$ip] git-server: PUSH NOTIFICATION: Releasing worker (pid=$worker) by killing sleeper (pid=$sleeper) ...\n";
         $released_worker = kill 9, $sleeper; # WAKE UP!
     }
     # Try one more time to acquire lock
@@ -43,7 +43,7 @@ if (!flock $fh, LOCK_NB | LOCK_EX) {
         # Failed to release someone else or someone else still has the lock?
         # Then we can't take the flock() baton.
         # Just git out of here!
-        warn localtime().": [$KEY] git-server: [$ip] Unable to steal pull lock so proceeding immediately.\n";
+        warn localtime().": [$KEY\@$ip] git-server: PUSH NOTIFICATION: Unable to steal pull lock so proceeding immediately.\n";
         exit;
     }
     # Acquired Exclusive Lock!
@@ -77,7 +77,7 @@ if (my $sleeper = fork()) {
     print $fh "$$\n";
     print $fh "$sleeper\n";
     truncate $fh, tell $fh;
-    warn localtime().": [$KEY] git-server: [$ip] Starting worker (pid=$$) waiting for sleeper (pid=$sleeper) to finish ...\n";
+    warn localtime().": [$KEY\@$ip] git-server: PUSH NOTIFICATION: Starting worker (pid=$$) waiting for sleeper (pid=$sleeper) to finish ...\n";
     waitpid $sleeper, 0;
     my $rbits = "\x01"; # 2 ^ (fileno(STDIN)) = 1
     if (select $rbits, undef, undef, 0.1) {
@@ -101,13 +101,13 @@ else {
 
 # Wait for push to fall far enough away to provide safely distinct timestamps
 while (time - ((stat $last_pushed)[9] || 0) < 1) {
-    warn localtime().": [$KEY] git-server: [$ip] PUSH NOTIFICATION: Waiting for recent commit to complete ...\n";
+    warn localtime().": [$KEY\@$ip] git-server: PUSH NOTIFICATION: Waiting for recent commit to complete ...\n";
     sleep 1;
 }
 
 # Throw a warning if a push was too recent.
 if (!$should_wait) {
-    warn localtime().": [$KEY] git-server: [$ip] PUSH NOTIFICATION: Releasing pull due to recent commit. Please pull again ...\n";
+    warn localtime().": [$KEY\@$ip] git-server: PUSH NOTIFICATION: Releasing pull due to recent commit. Please pull again ...\n";
     # git client will probably see the following spewage:
     # Cannot rebase onto multiple branches
 }
