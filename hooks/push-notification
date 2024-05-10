@@ -35,15 +35,23 @@ if (!flock $fh, LOCK_NB | LOCK_EX) {
         warn localtime().": [$KEY\@$ip] git-server: PUSH NOTIFICATION: Releasing worker (pid=$worker) by killing sleeper (pid=$sleeper) ...\n";
         $released_worker = kill 9, $sleeper; # WAKE UP!
     }
-    # Try one more time to acquire lock
-    if (!$released_worker or
-        !sleep 1 or
-        !flock $fh, LOCK_NB | LOCK_EX) {
+    if ($released_worker) {
+        # SIGKILL was sent, so now patiently wait for him die,
+        # and pry the lock out of his cold dead fingers.
+        $released_worker = 0;
+        my $tries = 3;
+        while ($tries-- and sleep 1) {
+            last if $released_worker = flock $fh, LOCK_NB | LOCK_EX;
+        }
+    }
+    if (!$released_worker) {
         close $fh; # Let go of lock file
         # Failed to release someone else or someone else still has the lock?
         # Then we can't take the flock() baton.
         # Just git out of here!
-        warn localtime().": [$KEY\@$ip] git-server: PUSH NOTIFICATION: Unable to steal pull lock so proceeding immediately.\n";
+        $worker ||= "[unknown]";
+        $sleeper ||= "[gone]";
+        warn localtime().": [$KEY\@$ip] git-server: PUSH NOTIFICATION: Unable to steal pull lock from worker (pid=$worker) with sleeper (pid=$sleeper) You may proceed.\n";
         exit;
     }
     # Acquired Exclusive Lock!
