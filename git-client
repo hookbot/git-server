@@ -54,7 +54,7 @@ This library is free software; you can redistribute it and/or modify it under th
 use strict;
 use Cwd qw(abs_path);
 
-our $VERSION = "0.015";
+our $VERSION = "0.016";
 
 my $myself = (stat $0)[1] or die "$0: Can't find my inode?\n";
 my $real_git = "/usr/bin/git";

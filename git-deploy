@@ -64,7 +64,7 @@ use strict;
 use FindBin qw($Script);
 use Getopt::Long qw(GetOptions);
 
-our $VERSION = "0.015";
+our $VERSION = "0.016";
 
 my $build = undef;
 my $fix_nasty = undef;
