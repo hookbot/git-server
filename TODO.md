@@ -3,8 +3,6 @@ TODO
 
 Some features we need or want, plus some neat ideas that may not be too feasible to implement.
 
- - More gracefully handle diverged crashing case caused by someone using "--force" to freak out the git-deploy by destroying history.
-
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
  - Add IP Whitelist [restrictip] feature
