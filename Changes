@@ -1,5 +1,14 @@
 Revision History for git-server
 
+0.015  2024-05-10 01:00:00
+ - Cosmetic adjustments to some messages.
+ - Fix more ID Message format [$KEY@$IP]
+ - Fix syntax of BAK tag suggestion.
+ - Try harder to steal notification lock.
+ - Fix git-deploy to properly deploy changes
+   that got reverted using "push --force"
+   to break out of the rebase detached loop.
+
 0.014  2024-04-21 22:00:00
  - Consistent ID Message format [$KEY@$IP]
  - Fix perl path for installing helper scripts
