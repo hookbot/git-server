@@ -20,32 +20,6 @@ Some features we need or want, plus some neat ideas that may not be too feasible
    # Most, if not all of these, may also be implemented externally via callback webhooks
    # Or even provide multiple ways to accomplish the two-way sync
 
- - Provide branch, old hash, new hash, and common parent "fork" commit hash to pre-write hook and post-write hook args.  LOGS transport interprocess communications
-   * This fork hash can be used for debugging
-   * or for callback webhook.
-   * In order to facilitate the InterProcessCommunication between the pre-write and post-write, information in should be stored in $GIT_DIR/last-write-state.txt until the post-write completes.
-
-if old_hash found in git log new_hash,
-  $found_fork_commit_hash = $prev_hash
-else
-  while (!$found_fork_commit_hash)
-    do alternate old/new scan until match
-    git rev-parse $new_next_hash~1
-    git rev-parse $old_next_hash~1 (remember every one of these hashes in order to know which commits have been rolled back or destroyed)
-    until find match with the other side
-    $found_fork_commit_hash = HASH
-
-Example of how to obtain the commit immediately older before another commit hash:
-[hookbot@Robs-AllState-Mac git-server]$ git rev-parse ba9604a164bbc5b04f4fd06148ac00b31d48402f~0
-ba9604a164bbc5b04f4fd06148ac00b31d48402f
-[hookbot@Robs-AllState-Mac git-server]$ git rev-parse ba9604a164bbc5b04f4fd06148ac00b31d48402f~1
-4588ee196d836edd688f3aea12f80507852dec28
-[hookbot@Robs-AllState-Mac git-server]$ git rev-parse 4588ee196d836edd688f3aea12f80507852dec28~1
-f0698e302c5b628b0a27748a72736a73d1387db3
-[hookbot@Robs-AllState-Mac git-server]$ git rev-parse f0698e302c5b628b0a27748a72736a73d1387db3~1
-a7f3cea904dca2436d3fc18310008a33f9efef80
-[hookbot@Robs-AllState-Mac git-server]$
-
  - Add support for automatic log rotation
    * git config logrotate."logs/access_log".compress true
    * git config logrotate."*".compress true
@@ -54,25 +28,48 @@ a7f3cea904dca2436d3fc18310008a33f9efef80
    * git config logrotate."logs/access_log".rotate 365
    * git config logrotate."*".rotate 20
 
+ - Set $USER_AGENT environment for post-read and post-write (Requires man-in-the-middle sniffer)
+
+ - Provide branch, old hash, and new hash (for every branch updated by the git client) to post-read hook args (Requires man-in-the-middle sniffer)
+   * If nothing is updated to the client, then there will be no arguments to post-read.
+   * There will be a multiple of 3 args, each triple being branch, old hash, new hash, (depending on how many branches the client updates).
+   * In order to facilitate the InterProcessCommunication to post-read, information in should be stored in $GIT_DIR/last-read-state.<git-server-pid>.txt until the post-read completes.
+   * Client sends "want" and "have" so the server knows how to pack up the deltas to give to the client.
+
+ - Determine files involved with the pull (Requires man-in-the-middle sniffer)
+
+ - Provide branch, old hash, new hash, and common parent "fork" commit hash to pre-write hook and post-write hook args. (Requires man-in-the-middle sniffer)
+   * This fork hash can be used for debugging
+   * or for callback webhook.
+   * In order to facilitate the InterProcessCommunication between the pre-write and post-write, information in should be stored in $GIT_DIR/last-write-state.<git-server-pid>.txt until the post-write completes.
+
  - Determine files involved with the push
 
  - Add [restrictfile] support
+   * Only restrict WRITING certain files
+   * Not feasible to block READ of files
 
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6
-
-(gethostbyname)
-echo -e '\nHost $GIT_HOST\n    AddressFamily inet6' >> ~/.ssh/config
 
  - Add webhook callback support
    * support for protos http and https
    * support for push
-   * support for pull/clone (tricky to obtain client heads from pull packets - reverse engineered - proxy can read read HEADs from client then passthru after that)
-   * provide failover retry mechanism in case webhook server is down
-   * provide user KEY doing the pulling or pushing (and pubkey? NAH!)
+   * provide the direction of operation ("read" for clone,pull,fetch) ("write" for push)
+   * support for pull/clone/fetch (setup proxy sniffer to scan for "want" and "have" packets from client to determine updates downloaded to the git client)
+   * Allow for WhiteList or BlackList filters to trigger webhook or ignore webhooks under certain conditions:
+     : When specified branches are involved
+     : When certain KEY users are involved
+     : When coming from a specific IP or Network CIDR
+     : When certain files are affected (tricky for pull reads)
+     : When certain strings exist in any of the commit comments being pushed. (Tricky for pull reads.)
+   * provide failover queue retry mechanism fibinacci backoff until remote webhook server returns 2xx or 3xx status.
+   * provide Git Server Version
+   * provide Git Client Version (man-in-the-middle sniff)
+   * provide user KEY doing the pulling or pushing (and pubkey?)
    * provide epoch time stamp of client connection.
-   * provide IPv4 or IPv6 Address of client connecting
-   * provide type of reference pushing ("tag" or "branch")
-   * provide branch or tag modified by push operation
+   * provide IPv4 or IPv6 Address of client connecting.
+   * provide type of reference pushing ("tag" or "branch").
+   * provide branch or tag affected by push or pull operation.
    * provide PREV commit hash for the tag or branch
    * provide whether or not FORCE was used to rewrite or destroy history
    * at least provide when FORCE push destroys branch history
@@ -82,7 +79,7 @@ echo -e '\nHost $GIT_HOST\n    AddressFamily inet6' >> ~/.ssh/config
      : commit hash
      : author name
      : author email
-     : subject of commit excuse reason, i.e., (my $squish = `git show -s --format=%s 12ABCDEF `)=~s{\s+}{ }g; $squish =~ s/\s+$//m; $squish =~ s<^(.{80}).{3,}><$1...>s;
+     : subject of commit excuse reason, i.e., (my $squish = `git show -s --format=%s 665bd34 `)=~s{\s+}{ }g; $squish =~ s/\s+$//m; $squish =~ s<^(.{80}).{3,}><$1...>s;
      : files added
      : files modified
      : files removed
