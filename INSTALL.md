@@ -46,7 +46,8 @@ from a remote server to this server:
 remote[...]
 Receiving[...]
 [git@gitsrvhost ~]$ cd ProjX
-[git@gitsrvhost ProjX]$ git config --local --unset remote.origin.url
+[git@gitsrvhost ProjX]$ git remote rm origin
+[git@gitsrvhost ProjX]$ git config --local --replace-all core.bare true
 [git@gitsrvhost ProjX]$ cd
 [git@gitsrvhost ~]$
 ```
@@ -57,8 +58,8 @@ on this server, then you can just copy its ".git" folder:
 ```
 [git@gitsrvhost ~]$ cp -a /tmp/ProjX/.git ~/ProjX
 [git@gitsrvhost ~]$ cd ProjX
+[git@gitsrvhost ProjX]$ git remote rm origin
 [git@gitsrvhost ProjX]$ git config --local --replace-all core.bare true
-[git@gitsrvhost ProjX]$ git config --local --unset remote.origin.url
 [git@gitsrvhost ProjX]$ cd
 [git@gitsrvhost ~]$
 ```
