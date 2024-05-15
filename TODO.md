@@ -5,9 +5,9 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
- - Add IP Whitelist [restrictip] feature
+ - Add [acl.allowip] IP Whitelist feature
 
- - Author email whitelist or RegExp
+ - Add [acl.allowauthor] feature to whitelist Author Email or RegExp for all commits being pushed.
 
  - Two-Way Git "Proxy" support for remote git server to allow for slow migration of a repo from one system to another.
    # Like the client: $ git pull --rebase foreign-repo
@@ -20,13 +20,10 @@ Some features we need or want, plus some neat ideas that may not be too feasible
    # Most, if not all of these, may also be implemented externally via callback webhooks
    # Or even provide multiple ways to accomplish the two-way sync
 
- - Add support for automatic log rotation
-   * git config logrotate."logs/access_log".compress true
-   * git config logrotate."*".compress true
-   * git config logrotate."logs/access_log".daily true
-   * git config logrotate."*".weekly true
-   * git config logrotate."logs/access_log".rotate 365
-   * git config logrotate."*".rotate 20
+ - Add support for automatic rotation of log.logfile, i.e:
+   * git config log.compress true (default false)
+   * git config log.{daily|weekly} true (default "weekly" is true)
+   * git config log.rotate 365 (default 5)
 
  - Set $USER_AGENT environment for post-read and post-write (Requires man-in-the-middle sniffer)
 
@@ -45,15 +42,18 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Determine files involved with the push
 
- - Add [restrictfile] support
+ - Add [restrictfile.___.pushers] support to block pushes including changes to specified files, except authorized "pushers"
    * Only restrict WRITING certain files
    * Not feasible to block READ of files
+   * EXAMPLE: git config restrictfile."lib/config.txt".pushers alice,bob
 
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6
 
- - Add webhook callback support
-   * support for protos http and https
+ - Add [webhook.url] feature for callback support
+   * support for multiple [webhook.url] configurations to mean POST to multiple callback URLs
+   * support for protocols http and https
    * support for push
+   * support for pull
    * provide the direction of operation ("read" for clone,pull,fetch) ("write" for push)
    * support for pull/clone/fetch (setup proxy sniffer to scan for "want" and "have" packets from client to determine updates downloaded to the git client)
    * Allow for WhiteList or BlackList filters to trigger webhook or ignore webhooks under certain conditions:
