@@ -93,16 +93,16 @@ system "git checkout $branch";
 sleep 1;
 rebuild;
 while (1) {
+    $0 = "$Script - Waiting for push notification ...";
+    my $update = `(git fetch ; git checkout $branch ; git rebase origin/$branch) 2>&1`;
+    $0 = "$Script - Scanning updates";
+    $update .= `git rebase --abort 2>1` if $update =~ /fix conflicts|git rebase.*--continue|you need to resolve your|stop rebasing/;
     if (-M $Script < 0) {
         # Myself update detected so need to respawn
         warn localtime.": [$$] Auto-update $Script respawning ...\n";
         sleep 1;
         exec $Script, @original_args or die localtime.": [$$] $Script: RESPAWN FATAL CRASH\n";
     }
-    $0 = "$Script - Waiting for push notification ...";
-    my $update = `(git fetch ; git checkout $branch ; git rebase origin/$branch) 2>&1`;
-    $0 = "$Script - Scanning updates";
-    $update .= `git rebase --abort 2>1` if $update =~ /fix conflicts|git rebase.*--continue|you need to resolve your|stop rebasing/;
     if ($update =~ /POSSIBLE.*SOMEONE.*DOING.*NASTY/) {
         warn $update;
         if ($fix_nasty && $update =~ /host key for (\S+) has changed and you have requested strict checking/) {
