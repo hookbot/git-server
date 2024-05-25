@@ -3,6 +3,8 @@ TODO
 
 Some features we need or want, plus some neat ideas that may not be too feasible to implement.
 
+ - Autodetect git-deploy updates to respawn
+
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
  - Add [acl.allowip] IP Whitelist feature
