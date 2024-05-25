@@ -66,6 +66,7 @@ use Getopt::Long qw(GetOptions);
 
 our $VERSION = "0.016";
 
+my @original_args = @ARGV;
 my $build = undef;
 my $fix_nasty = undef;
 GetOptions
@@ -92,6 +93,12 @@ system "git checkout $branch";
 sleep 1;
 rebuild;
 while (1) {
+    if (-M $Script < 0) {
+        # Myself update detected so need to respawn
+        warn localtime.": [$$] Auto-update $Script respawning ...\n";
+        sleep 1;
+        exec $Script, @original_args or die localtime.": [$$] $Script: RESPAWN FATAL CRASH\n";
+    }
     $0 = "$Script - Waiting for push notification ...";
     my $update = `(git fetch ; git checkout $branch ; git rebase origin/$branch) 2>&1`;
     $0 = "$Script - Scanning updates";
