@@ -61,12 +61,12 @@ This library is free software; you can redistribute it and/or modify it under th
 =cut
 
 use strict;
-use FindBin qw($Script);
+use FindBin qw($Script $Bin);
 use Getopt::Long qw(GetOptions);
 
 our $VERSION = "0.016";
 
-my @original_args = @ARGV;
+my @invoked = ($0, @ARGV);
 my $build = undef;
 my $fix_nasty = undef;
 GetOptions
@@ -97,11 +97,11 @@ while (1) {
     my $update = `(git fetch ; git checkout $branch ; git rebase origin/$branch) 2>&1`;
     $0 = "$Script - Scanning updates";
     $update .= `git rebase --abort 2>1` if $update =~ /fix conflicts|git rebase.*--continue|you need to resolve your|stop rebasing/;
-    if (-M $Script < 0) {
+    if (-M "$Bin/$Script" < 0) {
         # Myself update detected so need to respawn
         warn localtime.": [$$] Auto-update $Script respawning ...\n";
         sleep 1;
-        exec $Script, @original_args or die localtime.": [$$] $Script: RESPAWN FATAL CRASH\n";
+        exec @invoked or die localtime.": [$$] $Bin/$Script: RESPAWN FATAL CRASH\n";
     }
     if ($update =~ /POSSIBLE.*SOMEONE.*DOING.*NASTY/) {
         warn $update;
