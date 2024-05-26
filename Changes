@@ -1,5 +1,13 @@
 Revision History for git-server
 
+0.016  2024-05-25 22:00:00
+ - Update TODO wishlist
+ - Use "git remote" instead of "--unset" hack
+ - Backward compatibility fixes for 1.7.1
+ - Auto-Respawn git-deploy after update
+ - Handle git-deploy detached case earlier
+ - Never default to 'master' branch anymore
+
 0.015  2024-05-10 01:00:00
  - Cosmetic adjustments to some messages.
  - Fix more ID Message format [$KEY@$IP]
