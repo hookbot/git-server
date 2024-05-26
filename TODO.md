@@ -3,8 +3,6 @@ TODO
 
 Some features we need or want, plus some neat ideas that may not be too feasible to implement.
 
- - Choose more appropriate branch guess after getting detached instead of hard-coding "master"
-
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
  - Add [acl.allowip] IP Whitelist feature
