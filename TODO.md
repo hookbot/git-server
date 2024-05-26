@@ -30,7 +30,7 @@ Some features we need or want, plus some neat ideas that may not be too feasible
  - Provide branch, old hash, and new hash (for every branch updated by the git client) to post-read hook args (Requires man-in-the-middle sniffer)
    * If nothing is updated to the client, then there will be no arguments to post-read.
    * There will be a multiple of 3 args, each triple being branch, old hash, new hash, (depending on how many branches the client updates).
-   * In order to facilitate the InterProcessCommunication to post-read, information in should be stored in $GIT_DIR/last-read-state.<git-server-pid>.txt until the post-read completes.
+   * In order to facilitate the InterProcessCommunication to post-read, information should be stored in $GIT_DIR/last-read-state.<git-server-pid>.txt until the post-read completes.
    * Client sends "want" and "have" so the server knows how to pack up the deltas to give to the client.
 
  - Determine files involved with the pull (Requires man-in-the-middle sniffer)
@@ -38,7 +38,7 @@ Some features we need or want, plus some neat ideas that may not be too feasible
  - Provide branch, old hash, new hash, and common parent "fork" commit hash to pre-write hook and post-write hook args. (Requires man-in-the-middle sniffer)
    * This fork hash can be used for debugging
    * or for callback webhook.
-   * In order to facilitate the InterProcessCommunication between the pre-write and post-write, information in should be stored in $GIT_DIR/last-write-state.<git-server-pid>.txt until the post-write completes.
+   * In order to facilitate the InterProcessCommunication between the pre-write and post-write, information should be stored in $GIT_DIR/last-write-state.<git-server-pid>.txt until the post-write completes.
 
  - Determine files involved with the push
 
