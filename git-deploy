@@ -99,9 +99,9 @@ while (1) {
     $update .= `git rebase --abort 2>1` if $update =~ /fix conflicts|git rebase.*--continue|you need to resolve your|stop rebasing/;
     if (-M "$Bin/$Script" < 0) {
         # Myself update detected so need to respawn
-        warn localtime.": [$$] Auto-update $Script respawning ...\n";
+        warn localtime().": [$$] Auto-update $Script respawning ...\n";
         sleep 1;
-        exec @invoked or die localtime.": [$$] $Bin/$Script: RESPAWN FATAL CRASH\n";
+        exec @invoked or die localtime().": [$$] $Bin/$Script: RESPAWN FATAL CRASH\n";
     }
     if ($update =~ /POSSIBLE.*SOMEONE.*DOING.*NASTY/) {
         warn $update;
@@ -135,7 +135,7 @@ while (1) {
     elsif ($update =~ /Your branch.*diverged/) {
         # Rebase can't work if there are local divergents.
         warn $update;
-        warn localtime.": [$$] Detected local divergence off [$branch] so doing HARD RESET ...\n";
+        warn localtime().": [$$] Detected local divergence off [$branch] so doing HARD RESET ...\n";
         system "git", "checkout", $branch;
         system "git", "reset", "--hard", "origin/$branch";
         my $running = `ps fauwwx`;
