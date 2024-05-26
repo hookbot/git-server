@@ -74,11 +74,14 @@ GetOptions
     "fix-nasty" => \$fix_nasty,
     or exec perldoc => $0;
 
-my $branch = shift || do {
-    my $scan = `git branch 2>/dev/null`;
-    $scan =~ m{^\* ([\w/]+)}m ? $1 :
-    $scan =~ m{^\s+([\w/]+)}m ? $1 : "master"
-};
+my $branch = shift || eval {
+    my $scan = `git branch -a 2>/dev/null`;
+    return $1 if $scan =~ m{^\* ([\w/]+)}m;
+    if ($scan =~ m{^\* .*detached at (\w+)}m) {
+        $scan = `git branch -a --contains $1 2>/dev/null`.$scan;
+    }
+    return $1 if $scan =~ m{^\s+([\w/]+)}m;
+} or die localtime().": [$$] Unable to determine which branch to deploy.\n";
 
 sub rebuild {
     if (defined $build) {
