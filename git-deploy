@@ -124,18 +124,7 @@ while (1) {
         }
         last;
     }
-    if ($update =~ /You have unstaged changes/) {
-        # Rebase can't work if there are local changes.
-        # Make sure there aren't multiple pullers choking on the repo
-        warn $update;
-        my $running = `ps fauwwx`;
-        last if $running =~ /\Q$Script\E - Waiting/;
-        my $monkey = "";
-        $monkey = ": $1" if $update =~ /^M\s+(\S+)/m;
-        $0 = "$Script - Waiting because of local modifications$monkey";
-        system "sleep 60";
-    }
-    elsif ($update =~ /Your branch.*diverged/) {
+    if ($update =~ /Your branch.*diverged/) {
         # Rebase can't work if there are local divergents.
         warn $update;
         warn localtime().": [$$] Detected local divergence off [$branch] so doing HARD RESET ...\n";
@@ -144,6 +133,17 @@ while (1) {
         my $running = `ps fauwwx`;
         last if $running =~ /\Q$Script\E - Waiting/;
         $0 = "$Script - Waiting because of local divergence";
+        system "sleep 60";
+    }
+    elsif ($update =~ /You have unstaged changes/) {
+        # Rebase can't work if there are local changes.
+        # Make sure there aren't multiple pullers choking on the repo
+        warn $update;
+        my $running = `ps fauwwx`;
+        last if $running =~ /\Q$Script\E - Waiting/;
+        my $monkey = "";
+        $monkey = ": $1" if $update =~ /^M\s+(\S+)/m;
+        $0 = "$Script - Waiting because of local modifications$monkey";
         system "sleep 60";
     }
     elsif ($update =~ m{fatal: Unable to create '(.+?)': File exists.}) {
