@@ -98,7 +98,7 @@ our $VERSION = "0.017";
 my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
 
 my $git_op_hook = {
-    "git-upload-pack" => "read", # i.e., clone, pull
+    "git-upload-pack" => "read", # i.e., clone, pull, fetch
     "git-receive-pack" => "write", # i.e., push
 };
 
@@ -171,7 +171,9 @@ if ($hook and -x "$dir/hooks/pre-$hook") {
     }
 }
 
-my $res = system "git-shell", "-c", $cmd;
+my $shell = "$dir/hooks/git-shell";
+$shell = "git-shell" unless -x $shell;
+my $res = system $shell, "-c", $cmd;
 
 if ($hook and -x "$dir/hooks/post-$hook") {
     if (my $failed = spawn($dir, "hooks/post-$hook", "exit=$res")) {
