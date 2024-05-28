@@ -134,9 +134,7 @@ my $hook = undef;
 if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
     my $op = $1;
     my $repo = $2;
-    if (my $found = $git_op_hook->{$op}) {
-        $hook = $found;
-    }
+    $hook = $git_op_hook->{$op} or die localtime().": [$KEY\@$ip] git-server: Unimplemented operation! $op\n";
     $repo = $1 if $repo =~ /^'(.+)'$/;
     $repo =~ s/\.git$//;
     my $home = $ENV{HOME} || (getpwuid $<)[7];
@@ -164,7 +162,7 @@ else {
     die localtime().": [$KEY\@$ip] git-server: You can't run the command '$cmd'\n";
 }
 
-if ($hook and -x "$dir/hooks/pre-$hook") {
+if (-x "$dir/hooks/pre-$hook") {
     if (my $failed = spawn($dir, "hooks/pre-$hook")) {
         warn "pre-$hook: failed!\n";
         exit $failed;
@@ -175,7 +173,7 @@ my $shell = "$dir/hooks/git-shell";
 $shell = "git-shell" unless -x $shell;
 my $res = system $shell, "-c", $cmd;
 
-if ($hook and -x "$dir/hooks/post-$hook") {
+if (-x "$dir/hooks/post-$hook") {
     if (my $failed = spawn($dir, "hooks/post-$hook", "exit=$res")) {
         warn "post-$hook: failed!\n";
         exit $failed;
