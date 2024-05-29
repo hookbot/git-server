@@ -211,7 +211,7 @@ sub spawn {
     }
     else {
         # Child
-        chdir($dir) or die "$dir: chdir: $!\n";
-        exec @cmd or die "$dir/$cmd[0]: exec: $!";
+        chdir($chdir) or die "$chdir: chdir: $!\n";
+        exec @cmd or die "From($chdir) $cmd[0]: exec: $!";
     }
 }
