@@ -170,10 +170,10 @@ if (-x "$dir/hooks/pre-$hook") {
 }
 
 # Custom hooks are free to read or write in this IPC folder
-my $tmpdir = "$dir/tmp";
+my $tmpdir = "$ENV{GIT_DIR}/tmp";
 mkdir $tmpdir, 0700 unless -d $tmpdir;
 $ENV{IPC} = "$tmpdir/current-$hook-$$-io";
-mkdir $ENV{IPC}, 0700 unless -d $tmpdir;
+mkdir $ENV{IPC}, 0700;
 
 my $shell = "$dir/hooks/git-shell";
 $shell = "git-shell" unless -x $shell;
