@@ -177,7 +177,7 @@ mkdir $ENV{IPC}, 0700 unless -d $tmpdir;
 
 my $shell = "$dir/hooks/git-shell";
 $shell = "git-shell" unless -x $shell;
-my $res = spawn($dir, $shell, "-c", $cmd);
+my $res = spawn(".", $shell, "-c", $cmd);
 
 if (-x "$dir/hooks/post-$hook") {
     if (my $failed = spawn($dir, "hooks/post-$hook", "exit=$res")) {
