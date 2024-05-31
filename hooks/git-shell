@@ -5,12 +5,8 @@ use strict;
 
 my @run = ("git-shell", @ARGV);
 if (my $ipc = $ENV{IPC}) {
-    #exec strace => -f => -v => -x => -s => 32768 => -tt => -e => "execve,clone,open,read,write" => -o => "$ipc/log.trace" => @run;
-    # Using -f imposes the danger of split brain trace logs:
-#3085858 20:57:24.030246 read(0,  <unfinished ...>
-#3085857 20:57:24.030282 write(1, "\ncommit 506a7cc0ecfc4d3fec6b3f475e0d297012240cf0\nAuthor: Hook Bot <hookbot@r.cx>\nDate:   Tue May 1 02:14:27 2012 +0000\n\n    Original attempt of redirection compact express CGI::Ex::App\n", 185 <unfinished ...>
-#3085858 20:57:24.030314 <... read resumed>"\ncommit 506a7cc0ecfc4d3fec6b3f475e0d297012240cf0\nAuthor: Hook Bot <hookbot@r.cx>\nDate:   Tue May 1 02:14:27 2012 +0000\n\n    Original attempt of redirection compact express CGI::Ex::App\n", 4096) = 185
-#3085857 20:57:24.030333 <... write resumed>) = 185
+    # Using strace -f imposes the danger of split brain trace logs.
     exec strace => -v => -s => 32768 => -tt => -e => "execve,clone,open,read,write" => -o => "$ipc/log.trace" => @run;
+    # If strace fails to launch, then continue on to @run anyways
 }
 exec @run or die "exec: Failed to spawn! $!\n";
