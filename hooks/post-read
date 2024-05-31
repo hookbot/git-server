@@ -10,7 +10,7 @@ my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
 if ($ENV{IPC} and my $dir = $ENV{GIT_DIR}) {
     my $info = `$dir/hooks/ipc-parse 2>/dev/null`;
     $info =~ s/\s*$//;
-    #warn localtime().": [$KEY\@$ip] git-server: DEBUG GIT PUSH: Found info: $info\n";
+    #warn localtime().": [$KEY\@$ip] git-server: DEBUG GIT PULL: Found info: $info\n";
 }
 
 exit;
