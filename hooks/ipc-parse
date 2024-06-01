@@ -50,9 +50,9 @@ warn "DEBUG: err=[$stderr]\n";
 
 my $info = {};
 
-# Example: agent=git/2.43.0
-$info->{client_git_version} = $1 if $client_to_server =~ m{\bagent=([\w/\.]+)};
-$info->{server_git_version} = $1 if $server_to_client =~ m{\bagent=([\w/\.]+)};
+# Example: agent=git/2.39.3.(Apple.Git-146)
+$info->{client_git_version} = $1 if $client_to_server =~ m{ agent=([\w/\.\ \-\(\)]+)};
+$info->{server_git_version} = $1 if $server_to_client =~ m{ agent=([\w/\.\ \-\(\)]+)};
 
 if (eval { require JSON }) {
     print JSON::to_json($info)."\n";
