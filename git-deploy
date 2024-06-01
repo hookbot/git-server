@@ -61,12 +61,14 @@ This library is free software; you can redistribute it and/or modify it under th
 =cut
 
 use strict;
+use Cwd qw(getcwd);
 use FindBin qw($Script $Bin);
 use Getopt::Long qw(GetOptions);
 
 our $VERSION = "0.017";
 
 my @invoked = ($0, @ARGV);
+my $cwd = getcwd();
 my $build = undef;
 my $fix_nasty = undef;
 GetOptions
@@ -96,7 +98,7 @@ system "git checkout $branch";
 sleep 1;
 rebuild;
 while (1) {
-    $0 = "$Script - Waiting for push notification ...";
+    $0 = "$Script - $cwd: Waiting for push notification ...";
     my $update = `(git fetch ; git checkout $branch ; git rebase origin/$branch) 2>&1`;
     $0 = "$Script - Scanning updates";
     $update .= `git rebase --abort 2>1` if $update =~ /fix conflicts|git rebase.*--continue|you need to resolve your|stop rebasing/;
@@ -131,8 +133,8 @@ while (1) {
         system "git", "checkout", $branch;
         system "git", "reset", "--hard", "origin/$branch";
         my $running = `ps fauwwx`;
-        last if $running =~ /\Q$Script\E - Waiting/;
-        $0 = "$Script - Waiting because of local divergence";
+        last if $running =~ /\Q$Script - $cwd\E: Waiting/;
+        $0 = "$Script - $cwd: Waiting because of local divergence";
         system "sleep 60";
     }
     elsif ($update =~ /You have unstaged changes/) {
@@ -140,10 +142,10 @@ while (1) {
         # Make sure there aren't multiple pullers choking on the repo
         warn $update;
         my $running = `ps fauwwx`;
-        last if $running =~ /\Q$Script\E - Waiting/;
+        last if $running =~ /\Q$Script - $cwd\E: Waiting/;
         my $monkey = "";
         $monkey = ": $1" if $update =~ /^M\s+(\S+)/m;
-        $0 = "$Script - Waiting because of local modifications$monkey";
+        $0 = "$Script - $cwd: Waiting because of local modifications$monkey";
         system "sleep 60";
     }
     elsif ($update =~ m{fatal: Unable to create '(.+?)': File exists.}) {
@@ -152,7 +154,7 @@ while (1) {
         my $broken_lock = $1;
         $0 = "$Script - Choking Locked: $broken_lock";
         my $running = `ps fauwwx`;
-        last if $running =~ /\Q$Script\E - Waiting/;
+        last if $running =~ /\Q$Script - $cwd\E: Waiting/;
         if ($running !~ /git rebase/) {
             # No other conflicting git process running
             # So lock file is safe enough to be removed
@@ -164,7 +166,7 @@ while (1) {
     }
     last if $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
     if ($update =~ /Current branch.*is up to date/) {
-        $0 = "$Script - Waiting because everything is updated ...";
+        $0 = "$Script - $cwd: Waiting because everything is updated ...";
         print "Everything was updated perfectly. Sleeping ...\n";
         system "sleep 60";
     }
