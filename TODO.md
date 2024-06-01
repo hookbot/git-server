@@ -3,8 +3,6 @@ TODO
 
 Some features we need or want, plus some neat ideas that may not be too feasible to implement.
 
- - Allow multiple pull "Waiting" push notification on the same server under different folders or at least for different repos.
-
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
  - Add [acl.allowip] IP Whitelist feature
