@@ -1,0 +1,16 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
+my $KEY = $ENV{KEY} || "UNKNOWN";
+my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
+
+if ($ENV{IPC} and my $dir = $ENV{GIT_DIR}) {
+    my $info = `$dir/hooks/ipc-parse 2>/dev/null`;
+    $info =~ s/\s*$//;
+    #warn localtime().": [$KEY\@$ip] git-server: DEBUG: Found info: $info\n";
+}
+
+exit;
