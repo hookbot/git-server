@@ -25,8 +25,6 @@ Some features we need or want, plus some neat ideas that may not be too feasible
    * git config log.{daily|weekly} true (default "weekly" is true)
    * git config log.rotate 365 (default 5)
 
- - Set $USER_AGENT environment for post-read and post-write (Requires man-in-the-middle sniffer)
-
  - Provide branch, old hash, and new hash (for every branch updated by the git client) to post-read hook args (Requires man-in-the-middle sniffer)
    * If nothing is updated to the client, then there will be no arguments to post-read.
    * There will be a multiple of 3 args, each triple being branch, old hash, new hash, (depending on how many branches the client updates).
