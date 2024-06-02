@@ -25,10 +25,6 @@ Some features we need or want, plus some neat ideas that may not be too feasible
    * git config log.{daily|weekly} true (default "weekly" is true)
    * git config log.rotate 365 (default 5)
 
- - Honor hooks/git-shell override instead of running the real git-shell
-   * This will help facilitate InterProcessCommunication among the other hooks, if desired.
-   * This can provide the capability to override git-shell with a custom handler or man-in-the-middle sniffing, if desired.
-
  - Set $USER_AGENT environment for post-read and post-write (Requires man-in-the-middle sniffer)
 
  - Provide branch, old hash, and new hash (for every branch updated by the git client) to post-read hook args (Requires man-in-the-middle sniffer)
