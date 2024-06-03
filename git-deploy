@@ -78,7 +78,7 @@ GetOptions
 
 my $branch = shift || eval {
     my $scan = `git branch -a 2>/dev/null`;
-    return $1 if $scan =~ m{^\* ([\w/]+)}m;
+    return $1 if $scan =~ m{^\* ([\w/\-]+)}m;
     if ($scan =~ m{^\* .*detached at (\w+)}m) {
         $scan = `git branch -a --contains $1 2>/dev/null`.$scan;
     }
