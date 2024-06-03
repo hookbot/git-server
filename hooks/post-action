@@ -10,7 +10,50 @@ my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
 if ($ENV{IPC} and my $dir = $ENV{GIT_DIR}) {
     my $info = `$dir/hooks/ipc-parse 2>/dev/null`;
     $info =~ s/\s*$//;
-    #warn localtime().": [$KEY\@$ip] git-server: DEBUG: Found info: $info\n";
+    my $ref = {};
+    if ($info =~ /^\s*\{/) {
+        # Must be JSON
+        $ref = eval {
+            require JSON;
+            return JSON::from_json($info);
+        };
+    }
+    elsif ($info =~ /^\s*\$VAR1\s*=/) {
+        # Must be Dumper
+        my $VAR1 = undef;
+        eval $info;
+        $ref = $VAR1;
+    }
+    else {
+        die localtime().": [$KEY\@$ip] git-server: Unrecognized IPC transport: $info\n";
+    }
+    my $config = `git config --list 2>/dev/null`;
+
+    # Check for any webhook directives
+    my $webhook = {};
+    while ($config =~ s/^webhook\.(.*)\.(\w+)=(.*)/\n/m) {
+        my $url = $1;
+        my $directive = $2;
+        my $val = $3;
+        $webhook->{$url}->{$directive} = $val;
+    }
+    foreach my $url (keys %$webhook) {
+        my $cfg = $webhook->{$url};
+        # Default settings
+        $cfg = {
+            method => "post",
+            transport => "json",
+            %$cfg,
+        };
+        use Data::Dumper;
+        warn Dumper {
+            info => $ref,
+            WEBHOOK =>{
+                url => $url,
+                cfg => $cfg,
+            },
+        };
+    }
 }
 
 exit;
