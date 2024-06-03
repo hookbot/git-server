@@ -13,27 +13,27 @@ sub crash {
     die "$0: $err_message\n";
 }
 
-my $ipc = $ENV{IPC} || shift or crash("Not invoked properly from git hooks.");
+my $ipc = $ENV{IPC} || shift or crash "Not invoked properly from git hooks.";
 
-open my $fh, "<", "$ipc/log.trace" or crash("$ipc/log.trace: Unable to read IPC info file? $!");
+open my $fh, "<", "$ipc/log.trace" or crash "$ipc/log.trace: Unable to read IPC info file? $!";
 my $log = join "", <$fh>;
 close $fh;
 
-if ($log =~ s{[\s\S]*?^(.*?execve.*git-shell.* = 0)}{}m) {
+if ($log =~ s/[\s\S]*?^(.*?execve.*git-shell.* = 0)//m) {
     my $launch = $1;
-    $ENV{SSH_ORIGINAL_COMMAND} ||= $1 if $launch =~ s{.*?execve.*\[.*git-shell.*?"-c",\s*"([^\"]+)".*?\],\s*}{};
-    while ($launch =~ s{\["([^=\"]+)=([^\"]*)",?\s?}{\[}) {
+    $ENV{SSH_ORIGINAL_COMMAND} ||= $1 if $launch =~ s/.*?execve.*\[.*git-shell.*?"-c",\s*"([^\"]+)".*?\],\s*//;
+    while ($launch =~ s/\["([^=\"]+)=([^\"]*)",?\s?/\[}/) {
         my $key = $1;
         my $val = $2;
         $ENV{$key} ||= $val;
     }
 }
 
-my $ssh = $ENV{SSH_CLIENT} or crash("Only SSH supported");
+my $ssh = $ENV{SSH_CLIENT} or crash "Only SSH supported";
 my $KEY = $ENV{KEY} || "UNKNOWN";
 my $ip = $ssh =~ s/^([\da-f\.:]+) //ig ? $1 : "UNKNOWN";
 my $remote_port = $ssh =~ /^(\d+)\s*/i ? $1 : 0;
-my $cmd = $ENV{SSH_ORIGINAL_COMMAND} or crash("Unable to determine SSH command");
+my $cmd = $ENV{SSH_ORIGINAL_COMMAND} or crash "Unable to determine SSH command";
 my $operation = "";
 if ($cmd =~ /^git-receive-peak\s/) {
     $operation = "push";
@@ -87,13 +87,11 @@ $info->{server_git_version} = $1 if $server_to_client =~ m{ agent=([\w/\.\ \-\(\
 
 if (eval { require JSON }) {
     print JSON::to_json($info)."\n";
-    exit;
 }
 elsif (eval { require Data::Dumper }) {
     print Data::Dumper::Dumper($info);
-    exit;
 }
 else {
     print qq{{"error":"Data Transport Failure"}\n};
-    exit;
 }
+exit;
