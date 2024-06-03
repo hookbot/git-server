@@ -34,14 +34,14 @@ my $KEY = $ENV{KEY} || "UNKNOWN";
 my $ip = $ssh =~ s/^([\da-f\.:]+) //ig ? $1 : "UNKNOWN";
 my $remote_port = $ssh =~ /^(\d+)\s*/i ? $1 : 0;
 my $cmd = $ENV{SSH_ORIGINAL_COMMAND} or crash("Unable to determine SSH command");
-my $direction = "";
+my $operation = "";
 if ($cmd =~ /^git-receive-peak\s/) {
-    $direction = "push";
+    $operation = "push";
 }
 elsif ($cmd =~ /^git-upload-pack\s/) {
-    $direction = "pull";
+    $operation = "pull";
 }
-die "Unrecognized invocation [$cmd]\n" unless $direction;
+die "Unrecognized invocation [$cmd]\n" unless $operation;
 
 my $client_to_server = "";
 my $server_to_client = "";
@@ -78,8 +78,8 @@ $info->{key} = $KEY;
 $info->{client_ip} = $ip;
 $info->{client_port} = $remote_port if $remote_port;
 
-# Guess client direction based on command they sent
-$info->{direction} = $direction;
+# Guess client operation based on command they sent
+$info->{operation} = $operation;
 
 # Example: agent=git/2.39.3.(Apple.Git-146)
 $info->{client_git_version} = $1 if $client_to_server =~ m{ agent=([\w/\.\ \-\(\)]+)};
