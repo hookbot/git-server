@@ -19,10 +19,10 @@ open my $fh, "<", "$ipc/log.trace" or crash "$ipc/log.trace: Unable to read IPC 
 my $log = join "", <$fh>;
 close $fh;
 
-if ($log =~ s/[\s\S]*?^(.*?execve.*git-shell.* = 0)//m) {
+if ($log =~ s/[\s\S]*?^(.*?execve.*git-shell.* = 0)/m) {
     my $launch = $1;
     $ENV{SSH_ORIGINAL_COMMAND} ||= $1 if $launch =~ s/.*?execve.*\[.*git-shell.*?"-c",\s*"([^\"]+)".*?\],\s*//;
-    while ($launch =~ s/\["([^=\"]+)=([^\"]*)",?\s?/\[}/) {
+    while ($launch =~ s/\["([^=\"]+)=([^\"]*)",?\s?/\[/) {
         my $key = $1;
         my $val = $2;
         $ENV{$key} ||= $val;
