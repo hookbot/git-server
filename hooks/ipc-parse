@@ -35,7 +35,7 @@ my $ip = $ssh =~ s/^([\da-f\.:]+) //ig ? $1 : "UNKNOWN";
 my $remote_port = $ssh =~ /^(\d+)\s*/i ? $1 : 0;
 my $cmd = $ENV{SSH_ORIGINAL_COMMAND} or crash "Unable to determine SSH command";
 my $operation = "";
-if ($cmd =~ /^git-receive-peak\s/) {
+if ($cmd =~ /^git-receive-pack\s/) {
     $operation = "push";
 }
 elsif ($cmd =~ /^git-upload-pack\s/) {
