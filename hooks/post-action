@@ -49,8 +49,9 @@ if ($ENV{IPC} and my $dir = $ENV{GIT_DIR}) {
             if ($cfg->{transport} =~ /^json$/i) {
                 die localtime().": [$KEY\@$ip] git-server: Unable to read JSON input:\n$info\n" unless $info =~ /^\s*\{/;
                 require IPC::Open3;
-                my $pid = IPC::Open3::open3(my $in, my $out, my $err, curl => -k => -s => -X => POST => '--data-raw' => '@-' => '-HContent-type: application/json' => $url);
+                my $pid = IPC::Open3::open3(my $in, my $out, my $err, curl => -k => -s => -X => POST => '--data-binary' => '@-' => '-HContent-type: application/json' => $url);
                 print $in $info;
+                print $in "\n";
                 close $in;
                 while (<$out>) {
                     chomp;
