@@ -29,10 +29,9 @@ if ($log =~ s/[\s\S]*?^(.*?execve.*git-shell.* = 0)//m) {
     }
 }
 
-my $ssh = $ENV{SSH_CLIENT} or crash "Only SSH supported";
+my $ssh = $ENV{SSH_CONNECTION} or crash "Only SSH supported";
 my $KEY = $ENV{KEY} || "UNKNOWN";
-my $ip = $ssh =~ s/^([\da-f\.:]+) //ig ? $1 : "UNKNOWN";
-my $remote_port = $ssh =~ /^(\d+)\s*/i ? $1 : 0;
+my ($ip, $remote_port, $local_ip, $local_port) = split /\ +/, $ssh;
 my $cmd = $ENV{SSH_ORIGINAL_COMMAND} or crash "Unable to determine SSH command";
 my $operation = "";
 if ($cmd =~ /^git-receive-pack\s/) {
@@ -76,7 +75,9 @@ my $info = {};
 
 $info->{key} = $KEY;
 $info->{client_ip} = $ip;
-$info->{client_port} = $remote_port if $remote_port;
+$info->{client_port} = $remote_port;
+$info->{server_ip} = $local_ip;
+$info->{server_port} = $local_port;
 
 # Guess client operation based on command they sent
 $info->{operation} = $operation;
