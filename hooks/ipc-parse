@@ -66,6 +66,24 @@ while ($log =~ s/^[\s\d:\.\-]+?(read|write)\(([012]),\s*(.+)//m) {
         $stderr .= $s;
     }
 }
+my $extracted = "";
+while ($client_to_server =~ s/^([0-9a-f]{4})//) {
+    my $packet_len = -4 + hex $1;
+    if ($packet_len > 0) {
+        $extracted .= substr($client_to_server, 0, $packet_len, "");
+        $extracted =~ s/\s*$/\n/;
+    }
+}
+$client_to_server = $extracted;
+$extracted = "";
+while ($server_to_client =~ s/^([0-9a-f]{4})//) {
+    my $packet_len = -4 + hex $1;
+    if ($packet_len > 0) {
+        $extracted .= substr($server_to_client, 0, $packet_len, "");
+        $extracted =~ s/\s*$/\n/;
+    }
+}
+$server_to_client = $extracted;
 #warn "DEBUG: leftovers=[$log]\n";
 warn "DEBUG: in=[$client_to_server]\n";
 warn "DEBUG: out=[$server_to_client]\n";
