@@ -90,11 +90,11 @@ $info->{server_port} = $local_port;
 $info->{operation} = $operation;
 
 my $have = [];
-while ($client_to_server =~ s{have ([0-9a-f]{32,40})}{}) {
+while ($client_to_server =~ s/have ([0-9a-f]{32,40})//) {
     push @$have, $1;
 }
 my $want = [];
-while ($client_to_server =~ s{want ([0-9a-f]{32,40})}{}) {
+while ($client_to_server =~ s/want ([0-9a-f]{32,40})//) {
     push @$want, $1;
 }
 if ($operation eq "pull" and @$want and !@$have) {
