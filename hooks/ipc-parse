@@ -73,6 +73,13 @@ warn "DEBUG: err=[$stderr]\n";
 
 my $info = {};
 
+if ($ENV{USER} and $ENV{HOME} and $ENV{GIT_DIR} and my $full = $ENV{GIT_DIR}) {
+    $full =~ s{^\Q$ENV{HOME}\E/*}{};
+    $full ||= ".";
+    $full =~ s/\.git$//;
+    $info->{repo} = "$ENV{USER}\@[$local_ip]:$full";
+}
+
 $info->{key} = $KEY;
 $info->{client_ip} = $ip;
 $info->{client_port} = $remote_port;
