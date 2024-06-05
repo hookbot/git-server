@@ -89,6 +89,18 @@ $info->{server_port} = $local_port;
 # Guess client operation based on command they sent
 $info->{operation} = $operation;
 
+my $have = [];
+while ($client_to_server =~ s{have ([0-9a-f]{32,40})}{}) {
+    push @$have, $1;
+}
+my $want = [];
+while ($client_to_server =~ s{want ([0-9a-f]{32,40})}{}) {
+    push @$want, $1;
+}
+if ($operation eq "pull" and @$want and !@$have) {
+    $info->{operation} = "clone";
+}
+
 # Example: agent=git/2.39.3.(Apple.Git-146)
 $info->{client_git_version} = $1 if $client_to_server =~ m{ agent=([\w/\.\ \-\(\)]+)};
 $info->{server_git_version} = $1 if $server_to_client =~ m{ agent=([\w/\.\ \-\(\)]+)};
