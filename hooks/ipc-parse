@@ -91,7 +91,8 @@ warn "DEBUG: err=[$stderr]\n";
 
 my $info = {};
 
-$info->{XMODIFIERS} = $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
+$info->{xmodifiers} = $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
+
 if ($ENV{USER} and $ENV{HOME} and $ENV{GIT_DIR} and my $full = $ENV{GIT_DIR}) {
     $full =~ s{^\Q$ENV{HOME}\E/*}{};
     $full ||= ".";
