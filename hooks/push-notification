@@ -18,7 +18,7 @@ mkdir $lock_dir, 0755 unless -d $lock_dir;
 my $KEY = $ENV{KEY} || "UNKNOWN";
 $SIG{PIPE} = sub { exit 1; };
 if (my $xmods = $ENV{XMODIFIERS}) {
-    if ($xmods =~ /\ndeploy_patience=(\d+)/) {
+    if ($xmods =~ /\bdeploy_patience=(\d+)/) {
         $MAX_PATIENCE = $1 || 1;
         warn localtime().": [$KEY\@$ip] git-server: Modified Deploy Patience: $MAX_PATIENCE Seconds\n";
     }
