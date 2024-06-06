@@ -3,6 +3,14 @@ TODO
 
 Some features we need or want, plus some neat ideas that may not be too feasible to implement.
 
+ - Optimize ipc-parse so it's not so slow with large git I/O, such as git clone or a large push.
+
+ - Always run hooks/post-read even if pre-read fails.
+
+ - Always run hooks/post-write even if pre-write or other condition fails to actually push.
+
+ - Make sure ipc-parse can determine if action was actually performed or else the reason of why not.
+
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
  - Add [acl.allowip] IP Whitelist feature
