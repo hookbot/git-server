@@ -28,8 +28,7 @@ Some features we need or want, plus some neat ideas that may not be too feasible
  - Provide branch, old hash, and new hash (for every branch updated by the git client) to post-read hook args (Requires man-in-the-middle sniffer)
    * If nothing is updated to the client, then there will be no arguments to post-read.
    * There will be a multiple of 3 args, each triple being branch, old hash, new hash, (depending on how many branches the client updates).
-   * In order to facilitate the InterProcessCommunication to post-read, information should be stored in $GIT_DIR/last-read-state.<git-server-pid>.txt until the post-read completes.
-   * Client sends "want" and "have" so the server knows how to pack up the deltas to give to the client.
+   * In order to facilitate the InterProcessCommunication to post-read, information should be stored in $GIT_DIR/tmp/current-*-io/ until the post-read completes.
 
  - Determine files involved with the pull (Requires man-in-the-middle sniffer)
 
@@ -47,12 +46,7 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6
 
- - Add [webhook.url] feature for callback support
-   * support for multiple [webhook.url] configurations to mean POST to multiple callback URLs
-   * support for protocols http and https
-   * support for push
-   * support for pull
-   * provide the direction of operation ("read" for clone,pull,fetch) ("write" for push)
+ - [webhook] features for callback:
    * support for pull/clone/fetch (setup proxy sniffer to scan for "want" and "have" packets from client to determine updates downloaded to the git client)
    * Allow for WhiteList or BlackList filters to trigger webhook or ignore webhooks under certain conditions:
      : When specified branches are involved
