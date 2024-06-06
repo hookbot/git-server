@@ -128,6 +128,7 @@ else {
 my $KEY = $ENV{KEY} || "UNKNOWN";
 my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
 die localtime().": [$KEY\@$ip] git-server: You don't have shell access!\n" unless $cmd;
+warn localtime().": [$KEY\@$ip] git-server: Detected XMODIFIERS [$ENV{XMODIFIERS}]\n" if $ENV{XMODIFIERS};
 
 my $dir = undef;
 my $hook = undef;
