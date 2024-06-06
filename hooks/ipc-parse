@@ -42,6 +42,15 @@ elsif ($cmd =~ /^git-upload-pack\s/) {
 }
 die "Unrecognized invocation [$cmd]\n" unless $operation;
 
+my $xmods = $ENV{XMODIFIERS} || "";
+my $xdebug = 0;
+if ($xmods =~ /\bDEBUG\s*=\s*([^,]*)/i) {
+    my $debug = $1;
+    if ($debug !~ /^(?:|0|off|false)$/i) {
+        $xdebug = $debug =~ /^(\d+)$/ ? $1 : 1;
+    }
+}
+
 my $client_to_server = "";
 my $server_to_client = "";
 my $stderr = "";
@@ -91,7 +100,8 @@ warn "DEBUG: err=[$stderr]\n";
 
 my $info = {};
 
-$info->{xmodifiers} = $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
+$info->{xmodifiers} = $xmods if $xmods;
+$info->{xdebug} = $xdebug if $xdebug;
 
 if ($ENV{USER} and $ENV{HOME} and $ENV{GIT_DIR} and my $full = $ENV{GIT_DIR}) {
     $full =~ s{^\Q$ENV{HOME}\E/*}{};

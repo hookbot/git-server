@@ -124,3 +124,13 @@ To use the "git-client" wrapper for .gitconfig overrides:
 [admin@devbox ~]$ chmod 755 /usr/bin/git-deploy
 [admin@devbox ~]$
 ```
+
+4. To enable debugging, run this on any client host:
+
+```
+[user1@devbox ProjX]$ git config --global core.SshCommand 'ssh -o SendEnv=XMODIFIERS'
+# -AND/OR- for super SSH debugging on local repo:
+[user1@devbox ProjX]$ git config --local core.SshCommand 'ssh -v -o SendEnv=XMODIFIERS'
+[user1@devbox ProjX]$ export XMODIFIERS=DEBUG=1
+[user1@devbox ProjX]$
+```
