@@ -1,5 +1,35 @@
 Revision History for git-server
 
+0.017  2024-06-07 09:00:00
+ - Allow multiple git-deploy to run in parallel.
+ - Allow git-server to override git-shell.
+ - Let git-deploy work with branch containing "-".
+ - Implement hooks/git-shell wrapper feature.
+ - SECURITY: Block unrecognized git operations.
+ - Pass XMODIFIERS env for extended functionality.
+ - Allow git client to choose to enable DEBUG mode.
+ - Let git client choose the deploy timeout.
+ - Updated MANIFEST to include required files.
+ - Client can now pass XMODIFIERS to git-server
+   for extended functionalities.
+ - Create IPC folder to facilitate communications
+   among different processes.
+ - Extract client "want" and "have" packets.
+ - Add [webhook] callback with following features:
+   * Supports unlimited multiple callback URLs.
+   * Any HTTP or HTTPS URLs.
+   * Allows for insecure HTTPS certificate.
+   * [webhook.__.method] POST method.
+   * [webhook.__.transport] JSON Hash.
+   * Support for IPv4 and IPv6.
+ - Now [webhook] will POST the following information:
+   * Git Operation (clone, pull, push)
+   * Repo SSH URL
+   * Server Git version
+   * Client Git version
+   * Client IP/Port
+   * Client SSH Key used
+
 0.016  2024-05-25 22:00:00
  - Update TODO wishlist.
  - Use "git remote rm" instead of "--unset" hack.
