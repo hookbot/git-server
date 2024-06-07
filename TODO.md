@@ -9,6 +9,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Always run hooks/post-write even if pre-write or other condition fails to actually push.
 
+ - Background webhook so the git client doesn't have to wait around (unless DEBUG).
+
  - Make sure ipc-parse can determine if action was actually performed or else the reason of why not.
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
