@@ -178,20 +178,21 @@ die localtime().": [$KEY\@$ip] git-server: Unable to create [$ENV{IPC}] folder! 
 my $pre_failure = 0;
 if (-x "$dir/hooks/pre-$hook") {
     if ($pre_failure = spawn($dir, "hooks/pre-$hook")) {
-        warn "pre-$hook: failed!\n";
-        exit $pre_failure;
+        warn "pre-$hook: failed! $pre_failure\n";
     }
 }
 
-my $shell = "$dir/hooks/git-shell";
-$shell = "git-shell" unless -x $shell;
-my $git_failure = spawn(".", $shell, "-c", $cmd);
+my $git_failure = $pre_failure;
+if (!$pre_failure) {
+    my $shell = "$dir/hooks/git-shell";
+    $shell = "git-shell" unless -x $shell;
+    $git_failure = spawn(".", $shell, "-c", $cmd);
+}
 
 my $post_failure = 0;
 if (-x "$dir/hooks/post-$hook") {
     if ($post_failure = spawn($dir, "hooks/post-$hook", "exit=$git_failure")) {
-        warn "post-$hook: failed!\n";
-        exit $post_failure;
+        warn "post-$hook: failed! $post_failure\n";
     }
 }
 
