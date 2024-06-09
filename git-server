@@ -10,13 +10,13 @@ git-server - Secure Git Server with more granular hooks capabilities than defaul
 
   Standard Method:
   With SHELL=/bin/bash, use the following format in ~/.ssh/authorized_keys:
-  command="git-server KEY=USER1" ssh-rsa AAAA___blah_pub__ user1@workstation
+  command="~/git-server/gitserver KEY=USER1" ssh-rsa AAAA___blah_pub__ user1@workstation
 
    -- OR --
 
   Advanced Method:
-  Set SHELL=/usr/bin/git-server (in etc/passwd) and
-  Set "PermitUserEnvironment yes" (in etc/ssh/sshd_config)
+  Set SHELL=/path/to/git-server (in /etc/passwd) and
+  Set "PermitUserEnvironment yes" (in /etc/ssh/sshd_config)
   Then use the following format in ~/.ssh/authorized_keys:
   environment="KEY=USER1" ssh-rsa AAAA___blah_pub__ user1@workstation
 
