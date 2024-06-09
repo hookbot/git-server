@@ -168,27 +168,29 @@ else {
     die localtime().": [$KEY\@$ip] git-server: You can't run the command '$cmd'\n";
 }
 
-if (-x "$dir/hooks/pre-$hook") {
-    if (my $failed = spawn($dir, "hooks/pre-$hook")) {
-        warn "pre-$hook: failed!\n";
-        exit $failed;
-    }
-}
-
 # Custom hooks are free to read or write in this IPC folder
 my $tmpdir = "$ENV{GIT_DIR}/tmp";
 mkdir $tmpdir, 0700 unless -d $tmpdir;
 $ENV{IPC} = "$tmpdir/current-$hook-$$-io";
 mkdir $ENV{IPC}, 0700;
 
+my $pre_failure = 0;
+if (-x "$dir/hooks/pre-$hook") {
+    if ($pre_failure = spawn($dir, "hooks/pre-$hook")) {
+        warn "pre-$hook: failed!\n";
+        exit $pre_failure;
+    }
+}
+
 my $shell = "$dir/hooks/git-shell";
 $shell = "git-shell" unless -x $shell;
-my $res = spawn(".", $shell, "-c", $cmd);
+my $git_failure = spawn(".", $shell, "-c", $cmd);
 
+my $post_failure = 0;
 if (-x "$dir/hooks/post-$hook") {
-    if (my $failed = spawn($dir, "hooks/post-$hook", "exit=$res")) {
+    if ($post_failure = spawn($dir, "hooks/post-$hook", "exit=$git_failure")) {
         warn "post-$hook: failed!\n";
-        exit $failed;
+        exit $post_failure;
     }
 }
 
@@ -197,7 +199,7 @@ system "rm -rfv $ENV{IPC}*" if $ENV{IPC};
 #unlink glob "$ENV{IPC}/*"; rmdir $ENV{IPC};
 rmdir $tmpdir; # Only clear if empty
 
-exit $res;
+exit $git_failure;
 
 # spawn( $chdir, $cmd, [ @args ] )
 # chdir $chdir
