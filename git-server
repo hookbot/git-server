@@ -173,6 +173,7 @@ my $tmpdir = "$ENV{GIT_DIR}/tmp";
 mkdir $tmpdir, 0700 unless -d $tmpdir;
 $ENV{IPC} = "$tmpdir/current-$hook-$$-io";
 mkdir $ENV{IPC}, 0700;
+die localtime().": [$KEY\@$ip] git-server: Unable to create [$ENV{IPC}] folder! $!\n" unless -d $ENV{IPC};
 
 my $pre_failure = 0;
 if (-x "$dir/hooks/pre-$hook") {
