@@ -71,6 +71,11 @@ if there are no actual changes that need to be made.
 
 Same as hooks/post-read except for write operations.
 
+=head2 hooks/git-shell
+
+If this exists, then it will be executed instead of
+the real git-shell program.
+
 =head1 SEE ALSO
 
 Similar functionality to the following:
