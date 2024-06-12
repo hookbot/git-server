@@ -76,6 +76,13 @@ GetOptions
     "fix-nasty" => \$fix_nasty,
     or exec perldoc => $0;
 
+sub rebuild {
+    if (defined $build) {
+        $0 = "$Script - Running build hook ...";
+        system $build;
+    }
+}
+
 my $branch = shift || eval {
     my $scan = `git branch -a 2>/dev/null`;
     return $1 if $scan =~ m{^\* ([\w/\-]+)}m;
@@ -84,13 +91,6 @@ my $branch = shift || eval {
     }
     return $1 if $scan =~ m{^\s+([\w/]+)}m;
 } or die localtime().": [$$] Unable to determine which branch to deploy.\n";
-
-sub rebuild {
-    if (defined $build) {
-        $0 = "$Script - Running build hook ...";
-        system $build;
-    }
-}
 
 umask 0002;
 $0 = "$Script - Initial checkout";
