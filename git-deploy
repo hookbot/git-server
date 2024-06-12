@@ -101,7 +101,7 @@ while (1) {
     $0 = "$Script - $cwd: Waiting for push notification ...";
     my $update = `(git fetch ; git checkout $branch ; git rebase origin/$branch) 2>&1`;
     $0 = "$Script - Scanning updates";
-    $update .= `git rebase --abort 2>1` if $update =~ /fix conflicts|git rebase.*--continue|you need to resolve your|stop rebasing/;
+    $update .= `git rebase --abort 2>&1` if $update =~ /fix conflicts|git rebase.*--continue|you need to resolve your|stop rebasing/;
     if (-M "$Bin/$Script" < 0) {
         # Myself update detected so need to respawn
         warn localtime().": [$$] Auto-update $Script respawning ...\n";
