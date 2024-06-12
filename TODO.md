@@ -5,10 +5,6 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Optimize ipc-parse so it's not so slow with large git I/O, such as git clone or a large push.
 
- - Always run hooks/post-read even if pre-read fails.
-
- - Always run hooks/post-write even if pre-write or other condition fails to actually push.
-
  - Once "post" method is sure to run, then move logger step from "pre" to "post".
 
  - Background webhook so the git client doesn't have to wait around (unless DEBUG).
