@@ -14,7 +14,7 @@ instantly after a push is triggered.
 
 =head1 SYNOPSIS
 
-  git deploy [ --build='make -C src/.' ] [ --fix-nasty ] [ branch ]
+  git deploy [ --build='make -C src/.' ] [ --fix-nasty ] [ --background ] [ <branch> ]
 
 =head2 branch
 
@@ -33,6 +33,14 @@ The --fix-nasty argument will automatically remove the offending
 SSH host entry for the git server from known_hosts. Only use this
 flag if you've changed the SSH server key on the git server host.
 By default, this option is disabled for better security.
+
+=head2 background
+
+The --background option will cause the deploy process to detach
+from its invoker and run in the background.
+This is useful when invoked from a cron
+since there is nobody around to see the output anyways.
+By default, this option is disabled so runs in the foreground.
 
 =head1 INSTALL
 
@@ -71,9 +79,11 @@ my @invoked = ($0, @ARGV);
 my $cwd = getcwd();
 my $build = undef;
 my $fix_nasty = undef;
+my $background = undef;
 GetOptions
     "build:s" => \$build,
     "fix-nasty" => \$fix_nasty,
+    "background" => \$background,
     or exec perldoc => $0;
 
 sub run_how_cmd {
@@ -127,6 +137,14 @@ $0 = "$Script - Initial checkout";
 run_output_ignore_err "git", "checkout", $branch;
 sleep 1;
 rebuild;
+if ($background) {
+    exit if fork;
+    require POSIX;
+    POSIX::setsid();
+    close STDIN;
+    close STDOUT;
+    close STDERR;
+}
 while (1) {
     $0 = "$Script - $cwd: Waiting for push notification ...";
     my $update = "";
