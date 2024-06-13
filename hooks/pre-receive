@@ -12,6 +12,7 @@ while (my $push_info = <STDIN>) {
     my $ip = $ENV{SSH_CLIENT} =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
     my $branch = ($ref =~ m{^refs/(?:heads|tags)/(.+)} || $ref =~ m{.*/([^/]+)}) ? $1 : $ref;
     my $type = ($ref =~ m{^refs/tags/}) ? "tag" : "branch";
+    ipclog("BRANCH:$branch\n  OLD:$old\n  NEW:$new\n  TYPE:$type\n");
     my $conf = `git config --list`;
     my $allowed_users = {};
     while ($conf =~ s/^restrictedbranch\.(.+)\.pushers=(.+)$//m) {
@@ -87,9 +88,11 @@ while (my $push_info = <STDIN>) {
     }
     elsif (`git log $new -- 2>&1 | grep '^commit $old'`) {
         #warn localtime().": [$KEY\@$ip] git-server: Pushing $new changes to $type [$branch] tip without --force\n";
+        ipclog("  FORCE:0\n");
     }
     else {
         # MUST HAVE USED: git push --force
+        ipclog("  FORCE:1\n");
         if ($can_change_history) {
             my $tip_hashes = `git show-ref 2>&1`;
             $tip_hashes =~ s{ refs/\w+/}{ }g;
@@ -115,6 +118,18 @@ while (my $push_info = <STDIN>) {
         }
         else {
             die localtime().": [$KEY\@$ip] git-server: Missing [restrictedbranch.forcers] permission! Failed to rewrite git history for restricted $type [$branch]. Do not run 'git push --force'. Try 'git pull --rebase' or 'git pull' to clean up your local repo.\n";
+        }
+    }
+}
+
+# Remember this info that might be needed later
+sub ipclog {
+    my $entry = shift;
+    $entry =~ s/\s*$/\n/;
+    if ($entry and my $ipc = $ENV{IPC}) {
+        if (open my $fh, ">>", "$ipc/pushinfo.log") {
+            print $fh $entry;
+            close $fh;
         }
     }
 }
