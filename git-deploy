@@ -76,32 +76,65 @@ GetOptions
     "fix-nasty" => \$fix_nasty,
     or exec perldoc => $0;
 
+sub run_how_cmd {
+    my $keep = shift;
+    my @cmd = @_;
+    if (my $pid = open my $fh_out, "-|") {
+        # Parent process waiting for kid to say something
+        my $output = join "", <$fh_out>;
+        waitpid $pid, 0;
+        my $exit_status = $?;
+        close $fh_out;
+        $? = $exit_status;
+        return $output;
+    }
+    # Child process
+    if ($keep) {
+        open STDERR, ">&STDOUT";
+    }
+    else {
+        open STDERR, ">", "/dev/null";
+    }
+    exec @cmd or die "$cmd[0]: Failed to spawn? $!\n";
+}
+
+sub run_output_ignore_err {
+    return run_how_cmd 0, @_;
+}
+
+sub run_output_include_err {
+    return run_how_cmd 1, @_;
+}
+
 sub rebuild {
     if (defined $build) {
         $0 = "$Script - Running build hook ...";
-        system $build;
+        print run_output_include_err $build;
     }
 }
 
 my $branch = shift || eval {
-    my $scan = `git branch -a 2>/dev/null`;
+    my $scan = run_output_ignore_err qw(git branch -a);
     return $1 if $scan =~ m{^\* ([\w/\-]+)}m;
     if ($scan =~ m{^\* .*detached at (\w+)}m) {
-        $scan = `git branch -a --contains $1 2>/dev/null`.$scan;
+        $scan = run_output_ignore_err("git", "branch", "-a", "--contains", $1).$scan;
     }
     return $1 if $scan =~ m{^\s+([\w/]+)}m;
 } or die localtime().": [$$] Unable to determine which branch to deploy.\n";
 
 umask 0002;
 $0 = "$Script - Initial checkout";
-system "git checkout $branch";
+run_output_ignore_err "git", "checkout", $branch;
 sleep 1;
 rebuild;
 while (1) {
     $0 = "$Script - $cwd: Waiting for push notification ...";
-    my $update = `(git fetch ; git checkout $branch ; git rebase origin/$branch) 2>&1`;
+    my $update = "";
+    $update .= run_output_include_err qw(git fetch);
+    $update .= run_output_include_err "git", "checkout", $branch;
+    $update .= run_output_include_err "git", "rebase", "origin/$branch";
     $0 = "$Script - Scanning updates";
-    $update .= `git rebase --abort 2>&1` if $update =~ /fix conflicts|git rebase.*--continue|you need to resolve your|stop rebasing/;
+    $update .= run_output_include_err "git", "rebase", "--abort" if $update =~ /fix conflicts|git rebase.*--continue|you need to resolve your|stop rebasing/;
     if (-M "$Bin/$Script" < 0) {
         # Myself update detected so need to respawn
         warn localtime().": [$$] Auto-update $Script respawning ...\n";
@@ -113,12 +146,19 @@ while (1) {
         if ($fix_nasty && $update =~ /host key for (\S+) has changed and you have requested strict checking/) {
             my $nasty = $1;
             warn "--fix-nasty: $nasty: Clearing known_hosts ...\n";
-            if (0 == system "ssh-keygen", "-R", $nasty) {
+            my $wipe = run_output_include_err "ssh-keygen", "-R", $nasty;
+            if (!$?) {
+                $wipe =~ s/\s*$/\n/;
+                warn $wipe;
                 require Socket;
                 if (my $ip = Socket::inet_ntoa(Socket::inet_aton($nasty))) {
                     $nasty .= ",$ip";
                 }
-                system "ssh-keyscan -t rsa,dsa $nasty | tee -a ~/.ssh/known_hosts";
+                if (my $real_ssh_server_key = run_output_ignore_err "ssh-keyscan", "-t", "rsa,dsa", $nasty) {
+                    open my $fh_known, ">>", "$ENV{HOME}/.ssh/known_hosts";
+                    print $real_ssh_server_key;
+                    close $fh_known;
+                }
             }
         }
         else {
@@ -130,30 +170,31 @@ while (1) {
         # Rebase can't work if there are local divergents.
         warn $update;
         warn localtime().": [$$] Detected local divergence off [$branch] so doing HARD RESET ...\n";
-        system "git", "checkout", $branch;
-        system "git", "reset", "--hard", "origin/$branch";
-        my $running = `ps fauwwx`;
+        my $hard = "";
+        $hard .= run_output_include_err "git", "checkout", $branch;
+        $hard .= run_output_include_err "git", "reset", "--hard", "origin/$branch";
+        my $running = run_output_include_err qw(ps fauwwx);
         last if $running =~ /\Q$Script - $cwd\E: Waiting/;
         $0 = "$Script - $cwd: Waiting because of local divergence";
-        system "sleep 60";
+        print run_output_include_err qw(sleep 60);
     }
     elsif ($update =~ /You have unstaged changes/) {
         # Rebase can't work if there are local changes.
         # Make sure there aren't multiple pullers choking on the repo
         warn $update;
-        my $running = `ps fauwwx`;
+        my $running = run_output_include_err "ps", "fauwwx";
         last if $running =~ /\Q$Script - $cwd\E: Waiting/;
         my $monkey = "";
         $monkey = ": $1" if $update =~ /^M\s+(\S+)/m;
         $0 = "$Script - $cwd: Waiting because of local modifications$monkey";
-        system "sleep 60";
+        print run_output_ignore_err qw(sleep 60);
     }
     elsif ($update =~ m{fatal: Unable to create '(.+?)': File exists.}) {
         # Updates cannot work while lock file exists
         warn $update;
         my $broken_lock = $1;
         $0 = "$Script - Choking Locked: $broken_lock";
-        my $running = `ps fauwwx`;
+        my $running = run_output_ignore_err qw(ps fauwwx);
         last if $running =~ /\Q$Script - $cwd\E: Waiting/;
         if ($running !~ /git rebase/) {
             # No other conflicting git process running
@@ -161,14 +202,14 @@ while (1) {
             unlink $broken_lock;
         }
         else {
-            system "sleep 60";
+            print run_output_include_err qw(sleep 60);
         }
     }
     last if $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
     if ($update =~ /Current branch.*is up to date/) {
         $0 = "$Script - $cwd: Waiting because everything is updated ...";
         print "Everything was updated perfectly. Sleeping ...\n";
-        system "sleep 60";
+        print run_output_ignore_err qw(sleep 60);
     }
     $0 = "$Script - Update complete";
     sleep 1;
