@@ -6,9 +6,9 @@ use warnings;
 my $KEY = $ENV{KEY} or die "ENV KEY must be set to make changes.\n";
 my $r = "\x01"; # enable bit 2^(fileno STDIN)
 die "$0: Commandline Execution Worked!\n" if !select $r, undef, undef, 0.2;
-my $push_info = <STDIN>;
-my ($old,$new,$ref) = $push_info =~ m{^(\w+) (\w+) ([\w/\.\-]+)} or die "$0: Invalid syntax!\n";
-if ($ref) {
+while (my $push_info = <STDIN>) {
+    my ($old,$new,$ref) = $push_info =~ m{^(\w+) (\w+) ([\w/\.\-]+)} or die "$0: Invalid syntax!\n";
+    die "$0: Ref Implementation Fatality\n" unless $ref;
     my $ip = $ENV{SSH_CLIENT} =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
     my $branch = ($ref =~ m{^refs/(?:heads|tags)/(.+)} || $ref =~ m{.*/([^/]+)}) ? $1 : $ref;
     my $type = ($ref =~ m{^refs/tags/}) ? "tag" : "branch";
@@ -43,7 +43,7 @@ if ($ref) {
             $wild =~ s/\./\\./g;
             $wild =~ s/\*/.+/g;
             return qr{^$wild$};
-        } or die localtime().": [$KEY\@$ip] git-server: Unimplemented [restrictedbranchbranch.forcers] syntax? [$sniff]=>[$keys]\n";
+        } or die localtime().": [$KEY\@$ip] git-server: Unimplemented [restrictedbranch.forcers] syntax? [$sniff]=>[$keys]\n";
         if ($branch =~ $regex) {
             foreach my $key (split /,/, $keys) {
                 $rewrite_users->{$key} = $sniff;
