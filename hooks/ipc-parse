@@ -135,6 +135,9 @@ if ($operation eq "pull" and @$want and !@$have) {
 $info->{client_git_version} = $1 if $client_to_server =~ m{ agent=([\w/\.\ \-\(\)]+)};
 $info->{server_git_version} = $1 if $server_to_client =~ m{ agent=([\w/\.\ \-\(\)]+)};
 
+$info->{error_code} = $ENV{GIT_PRE_EXIT_STATUS} || $ENV{GIT_EXIT_STATUS} // -1;
+$info->{success} = $info->{error_code} ? 0 : 1;
+
 if (eval { require JSON }) {
     print JSON::to_json($info)."\n";
 }
