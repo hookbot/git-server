@@ -15,17 +15,21 @@ instantly after a push is triggered.
 =head1 SYNOPSIS
 
   git deploy
+    [ [--branch] <branch> ]
     [ { --chdir | -C } <dir> ]
     [ --build <command> ]
     [ --fix-nasty ]
     [ --background ]
     [ --max-delay <seconds> ]
-    [ <branch> ]
 
 =head2 branch
 
 If a <branch> is specified, then it will update to that branch.
 By default, the current branch is used.
+
+  Example: git deploy --branch master
+
+  --OR--
 
   Example: git deploy master
 
@@ -71,8 +75,9 @@ By default, this option is disabled so runs in the foreground.
 
 The --max-delay specifies the maximum number of seconds to wait
 for each push notification.
-This is useful when you want to force pull updates from commandline
-without hanging the console until the next git push.
+This is useful when you want to immediately release a previously
+deploying fetch and force pull updates from commandline without
+hanging the console waiting two hours until the next git push.
 By default, max-delay is 7200 seconds (or 2 hours).
 
   Example: git deploy --max-delay 10
@@ -113,12 +118,14 @@ our $VERSION = "0.018";
 my @invoked = ($0, @ARGV);
 my $cwd = getcwd();
 my $build = undef;
+my $branch = undef;
 my $chdir = undef;
 my $fix_nasty = undef;
 my $background = undef;
 my $maxpatience = undef;
 GetOptions
     "build:s" => \$build,
+    "branch:s" => \$branch,
     "chdir|C:s" => \$chdir,
     "fix-nasty" => \$fix_nasty,
     "background" => \$background,
@@ -162,9 +169,15 @@ sub rebuild {
     }
 }
 
+if ($branch and @ARGV) {
+    warn "$0: Don't specify both --branch and commandline argument.\n";
+    sleep 1;
+    exec perldoc => $0 or die "$0: help menu unavailable\n";
+}
+
 chdir $chdir if $chdir;
 
-my $branch = shift || eval {
+$branch ||= shift || eval {
     my $scan = run_output_ignore_err qw(git branch -a);
     return $1 if $scan =~ m{^\* ([\w/\-]+)}m;
     if ($scan =~ m{^\* .*detached at (\w+)}m) {
