@@ -138,6 +138,77 @@ $info->{server_git_version} = $1 if $server_to_client =~ m{ agent=([\w/\.\ \-\(\
 $info->{error_code} = $ENV{GIT_PRE_EXIT_STATUS} || $ENV{GIT_EXIT_STATUS} // -1;
 $info->{success} = $info->{error_code} ? 0 : 1;
 
+if ($info->{success}) {
+    my $refs = [];
+    if ($operation eq "push") {
+        # Did the client PUSH anything?
+        # Sniff out tags and branches from pushinfo.log
+        if (open my $fh, "<", "$ipc/pushinfo.log") {
+            my $ref = {};
+            while (<$fh>) {
+                if (/^(\s*)(\w+):\s*(.*)/) {
+                    if (!length $1) {
+                        push @$refs, $ref if keys %$ref;
+                        $ref = {};
+                    }
+                    $ref->{lc $2} = $3;
+                }
+                else {
+                    s/\s*$//;
+                    warn "pushinfo.log: corrupted=[$_]\n";
+                }
+            }
+            close $fh;
+            push @$refs, $ref if keys %$ref;
+        }
+        else {
+            warn "pushinfo.log: MISSING? $!\n";
+        }
+    }
+    else {
+        # Did the client PULL anything?
+        # Sniff out tags and branches from @$want
+        my $want_ref_hash = {};
+        foreach my $hash (@$want) {
+            # Security Emergency Taint Sniffing
+            if ($hash =~ /^(\w+)$/) {
+                $hash = $1;
+                foreach my $refname (`git branch --format '%(refname)' --contains $hash ; git tag --format '%(refname)' --contains $hash`) {
+                    chomp $refname;
+                    $want_ref_hash->{$refname}->{$hash} = 1;
+                }
+            }
+        }
+        my $have_ref_hash = {};
+        foreach my $hash (@$have) {
+            # Security Emergency Taint Sniffing
+            if ($hash =~ /^(\w+)$/) {
+                $hash = $1;
+                foreach my $refname (`git branch --format '%(refname)' --contains $hash ; git tag --format '%(refname)' --contains $hash`) {
+                    chomp $refname;
+                    $have_ref_hash->{$refname}->{$hash} = 1;
+                }
+            }
+        }
+        foreach my $refname (keys %$want_ref_hash) {
+            my $hashes = [ keys %{ $want_ref_hash->{$refname} } ];
+            my $type = $refname =~ s/^refs\/tags\/// ? "tag" :
+                $refname =~ s/^refs\/heads\/// ? "branch" : "";
+            if ($type) {
+                foreach my $hash (@$hashes) {
+                    # XXX: Do we need to look in @$have to compute the "old" hash?
+                    push @$refs, {
+                        ref => $refname,
+                        type => $type,
+                        new => $hash,
+                    };
+                }
+            }
+        }
+    }
+    $info->{refs} = $refs;
+}
+
 if (eval { require JSON }) {
     print JSON::to_json($info)."\n";
 }
