@@ -3,16 +3,26 @@
 use strict;
 use warnings;
 
-my $KEY = $ENV{KEY} or die "ENV KEY must be set to make changes.\n";
+my $KEY = $ENV{KEY} or die localtime().": $0: NO KEY? Commandline Execution Worked!\n";
+my $ip = $ENV{SSH_CLIENT} && $ENV{SSH_CLIENT} =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
 my $r = "\x01"; # enable bit 2^(fileno STDIN)
-die "$0: Commandline Execution Worked!\n" if !select $r, undef, undef, 0.2;
+die localtime().": [$KEY\@$ip] git-server: NO pre-receive STDIN? Commandline Execution Worked!\n" if !select $r, undef, undef, 0.2;
+$SIG{__DIE__} = sub {
+    my $why = shift;
+    $why =~ s/\s*$/\n/;
+    ipclog("  CRASH: $why");
+    warn $why;
+    exit 1;
+};
 while (my $push_info = <STDIN>) {
-    my ($old,$new,$ref) = $push_info =~ m{^(\w+) (\w+) ([\w/\.\-]+)} or die "$0: Invalid syntax!\n";
-    die "$0: Ref Implementation Fatality\n" unless $ref;
-    my $ip = $ENV{SSH_CLIENT} =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
+    my ($old,$new,$ref) = $push_info =~ m{^(\w+) (\w+) ([\w/\.\-]+)} or die localtime().": [$KEY\@$ip] git-server: Invalid pre-receive STDIN!\n";
+    die localtime().": [$KEY\@$ip] git-server: Invalid pre-receive ref!\n" unless $ref;
     my $branch = ($ref =~ m{^refs/(?:heads|tags)/(.+)} || $ref =~ m{.*/([^/]+)}) ? $1 : $ref;
     my $type = ($ref =~ m{^refs/tags/}) ? "tag" : "branch";
-    ipclog("BRANCH:$branch\n  OLD:$old\n  NEW:$new\n  TYPE:$type\n");
+    ipclog("BRANCH:$branch");
+    ipclog("  OLD:$old");
+    ipclog("  NEW:$new");
+    ipclog("  TYPE:$type");
     my $conf = `git config --list`;
     my $allowed_users = {};
     while ($conf =~ s/^restrictedbranch\.(.+)\.pushers=(.+)$//m) {
@@ -53,6 +63,7 @@ while (my $push_info = <STDIN>) {
     }
     my $can_change_history = !%$rewrite_users || $rewrite_users->{$KEY};
     if ($old =~ /^0+$/) {
+        ipclog("  FORCE:0");
         if ($can_change_history) {
             warn localtime().": [$KEY\@$ip] git-server: Creating new $type [$branch]\n";
         }
@@ -61,9 +72,10 @@ while (my $push_info = <STDIN>) {
         }
     }
     elsif ($new =~ /^0+$/) {
+        ipclog("  FORCE:1");
         if ($can_change_history) {
             if ($type eq "tag") {
-                warn localtime().": [$KEY\@$ip] git-server: Deleting tag $type [$branch] from [$old]\n";
+                warn localtime().": [$KEY\@$ip] git-server: Deleting tag [$branch] from [$old]\n";
             }
             else {
                 warn localtime().": [$KEY\@$ip] git-server: DANGER! Pruning entire branch [$branch] from [$old]!\n";
@@ -79,6 +91,7 @@ while (my $push_info = <STDIN>) {
         }
     }
     elsif ($type eq "tag") {
+        ipclog("  FORCE:1");
         if ($can_change_history) {
             warn localtime().": [$KEY\@$ip] git-server: FORCE moving existing $type [$branch] from $old to $new\n";
         }
@@ -88,11 +101,11 @@ while (my $push_info = <STDIN>) {
     }
     elsif (`git log $new -- 2>&1 | grep '^commit $old'`) {
         #warn localtime().": [$KEY\@$ip] git-server: Pushing $new changes to $type [$branch] tip without --force\n";
-        ipclog("  FORCE:0\n");
+        ipclog("  FORCE:0");
     }
     else {
         # MUST HAVE USED: git push --force
-        ipclog("  FORCE:1\n");
+        ipclog("  FORCE:1");
         if ($can_change_history) {
             my $tip_hashes = `git show-ref 2>&1`;
             $tip_hashes =~ s{ refs/\w+/}{ }g;
