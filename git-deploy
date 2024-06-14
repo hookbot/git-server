@@ -78,6 +78,8 @@ for each push notification.
 This is useful when you want to immediately release a previously
 deploying fetch and force pull updates from commandline without
 hanging the console waiting two hours until the next git push.
+Note that for this to work, the git ssh server must have
+"AcceptEnv XMODIFIERS" enabled in the sshd_config.
 By default, max-delay is 7200 seconds (or 2 hours).
 
   Example: git deploy --max-delay 10
