@@ -14,25 +14,31 @@ instantly after a push is triggered.
 
 =head1 SYNOPSIS
 
-  git deploy [ { --chdir | -C } <dir> ] [ --build <command> ] [ --fix-nasty ] [ --background ] [ <branch> ]
+  git deploy
+    [ { --chdir | -C } <dir> ]
+    [ --build <command> ]
+    [ --fix-nasty ]
+    [ --background ]
+    [ --max-delay <seconds> ]
+    [ <branch> ]
 
 =head2 branch
 
 If a <branch> is specified, then it will update to that branch.
 By default, the current branch is used.
 
-Example: git deploy master
+  Example: git deploy master
 
 =head2 chdir
 
 Jump to <dir> prior to running "git pull".
 By default, the current directory is used.
 
-Example: git deploy --chdir ~/projectx
+  Example: git deploy --chdir ~/projectx
 
   --OR--
 
-Example: git deploy -C ~/projectx
+  Example: git deploy -C ~/projectx
 
 =head2 build
 
@@ -40,7 +46,7 @@ The --build argument is any command you want to execute
 after any files are pulled or updated from git.
 By default, no command is run.
 
-Example: git deploy --build='make -C src/.'
+  Example: git deploy --build='make -C src/.'
 
 =head2 fix-nasty
 
@@ -49,7 +55,7 @@ SSH host entry for the git server from known_hosts. Only use this
 flag if you've changed the SSH server key on the git server host.
 By default, this option is disabled for better security.
 
-Example: git deploy --fix-nasty
+  Example: git deploy --fix-nasty
 
 =head2 background
 
@@ -59,7 +65,17 @@ This is useful when invoked from a cron
 since there is nobody around to see the output anyways.
 By default, this option is disabled so runs in the foreground.
 
-Example: echo '7 * * * * git deploy --chdir ~/projectz --background' | crontab -
+  Example: echo '7 * * * * git deploy --chdir ~/projectz --background' | crontab -
+
+=head2 max-delay
+
+The --max-delay specifies the maximum number of seconds to wait
+for each push notification.
+This is useful when you want to force pull updates from commandline
+without hanging the console until the next git push.
+By default, max-delay is 7200 seconds (or 2 hours).
+
+  Example: git deploy --max-delay 10
 
 =head1 INSTALL
 
@@ -96,15 +112,17 @@ our $VERSION = "0.018";
 
 my @invoked = ($0, @ARGV);
 my $cwd = getcwd();
-my $chdir = undef;
 my $build = undef;
+my $chdir = undef;
 my $fix_nasty = undef;
 my $background = undef;
+my $maxpatience = undef;
 GetOptions
-    "chdir|C:s" => \$chdir,
     "build:s" => \$build,
+    "chdir|C:s" => \$chdir,
     "fix-nasty" => \$fix_nasty,
     "background" => \$background,
+    "max-delay:i" => \$maxpatience,
     or exec perldoc => $0;
 
 sub run_how_cmd {
@@ -168,6 +186,12 @@ if ($background) {
     close STDOUT;
     close STDERR;
 }
+
+if ($maxpatience) {
+    $ENV{GIT_SSH_COMMAND} = "ssh -o SendEnv=XMODIFIERS";
+    $ENV{XMODIFIERS} = "deploy_patience=$maxpatience";
+}
+
 while (1) {
     $0 = "$Script - $cwd: Waiting for push notification ...";
     my $update = "";
