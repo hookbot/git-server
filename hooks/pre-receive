@@ -19,10 +19,10 @@ while (my $push_info = <STDIN>) {
     die localtime().": [$KEY\@$ip] git-server: Invalid pre-receive ref!\n" unless $ref;
     my $branch = ($ref =~ m{^refs/(?:heads|tags)/(.+)} || $ref =~ m{.*/([^/]+)}) ? $1 : $ref;
     my $type = ($ref =~ m{^refs/tags/}) ? "tag" : "branch";
-    ipclog("BRANCH:$branch");
+    ipclog("REF:$branch");
+    ipclog("  TYPE:$type");
     ipclog("  OLD:$old");
     ipclog("  NEW:$new");
-    ipclog("  TYPE:$type");
     my $conf = `git config --list`;
     my $allowed_users = {};
     while ($conf =~ s/^restrictedbranch\.(.+)\.pushers=(.+)$//m) {
