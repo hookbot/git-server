@@ -83,14 +83,12 @@ Otherwise, the git write operation will be aborted.
 
 =head2 hooks/post-write
 
-Same as hooks/post-read except for write operations.
-
 If the Environment variable GIT_PRE_EXIT_STATUS is defined,
 then post-write will know that the pre-write ran,
 and its exit status will be available in this variable.
 If it does not exist, then pre-write never ran.
 If the Environment variable GIT_EXIT_STATUS is defined,
-then post-read will know that the git operation ran,
+then post-write will know that the git operation ran,
 and its exit status will be this variable.
 If it does not exist, then the git operation never ran.
 
