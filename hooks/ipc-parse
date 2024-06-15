@@ -13,6 +13,47 @@ sub crash {
     die "$0: $err_message\n";
 }
 
+# Find nearest common hash
+my $memoize_parent_of = {};
+sub parent_of {
+    my $new = shift;
+    return $memoize_parent_of->{$new} if defined $memoize_parent_of->{$new};
+    chomp (my $dad = `git rev-parse $new~1 2>/dev/null`);
+    if (!$dad or $dad =~ /~/) {
+        return $memoize_parent_of->{$new} = "";
+    }
+    return $memoize_parent_of->{$new} = $dad;
+}
+
+sub get_fork_hash {
+    my $new = shift;
+    my @revs = ($new, @_);
+    my $seen = { map {$_ => $_} @revs };
+    while (@revs) {
+        my @prevs = ();
+        foreach my $rev (@revs) {
+            my $tip = $seen->{$rev} or crash "Implementation Fatality! Missing seen value for rev=[$rev] ?\n";
+            my $prev = parent_of($rev);
+            if (!$prev) {
+                #warn "FOUND GENESIS COMMIT [$rev]\n";
+                next;
+            }
+            push @prevs, $prev;
+            if (my $common_tip = $seen->{$prev}) {
+                # Found first occurence of common hash
+                my $old = $common_tip eq $new ? $tip : $common_tip;
+                return { common => $prev, old => $old };
+            }
+            $seen->{$prev} = $tip;
+        }
+        @revs = @prevs;
+    }
+    return {
+        common => ("0" x length $new),
+        old  => ("0" x length $new),
+    };
+}
+
 my $ipc = $ENV{IPC} || shift or crash "Not invoked properly from git hooks.";
 
 open my $fh, "<", "$ipc/log.trace" or crash "$ipc/log.trace: Unable to read IPC info file? $!";
@@ -202,11 +243,13 @@ if ($info->{success}) {
                 $refname =~ s/^refs\/heads\/// ? "branch" : "";
             if ($type) {
                 foreach my $hash (@$hashes) {
-                    # XXX: Do we need to look in @$have to compute the "old" hash?
+                    # Look up old hash based on @$have hashes.
+                    my $scan = get_fork_hash($hash, @$have) || {};
                     push @$refs, {
                         ref => $refname,
                         type => $type,
                         new => $hash,
+                        %$scan,
                     };
                 }
             }
