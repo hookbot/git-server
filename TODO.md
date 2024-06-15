@@ -3,6 +3,10 @@ TODO
 
 Some features we need or want, plus some neat ideas that may not be too feasible to implement.
 
+ - Fix Agent sniffer to work even if in the middle of a command string
+
+ - Get rid of all XMODIFIERS hacks, and use "-o" instead.
+
  - Optimize ipc-parse so it's not so slow with large git I/O, such as git clone or a large push.
 
  - Once "post" method is sure to run, then move logger step from "pre" to "post".
