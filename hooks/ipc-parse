@@ -29,6 +29,12 @@ if ($log =~ s/[\s\S]*?^(.*?execve.*git-shell.* = 0)//m) {
     }
 }
 
+if (!defined $ENV{GIT_EXIT_STATUS}) {
+    while ($log =~ s/^.*\+\+\+ exited with (\d+) \+\+\+\s*$//m) {
+        $ENV{GIT_EXIT_STATUS} = $1;
+    }
+}
+
 my $ssh = $ENV{SSH_CONNECTION} or crash "Only SSH supported";
 my $KEY = $ENV{KEY} || "UNKNOWN";
 my ($ip, $remote_port, $local_ip, $local_port) = split /\ +/, $ssh;
