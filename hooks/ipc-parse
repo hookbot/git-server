@@ -209,7 +209,33 @@ if ($info->{success}) {
             push @$refs, $ref if keys %$ref;
         }
         else {
-            warn "pushinfo.log: MISSING? $!\n";
+            warn "The push operation didn't actually push anything.\n";
+        }
+        foreach my $ref (@$refs) {
+            if (my $new = $ref->{new} and
+                my $old = $ref->{old} and
+                !$ref->{common}) {
+                my $scan = get_fork_hash($new, $old);
+                if (my $common = $scan->{common}) {
+                    if (my $tip = $scan->{old}) {
+                        if ($tip eq $old) {
+                            $ref->{common} = $common;
+                        }
+                        else {
+                            warn "BUG! $old => $new found tip $tip?\n";
+                        }
+                    }
+                    else {
+                        warn "BUG! Unable to find any tip for old $old to new $new?\n";
+                    }
+                }
+                else {
+                    warn "BUG! Unable to calculate nearest common parent for old $old to new $new?\n";
+                }
+            }
+            else {
+                warn "BUG! Found strange push ref without valid {old} and {new} elements?\n";
+            }
         }
     }
     else {
