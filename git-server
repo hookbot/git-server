@@ -67,8 +67,8 @@ If it does not exist, then the git operation never ran.
 
 This post-read hook will always be executed regardless
 of the exit statuses of pre-read or the git operation.
-The post-read hook cannot be used to block the git operation
-since it's already completed, thus the exit status is ignored.
+The post-read hook is meant primarily for notification
+and cannot affect the outcome of the git operation.
 
 =head2 hooks/pre-write
 
@@ -96,8 +96,8 @@ If it does not exist, then the git operation never ran.
 
 This post-write hook will always be executed regardless
 of the exit statuses of pre-write or the git operation.
-The post-write hook cannot be used to block the git operation
-since it's already completed, thus the exit status is ignored.
+The post-write hook is meant primarily for notification
+and cannot affect the outcome of the git operation.
 
 =head2 hooks/git-shell
 
