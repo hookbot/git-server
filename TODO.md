@@ -3,9 +3,9 @@ TODO
 
 Some features we need or want, plus some neat ideas that may not be too feasible to implement.
 
- - Get rid of all XMODIFIERS hacks, and use "-o" instead.
-
  - Optimize ipc-parse so it's not so slow with large git I/O, such as git clone or a large push.
+
+ - Make git-client intercept "-o" commandline options and convert to XMODIFIERS method so the server will be able to see the options from the very beginning.
 
  - Once "post" method is sure to run, then move logger step from "pre" to "post".
 
@@ -81,8 +81,20 @@ Some features we need or want, plus some neat ideas that may not be too feasible
      : commit hash
      : author name
      : author email
-     : subject of commit excuse reason, i.e., (my $squish = `git show -s --format=%s 665bd34 `)=~s{\s+}{ }g; $squish =~ s/\s+$//m; $squish =~ s<^(.{80}).{3,}><$1...>s;
+     : subject of commit excuse reason, i.e., (my $squish = `git show -s --format=\%s 665bd34 `)=~s{\s+}{ }g; $squish =~ s/\s+$//m; $squish =~ s<^(.{80}).{3,}><$1...>s;
      : files added
      : files modified
      : files removed
    * provide files affected for each commit
+
+ - Get rid of all XMODIFIERS hacks, and use "-o" instead?
+   WHOOPS! It seems the "-o" option can NOT be caught unless something is modified.
+   The "git pull" needs to actually download something for the "-o" to work.
+   The "git push" needs to actually push something for the "-o" to work.
+   The "-o" more-supported method is not as general as the XMODIFIERS hack method.
+   Maybe it's not feasible to use the "-o" for what I was hoping. So what?
+   Why would the server need to read the "-o" option anyways if nothing changed?
+   #1. For push and pull, the DEBUG flag is used to provide extra info to the client,
+   which currently still works even if nothing is modified.
+   #2. For pull, the deploy_patience setting is used in the pre-hook handler,
+   which is impossible to obtain "-o" settings that early in the process.
