@@ -206,7 +206,7 @@ die localtime().": [$KEY\@$ip] git-server: Unable to create [$ENV{IPC}] folder! 
 my $xmods = $ENV{XMODIFIERS} || "";
 if ($xmods =~ /\bDEBUG\s*=\s*([^,]*)/i) {
     my $debug = $1;
-    $ENV{XDEBUG} =
+    $ENV{DEBUG} =
         $debug =~ /^(?:|0|off|false)$/i ? 0 :
         $debug =~ /^(\d+)$/ ? $1 : 1;
 }
@@ -235,7 +235,7 @@ if (-x "$dir/hooks/post-$hook") {
 }
 
 # Wipe out anything in the IPC folder
-system "rm -rfv $ENV{IPC}*" if $ENV{IPC} and !$ENV{XDEBUG};
+system "rm -rfv $ENV{IPC}*" if $ENV{IPC} and !$ENV{DEBUG};
 rmdir $tmpdir; # Only clear if empty
 
 exit $git_failure;
