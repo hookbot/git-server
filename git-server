@@ -234,8 +234,16 @@ if (-x "$dir/hooks/post-$hook") {
     }
 }
 
-# Wipe out anything in the IPC folder
-system "rm -rfv $ENV{IPC}*" if $ENV{IPC} and !$ENV{DEBUG};
+if ($ENV{IPC}) {
+    if ($ENV{DEBUG}) {
+        warn localtime().": [$KEY\@$ip] git-server: DEBUG: Leaving $ENV{IPC} in tact\n";
+    }
+    else {
+        # Wipe out anything in the IPC folder
+        system "rm -rf $ENV{IPC}*";
+    }
+}
+
 rmdir $tmpdir; # Only clear if empty
 
 exit $git_failure;
