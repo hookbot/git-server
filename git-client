@@ -56,6 +56,29 @@ use Cwd qw(abs_path);
 
 our $VERSION = "0.019";
 
+if (@ARGV and $ARGV[0] =~ /^(clone|fetch|pull|push)$/) {
+    # Need to search for special "-o" options
+    my $op = $1;
+    my @options = ();
+    for (my $i = 1; $i < @ARGV; $i++) {
+        my $pre = $ARGV[$i-1];
+        my $option = $ARGV[$i];
+        if ($option =~ /^(--server-option|--push-option)=(.*)$/) {
+            splice(@ARGV, $i, 1, $1, $2);
+            next;
+        }
+        next if $op eq "clone" and $pre eq "-o"; # Don't brick the "-o" origin param for clone
+        if ($pre =~ /^(-o|--(server|push)-option)$/) {
+            push @options, $option;
+        }
+    }
+    push @options, $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
+    if (@options) {
+        $ENV{XMODIFIERS} = join "\n", @options;
+        $ENV{GIT_SSH_COMMAND} = "ssh -o SendEnv=XMODIFIERS";
+    }
+}
+
 my $myself = (stat $0)[1] or die "$0: Can't find my inode?\n";
 my $real_git = "/usr/bin/git";
 foreach my $path (split /:/,$ENV{PATH}) {
