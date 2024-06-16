@@ -203,6 +203,14 @@ $ENV{IPC} = "$tmpdir/current-$hook-$$-io";
 mkdir $ENV{IPC}, 0700;
 die localtime().": [$KEY\@$ip] git-server: Unable to create [$ENV{IPC}] folder! $!\n" unless -d $ENV{IPC};
 
+my $xmods = $ENV{XMODIFIERS} || "";
+if ($xmods =~ /\bDEBUG\s*=\s*([^,]*)/i) {
+    my $debug = $1;
+    $ENV{XDEBUG} =
+        $debug =~ /^(?:|0|off|false)$/i ? 0 :
+        $debug =~ /^(\d+)$/ ? $1 : 1;
+}
+
 my $pre_failure = 0;
 if (-x "$dir/hooks/pre-$hook") {
     if ($pre_failure = spawn($dir, "hooks/pre-$hook")) {
@@ -227,8 +235,7 @@ if (-x "$dir/hooks/post-$hook") {
 }
 
 # Wipe out anything in the IPC folder
-system "rm -rfv $ENV{IPC}*" if $ENV{IPC};
-#unlink glob "$ENV{IPC}/*"; rmdir $ENV{IPC};
+system "rm -rfv $ENV{IPC}*" if $ENV{IPC} and !$ENV{XDEBUG};
 rmdir $tmpdir; # Only clear if empty
 
 exit $git_failure;
