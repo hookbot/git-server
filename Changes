@@ -1,5 +1,27 @@
 Revision History for git-server
 
+0.018  2024-06-16 15:00:00
+ - SECURITY FIX: Prevent client from bypassing
+   restrictedbranch.forcers ACLs.
+ - Fixed strace log octal binary decoding.
+ - Provive IPC ENV for pre hooks as well.
+ - Always run post-* hook, even if pre-* hook fails.
+ - Extract WebHook HTTP Status for post-action.
+ - Fix rebase --abort syntax.
+ - Reduce max processes by losing the "sh -c ..."
+   intermediary middle sandwich process.
+ - Add "git deploy --branch" option.
+ - Add "git deploy --chdir" feature.
+ - Add "git deploy --max-delay" feature.
+ - Add "git deploy --background" option.
+ - Provide push branch info for IPC parser.
+ - Include old and new commit IDs and branch in webhook.
+ - Provide the {common} commit ID where the new
+   git branch was forked from.
+ - Honor GIT_EXIT_STATUS when replaying ipc-parse.
+ - Fixed git agent version sniffer regex.
+ - Update documentation.
+
 0.017  2024-06-07 09:00:00
  - Allow multiple git-deploy to run in parallel.
  - Allow git-server to override git-shell.
