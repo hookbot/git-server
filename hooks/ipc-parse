@@ -217,6 +217,16 @@ if ($info->{success}) {
             if (my $new = $ref->{new} and
                 my $old = $ref->{old} and
                 !$ref->{common}) {
+                if ($old =~ /^0+$/) {
+                    delete $ref->{old};
+                    $ref->{created} = 1;
+                    next;
+                }
+                if ($new =~ /^0+$/) {
+                    delete $ref->{new};
+                    $ref->{deleted} = 1;
+                    next;
+                }
                 my $scan = get_fork_hash($new, $old);
                 if (my $common = $scan->{common}) {
                     if (my $tip = $scan->{old}) {
