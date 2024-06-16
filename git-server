@@ -161,7 +161,22 @@ else {
 my $KEY = $ENV{KEY} || "UNKNOWN";
 my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
 die localtime().": [$KEY\@$ip] git-server: You don't have shell access!\n" unless $cmd;
-warn localtime().": [$KEY\@$ip] git-server: Detected XMODIFIERS [$ENV{XMODIFIERS}]\n" if $ENV{XMODIFIERS};
+my $xmods = $ENV{XMODIFIERS} || "";
+if ($xmods) {
+    $xmods =~ s/(^\s*|\s*$)//g;
+    if ($xmods =~ /\bDEBUG\s*=\s*([^,]*)/i) {
+        my $debug = $1;
+        $ENV{DEBUG} =
+            $debug =~ /^(?:|0|off|false)$/i ? 0 :
+            $debug =~ /^(\d+)$/ ? $1 : 1;
+    }
+    my @options = split /\n/, $xmods;
+    $ENV{GIT_OPTION_COUNT} = scalar @options;
+    for (my $i = 0; $i < @options; $i++) {
+        $ENV{"GIT_OPTION_$i"} = $options[$i];
+        warn localtime().": [$KEY\@$ip] git-server: Transported GIT_OPTION_$i=[$options[$i]]\n";
+    }
+}
 
 my $dir = undef;
 my $hook = undef;
@@ -212,14 +227,6 @@ mkdir $tmpdir, 0700 unless -d $tmpdir;
 $ENV{IPC} = "$tmpdir/current-$hook-$$-io";
 mkdir $ENV{IPC}, 0700;
 die localtime().": [$KEY\@$ip] git-server: Unable to create [$ENV{IPC}] folder! $!\n" unless -d $ENV{IPC};
-
-my $xmods = $ENV{XMODIFIERS} || "";
-if ($xmods =~ /\bDEBUG\s*=\s*([^,]*)/i) {
-    my $debug = $1;
-    $ENV{DEBUG} =
-        $debug =~ /^(?:|0|off|false)$/i ? 0 :
-        $debug =~ /^(\d+)$/ ? $1 : 1;
-}
 
 my $pre_failure = 0;
 if (-x "$dir/hooks/pre-$hook") {
