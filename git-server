@@ -161,22 +161,6 @@ else {
 my $KEY = $ENV{KEY} || "UNKNOWN";
 my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
 die localtime().": [$KEY\@$ip] git-server: You don't have shell access!\n" unless $cmd;
-my $xmods = $ENV{XMODIFIERS} || "";
-if ($xmods) {
-    $xmods =~ s/(^\s*|\s*$)//g;
-    if ($xmods =~ /\bDEBUG\s*=\s*([^,]*)/i) {
-        my $debug = $1;
-        $ENV{DEBUG} =
-            $debug =~ /^(?:|0|off|false)$/i ? 0 :
-            $debug =~ /^(\d+)$/ ? $1 : 1;
-    }
-    my @options = split /\n/, $xmods;
-    $ENV{GIT_OPTION_COUNT} = scalar @options;
-    for (my $i = 0; $i < @options; $i++) {
-        $ENV{"GIT_OPTION_$i"} = $options[$i];
-        warn localtime().": [$KEY\@$ip] git-server: Transported GIT_OPTION_$i=[$options[$i]]\n";
-    }
-}
 
 my $dir = undef;
 my $hook = undef;
@@ -218,6 +202,22 @@ if ($0 =~ m{/git-server$}) {
         warn localtime().": [$KEY\@$ip] git-server: Respawning via override $override\n";
         delete $ENV{GIT_DIR};
         exec $override, -c => $cmd;
+    }
+}
+my $xmods = $ENV{XMODIFIERS} || "";
+if ($xmods) {
+    $xmods =~ s/(^\s*|\s*$)//g;
+    if ($xmods =~ /\bDEBUG\s*=\s*([^,]*)/i) {
+        my $debug = $1;
+        $ENV{DEBUG} =
+            $debug =~ /^(?:|0|off|false)$/i ? 0 :
+            $debug =~ /^(\d+)$/ ? $1 : 1;
+    }
+    my @options = split /\n/, $xmods;
+    $ENV{GIT_OPTION_COUNT} = scalar @options;
+    for (my $i = 0; $i < @options; $i++) {
+        $ENV{"GIT_OPTION_$i"} = $options[$i];
+        warn localtime().": [$KEY\@$ip] git-server: Transported GIT_OPTION_$i=[$options[$i]]\n";
     }
 }
 
