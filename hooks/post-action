@@ -7,7 +7,7 @@ if (!$ENV{DEBUG}) {
     open STDIN,  "</dev/null";
     open STDOUT, ">/dev/null";
     open STDERR, ">/dev/null";
-    exit if fork;
+    exit 0 if fork;
 }
 my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
 my $KEY = $ENV{KEY} || "UNKNOWN";
