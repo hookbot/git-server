@@ -115,7 +115,7 @@ use Cwd qw(getcwd);
 use FindBin qw($Script $Bin);
 use Getopt::Long qw(GetOptions);
 
-our $VERSION = "0.019";
+our $VERSION = "0.020";
 
 my @invoked = ($0, @ARGV);
 my $cwd = getcwd();
