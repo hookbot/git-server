@@ -3,13 +3,9 @@ TODO
 
 Some features we need or want, plus some neat ideas that may not be too feasible to implement.
 
- - Optimize ipc-parse so it's not so slow with large git I/O, such as git clone or a large push.
-
- - Make git-client intercept "-o" commandline options and convert to XMODIFIERS method so the server will be able to see the options from the very beginning.
+ - Make exact RegEx branch ref match stronger than one with a "*" for pushers and forcers directive.
 
  - Once "post" method is sure to run, then move logger step from "pre" to "post".
-
- - Background webhook so the git client doesn't have to wait around (unless DEBUG).
 
  - Make sure ipc-parse can determine if action was actually performed or else the reason of why not.
 
@@ -65,11 +61,7 @@ Some features we need or want, plus some neat ideas that may not be too feasible
      : When certain files are affected (tricky for pull reads)
      : When certain strings exist in any of the commit comments being pushed. (Tricky for pull reads.)
    * provide failover queue retry mechanism fibinacci backoff until remote webhook server returns 2xx or 3xx status.
-   * provide Git Server Version
-   * provide Git Client Version (man-in-the-middle sniff)
-   * provide user KEY doing the pulling or pushing (and pubkey?)
    * provide epoch time stamp of client connection.
-   * provide IPv4 or IPv6 Address of client connecting.
    * provide type of reference pushing ("tag" or "branch").
    * provide branch or tag affected by push or pull operation.
    * provide PREV commit hash for the tag or branch
