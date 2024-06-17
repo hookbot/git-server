@@ -1,5 +1,15 @@
 Revision History for git-server
 
+0.019  2024-06-16 20:00:00
+ - Populate GIT_OPTION_* environment variables for
+   "pre" hooks on server when "-o" option is
+   used with the git-client wrapper.
+ - Set env DEBUG when in DEBUG mode.
+ - Keep IPC folder if DEBUG mode is enabled.
+ - OPTIMIZATION: Use exec in "post" hooks.
+ - OPTIMIZATION: Background "post" hook.
+ - Add hooks/git-server-override feature to debug.
+
 0.018  2024-06-16 15:00:00
  - SECURITY FIX: Prevent client from bypassing
    restrictedbranch.forcers ACLs.
