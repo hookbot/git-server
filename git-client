@@ -17,13 +17,21 @@ instead of only looking at ~/.gitconfig
 Just make sure this program comes BEFORE the
 real "git" program in the PATH.
 
-For example, you could do this as super user:
+For example, as super user, you could do this:
 
   [root@deploy-host ~]# wget https://raw.githubusercontent.com/hookbot/git-server/master/git-client
   [root@deploy-host ~]# chmod 755 git-client
   [root@deploy-host ~]# mv -i git-client /usr/local/bin/git
   [root@deploy-host ~]#
 
+Or as normal user, you could do this:
+
+  [root@deploy-host ~]$ wget https://raw.githubusercontent.com/hookbot/git-server/master/git-client
+  [root@deploy-host ~]$ chmod 755 git-client
+  [root@deploy-host ~]$ mkdir -p ~/bin
+  [root@deploy-host ~]$ mv -i git-client ~/bin/git
+  [root@deploy-host ~]$ grep 'PATH=$HOME/bin' ~/.bash_profile || echo 'export PATH=$HOME/bin:$PATH' | tee -a ~/.bash_profile
+  [root@deploy-host ~]$
 
 =head1 SYNOPSIS
 
@@ -56,6 +64,22 @@ use Cwd qw(abs_path);
 
 our $VERSION = "0.020";
 
+if ($0 !~ m{/git$}) {
+    my $recommend = "";
+    if ($0 =~ m{^(.*)/([^/]+)$}) {
+        my $bin = $1;
+        my $name = $2;
+        my ($first) = split /:/, $ENV{PATH};
+        foreach my $try (qw($first,"/usr/local/bin",$bin)) {
+            if (!-s "$try/git") {
+                warn qq{$0: WARNING! Not running as "git"? Recommended fix "sudo mv -i $0 $try/git"\n};
+                $recommend = $try;
+                last;
+            }
+        }
+    }
+    warn qq{$0: Warning: Not running as "git" as was intended. Rename to "git" to suppress this warning.\n} unless $recommend;
+}
 if (@ARGV and $ARGV[0] =~ /^(clone|fetch|pull|push)$/) {
     # Need to search for special "-o" options
     my $op = $1;
@@ -112,4 +136,4 @@ while (1) {
     }
 }
 
-exec $real_git, @ARGV unless $ENV{GIT_SCANNER_WRAPPER}++;
+exec $real_git, @ARGV unless $ENV{GIT_CLIENT_SCANNER}++;
