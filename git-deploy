@@ -17,12 +17,13 @@ instantly after a push is triggered.
   git deploy
     [ [--branch] <branch> ]
     [ { --chdir | -C } <dir> ]
+    [ -O <option> ]
     [ --build <command> ]
     [ --fix-nasty ]
     [ --background ]
     [ --max-delay <seconds> ]
 
-=head2 branch
+=head2 --branch <branch>
 
 If a <branch> is specified, then it will update to that branch.
 By default, the current branch is used.
@@ -33,7 +34,7 @@ By default, the current branch is used.
 
   Example: git deploy master
 
-=head2 chdir
+=head2 --chdir <dir>
 
 Jump to <dir> prior to running "git pull".
 By default, the current directory is used.
@@ -44,7 +45,16 @@ By default, the current directory is used.
 
   Example: git deploy -C ~/projectx
 
-=head2 build
+=head2 -O <OPTION>
+
+This -O may be used multiple times from commandline
+in order to pass multiple options to the server hooks.
+This has the same functionality as "git-client -O <OPTION>".
+Populates GIT_OPTION_* environment variables on server side.
+These ENV settings will be available to all the server side
+hooks, including the pre-* hooks.
+
+=head2 --build <COMMAND>
 
 The --build argument is any command you want to execute
 after any files are pulled or updated from git.
@@ -52,7 +62,7 @@ By default, no command is run.
 
   Example: git deploy --build='make -C src/.'
 
-=head2 fix-nasty
+=head2 --fix-nasty
 
 The --fix-nasty argument will automatically remove the offending
 SSH host entry for the git server from known_hosts. Only use this
@@ -61,7 +71,7 @@ By default, this option is disabled for better security.
 
   Example: git deploy --fix-nasty
 
-=head2 background
+=head2 --background
 
 The --background option will cause the deploy process to detach
 from its invoker and run in the background.
@@ -71,15 +81,13 @@ By default, this option is disabled so runs in the foreground.
 
   Example: echo '7 * * * * git deploy --chdir ~/projectz --background' | crontab -
 
-=head2 max-delay
+=head2 --max-delay <seconds>
 
 The --max-delay specifies the maximum number of seconds to wait
 for each push notification.
 This is useful when you want to immediately release a previously
 deploying fetch and force pull updates from commandline without
 hanging the console waiting two hours until the next git push.
-Note that for this to work, the git ssh server must have
-"AcceptEnv XMODIFIERS" enabled in the sshd_config.
 By default, max-delay is 7200 seconds (or 2 hours).
 
   Example: git deploy --max-delay 10
@@ -119,6 +127,7 @@ our $VERSION = "0.020";
 
 my @invoked = ($0, @ARGV);
 my $cwd = getcwd();
+my $opts = [];
 my $build = undef;
 my $branch = undef;
 my $chdir = undef;
@@ -126,6 +135,7 @@ my $fix_nasty = undef;
 my $background = undef;
 my $maxpatience = undef;
 GetOptions
+    "O|o:s" => \$opts,
     "build:s" => \$build,
     "branch:s" => \$branch,
     "chdir|C:s" => \$chdir,
@@ -178,6 +188,14 @@ if ($branch and @ARGV) {
 }
 
 chdir $chdir if $chdir;
+
+if (@$opts) {
+    push @$opts, $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
+    if (@$opts) {
+        $ENV{XMODIFIERS} = join "\n", @$opts;
+        $ENV{GIT_SSH_COMMAND} = "ssh -o SendEnv=XMODIFIERS";
+    }
+}
 
 $branch ||= shift || eval {
     my $scan = run_output_ignore_err qw(git branch -a);

@@ -8,9 +8,21 @@ git-client - Git Client Wrapper
 
 =head1 DESCRIPTION
 
-Wrapper around the real git to allow
-unlimited .gitconfig descent override
-instead of only looking at ~/.gitconfig
+Wrapper around the real git provide additional functionality.
+
+=head2 GITCONFIG Override
+
+Allows for .gitconfig descent override.
+It will traverse up the parent directories until a .gitconfig
+is found, then it will use that instead of only looking at HOME.
+
+=head2 -O <OPTION>
+
+Populates GIT_OPTION_* environment variables on server side.
+These ENV settings will be available to all the server side
+hooks, including the pre-* hooks.
+Note that for this to work, the git ssh server must have
+"AcceptEnv XMODIFIERS" enabled in its sshd_config.
 
 =head1 INSTALL
 
