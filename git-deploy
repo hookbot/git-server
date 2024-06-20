@@ -174,6 +174,11 @@ sub run_output_include_err {
     return run_how_cmd 1, @_;
 }
 
+sub getps {
+    return run_output_ignore_err qw(ps fauwwx)
+        || run_output_include_err qw(ps auwwx);
+}
+
 sub rebuild {
     if (defined $build) {
         $0 = "$Script - Running build hook ...";
@@ -280,7 +285,7 @@ while (1) {
         my $hard = "";
         $hard .= run_output_include_err "git", "checkout", $branch;
         $hard .= run_output_include_err "git", "reset", "--hard", "origin/$branch";
-        my $running = run_output_include_err qw(ps fauwwx);
+        my $running = getps;
         last if $running =~ /\Q$Script - $cwd\E: Waiting/;
         $0 = "$Script - $cwd: Waiting because of local divergence";
         print run_output_include_err qw(sleep 60);
@@ -289,7 +294,7 @@ while (1) {
         # Rebase can't work if there are local changes.
         # Make sure there aren't multiple pullers choking on the repo
         warn $update;
-        my $running = run_output_include_err "ps", "fauwwx";
+        my $running = getps;
         last if $running =~ /\Q$Script - $cwd\E: Waiting/;
         my $monkey = "";
         $monkey = ": $1" if $update =~ /^M\s+(\S+)/m;
@@ -301,7 +306,7 @@ while (1) {
         warn $update;
         my $broken_lock = $1;
         $0 = "$Script - Choking Locked: $broken_lock";
-        my $running = run_output_ignore_err qw(ps fauwwx);
+        my $running = getps;
         last if $running =~ /\Q$Script - $cwd\E: Waiting/;
         if ($running !~ /git rebase/) {
             # No other conflicting git process running
