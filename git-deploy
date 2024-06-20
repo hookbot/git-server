@@ -187,7 +187,16 @@ if ($branch and @ARGV) {
     exec perldoc => $0 or die "$0: help menu unavailable\n";
 }
 
-chdir $chdir if $chdir;
+if ($chdir) {
+    chdir $chdir;
+    # Relative chdir?
+    if ($chdir =~ /^[^\/]/) {
+        # Clear from args to avoid wrongly double jumping
+        for (my $i = 1; $i < @invoked; $i++) {
+            splice @invoked, --$i, ($2?1:2) if $invoked[$i-1] =~ /^(-C|--chdir)\b(=?).*$/;
+        }
+    }
+}
 
 if (@$opts) {
     push @$opts, $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
