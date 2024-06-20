@@ -87,13 +87,20 @@ if (@ARGV and $ARGV[0] =~ /^(clone|fetch|pull|push)$/) {
     for (my $i = 1; $i < @ARGV; $i++) {
         my $pre = $ARGV[$i-1];
         my $option = $ARGV[$i];
-        if ($option =~ /^(--server-option|--push-option)=(.*)$/) {
-            splice(@ARGV, $i, 1, $1, $2);
+        if ($option =~ /^(--server-option|--push-option)=(.*)$/i) {
+            splice @ARGV, $i, 1, $1, $2;
             next;
         }
-        next if $op eq "clone" and $pre eq "-o"; # Don't brick the "-o" origin param for clone
-        if ($pre =~ /^(-o|--(server|push)-option)$/) {
+        next if $op eq "clone" and $pre eq "-o"; # Don't brick the "-o <origin>" param for git clone
+        if ($pre =~ /^(-o|--(server|push)-option)$/i) {
             push @options, $option;
+            if ($pre eq "-O") {
+                # Special Capital -O means only transport via XMOD
+                # So must strip it from the real commandline.
+                splice @ARGV, $i-1, 2;
+                # Roll back to handle the 2 args that have been wiped.
+                $i-=2;
+            }
         }
     }
     push @options, $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
