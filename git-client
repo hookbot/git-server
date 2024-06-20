@@ -82,7 +82,7 @@ if ($0 !~ m{/git$}) {
         my $bin = $1;
         my $name = $2;
         my ($first) = split /:/, $ENV{PATH};
-        foreach my $try ($first, "usr/local/bin", $bin) {
+        foreach my $try ($first, "/usr/local/bin", $bin) {
             if (!-s "$try/git") {
                 warn qq{$0: WARNING! Not running as "git"? Recommended fix "sudo mv -i $0 $try/git"\n};
                 $recommend = $try;
