@@ -312,7 +312,7 @@ while (1) {
             print run_output_include_err qw(sleep 60);
         }
     }
-    last if $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
+    last if $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|annot rebase|ecent commit/;
     if ($update =~ /Current branch.*is up to date/) {
         $0 = "$Script - $cwd: Waiting because everything is updated ...";
         print "Everything was updated perfectly. Sleeping ...\n";
