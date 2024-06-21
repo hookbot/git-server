@@ -1,5 +1,14 @@
 Revision History for git-server
 
+0.020  2024-06-20 23:00:00
+ - Hint fix if git-client was invoked unexpectedly.
+ - Add -O <OPTION> for git-client and git-deploy.
+ - Add server support for push-options by fixing:
+   ERR: receiving end does not support push options
+ - Continue git-deploy process when local changes.
+ - More compatible "ps" sniffer on non-linux
+   Operating Systems running "git deploy".
+
 0.019  2024-06-16 20:00:00
  - Populate GIT_OPTION_* environment variables for
    "pre" hooks on server when "-o" option is
