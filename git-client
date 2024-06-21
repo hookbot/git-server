@@ -74,7 +74,7 @@ This library is free software; you can redistribute it and/or modify it under th
 use strict;
 use Cwd qw(abs_path);
 
-our $VERSION = "0.020";
+our $VERSION = "0.021";
 
 if ($0 !~ m{/git$}) {
     my $recommend = "";
