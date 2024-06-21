@@ -206,7 +206,8 @@ if ($0 =~ m{/git-server$}) {
 }
 my $xmods = $ENV{XMODIFIERS} || "";
 if ($xmods) {
-    `git config --list 2>/dev/null` =~ /^receive.advertisePushOptions=/im
+    $cmd !~ /^git-receive-pack\b/ or
+        `git config --list 2>/dev/null` =~ /^receive.advertisePushOptions=/im
          or system qw(git config --global receive.advertisePushOptions true);
     $xmods =~ s/(^\s*|\s*$)//g;
     if ($xmods =~ /\bDEBUG\s*=\s*([^,]*)/i) {
