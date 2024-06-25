@@ -17,6 +17,7 @@ instantly after a push is triggered.
   git deploy
     [ [--branch] <branch> ]
     [ { --chdir | -C } <dir> ]
+    [ --umask <umask> ]
     [ -O <option> ]
     [ --build <command> ]
     [ --fix-nasty ]
@@ -44,6 +45,13 @@ By default, the current directory is used.
   --OR--
 
   Example: git deploy -C ~/projectx
+
+=head2 --umask <umask>
+
+Set umask to <umask> in octal representation.
+This is useful when you need to set the umask prior to running any git commands.
+
+  Example: git deploy --umask 0022
 
 =head2 -O <OPTION>
 
@@ -131,12 +139,14 @@ my $opts = [];
 my $build = undef;
 my $branch = undef;
 my $chdir = undef;
+my $umask = undef;
 my $fix_nasty = undef;
 my $background = undef;
 my $maxpatience = undef;
 GetOptions
     "O|o:s" => \$opts,
     "build:s" => \$build,
+    "umask:s" => \$umask,
     "branch:s" => \$branch,
     "chdir|C:s" => \$chdir,
     "fix-nasty" => \$fix_nasty,
@@ -203,6 +213,10 @@ if ($chdir) {
     }
 }
 
+if ($umask and $umask =~ /^(0\d+)$/) {
+    umask eval $1;
+}
+
 if (@$opts) {
     push @$opts, $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
     if (@$opts) {
@@ -220,7 +234,6 @@ $branch ||= shift || eval {
     return $1 if $scan =~ m{^\s+([\w/]+)}m;
 } or die localtime().": [$$] Unable to determine which branch to deploy.\n";
 
-umask 0002;
 $0 = "$Script - Initial checkout";
 run_output_ignore_err "git", "checkout", $branch;
 sleep 1;
