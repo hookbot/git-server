@@ -3,18 +3,25 @@
 use strict;
 use warnings;
 
-if (!$ENV{DEBUG}) {
+pipe(my $rd_wait, my $wr_wake);
+if (!$ENV{DEBUG} and fork) {
+    close $wr_wake;
+    ~~<$rd_wait> and close $rd_wait;
     open STDIN,  "</dev/null";
     open STDOUT, ">/dev/null";
     open STDERR, ">/dev/null";
-    exit 0 if fork;
+    exit 0;
 }
+
 my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
 my $KEY = $ENV{KEY} || "UNKNOWN";
 my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
+close $rd_wait;
 
 if ($ENV{IPC} and my $dir = $ENV{GIT_DIR}) {
     my $info = `$dir/hooks/ipc-parse 2>/dev/null`;
+    print $wr_wake "\n";
+    close $wr_wake;
     $info =~ s/\s*$//;
     my $ref = {};
     if ($info =~ /^\s*\{/) {
