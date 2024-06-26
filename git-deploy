@@ -203,7 +203,7 @@ if ($branch and @ARGV) {
 }
 
 if ($chdir) {
-    chdir $chdir;
+    chdir $chdir or die "chdir: $chdir $!\n";
     # Relative chdir?
     if ($chdir =~ /^[^\/]/) {
         # Clear from args to avoid wrongly double jumping
@@ -211,6 +211,7 @@ if ($chdir) {
             splice @invoked, --$i, ($2?1:2) if $invoked[$i-1] =~ /^(-C|--chdir)\b(=?).*$/;
         }
     }
+    $cwd = getcwd();
 }
 
 if ($umask and $umask =~ /^(0\d+)$/) {
