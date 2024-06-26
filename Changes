@@ -1,5 +1,12 @@
 Revision History for git-server
 
+0.021  2024-06-26 12:00:00
+ - Fix race condition when backgrounding "post" hook.
+ - Fix proctitle mapping when --chdir is used.
+ - Honor umask setting instead of hard-code 0002.
+ - Add --umask option to override umask.
+ - Remove annoying git-client invocation hint.
+
 0.020  2024-06-20 23:00:00
  - Hint fix if git-client was invoked unexpectedly.
  - Add -O <OPTION> for git-client and git-deploy.
