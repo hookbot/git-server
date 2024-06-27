@@ -113,15 +113,6 @@ elsif ($cmd =~ /^git-upload-pack\s/) {
 }
 die "Unrecognized invocation [$cmd]\n" unless $operation;
 
-my $xmods = $ENV{XMODIFIERS} || "";
-my $debug = 0;
-if ($xmods =~ /\bDEBUG\s*=\s*([^,]*)/i) {
-    my $val = $1;
-    if ($val !~ /^(?:|0|off|false)$/i) {
-        $debug = $val =~ /^(\d+)$/ ? $1 : 1;
-    }
-}
-
 my $client_to_server = "";
 my $server_to_client = "";
 my $stderr = "";
@@ -173,8 +164,14 @@ warn "DEBUG: err=[$stderr]\n";
 
 my $info = {};
 
-$info->{xmodifiers} = $xmods if $xmods;
-$info->{debug} = $debug if $debug;
+$info->{debug} = $ENV{DEBUG} if defined $ENV{DEBUG};
+
+$info->{git_client_options} = [];
+if (my $i = $ENV{GIT_OPTION_COUNT}) {
+    while (0<=--$i and my $opt = $ENV{"GIT_OPTION_$i"}) {
+        unshift @{ $info->{git_client_options} }, $opt;
+    }
+}
 
 if ($ENV{USER} and $ENV{HOME} and my $full = $ENV{GIT_DIR}) {
     $full =~ s{^\Q$ENV{HOME}\E/*}{};
