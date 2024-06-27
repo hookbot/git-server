@@ -208,8 +208,8 @@ if ($operation eq "pull" and @$want and !@$have) {
 $info->{client_git_version} = $1 if $client_to_server =~ m{(?:^|\s|\b)agent=([\w/\.\-\(\)]+)};
 $info->{server_git_version} = $1 if $server_to_client =~ m{(?:^|\s|\b)agent=([\w/\.\-\(\)]+)};
 
-$info->{code} = $ENV{GIT_PRE_EXIT_STATUS} || $ENV{GIT_EXIT_STATUS} // -1;
-$info->{SUCCESS} = $info->{code} ? 0 : 1;
+$info->{error_code} = $ENV{GIT_PRE_EXIT_STATUS} || $ENV{GIT_EXIT_STATUS} // -1;
+$info->{SUCCESS} = $info->{error_code} ? 0 : 1;
 $info->{refs} = [];
 
 if ($info->{SUCCESS}) {
