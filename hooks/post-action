@@ -16,12 +16,15 @@ if (!$ENV{DEBUG} and fork) {
 my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
 my $KEY = $ENV{KEY} || "UNKNOWN";
 my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
-close $rd_wait;
 
 if ($ENV{IPC} and my $dir = $ENV{GIT_DIR}) {
     my $info = `$dir/hooks/ipc-parse 2>/dev/null`;
     print $wr_wake "\n";
     close $wr_wake;
+    # To avoid SIGPIPE Crashing, keep reader open until writes are completed.
+    # Leave whatever is in the pipe for the parent to read.
+    # Or if in DEBUG mode, then just throw it away.
+    close $rd_wait;
     $info =~ s/\s*$//;
     my $ref = {};
     if ($info =~ /^\s*\{/) {
