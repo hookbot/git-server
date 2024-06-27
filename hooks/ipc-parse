@@ -152,7 +152,7 @@ my $info = {};
 $info->{xmodifiers} = $xmods if $xmods;
 $info->{debug} = $debug if $debug;
 
-if ($ENV{USER} and $ENV{HOME} and $ENV{GIT_DIR} and my $full = $ENV{GIT_DIR}) {
+if ($ENV{USER} and $ENV{HOME} and my $full = $ENV{GIT_DIR}) {
     $full =~ s{^\Q$ENV{HOME}\E/*}{};
     $full ||= ".";
     $full =~ s/\.git$//;
@@ -297,7 +297,7 @@ if ($info->{success}) {
 }
 
 if (eval { require JSON }) {
-    print JSON::to_json($info)."\n";
+    print JSON->new->canonical->encode($info)."\n";
 }
 elsif (eval { require Data::Dumper }) {
     print Data::Dumper::Dumper($info);
