@@ -313,7 +313,7 @@ while (1) {
         my $monkey = "";
         $monkey = ": $1" if $update =~ /^M\s+(\S+)/m;
         $0 = "$Script - $cwd: Waiting because of local modifications$monkey";
-        print run_output_ignore_err qw(sleep 60);
+        print run_output_ignore_err qw(sleep 10);
     }
     elsif ($update =~ m{fatal: Unable to create '(.+?)': File exists.}) {
         # Updates cannot work while lock file exists
@@ -331,7 +331,8 @@ while (1) {
             print run_output_include_err qw(sleep 60);
         }
     }
-    last if $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|annot rebase|ecent commit/;
+    # Ge out of here if someone is monkeying a local file "error: cannot rebase: You have unstaged changes."
+    last if $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
     if ($update =~ /Current branch.*is up to date/) {
         $0 = "$Script - $cwd: Waiting because everything is updated ...";
         print "Everything was updated perfectly. Sleeping ...\n";
