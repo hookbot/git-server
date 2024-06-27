@@ -62,7 +62,14 @@ if (my $tracefile = "$ipc/log.trace") {
     if (!-r $tracefile) {
         # No log.trace? Conjure up a fake log from the current ENV:
         if (open $fh, ">>", $tracefile) {
-            my $envs = join ", ", map { qq{"$_=$ENV{$_}"} } keys %ENV;
+            my $envs = [];
+            foreach my $key (keys %ENV) {
+                my $val = $ENV{$key};
+                $val =~ s/\\/\\\\/g;
+                $val =~ s/\n/\\n/g;
+                push @$envs, qq{"$key=$val"};
+            }
+            $envs = join ", ", @$envs;
             print $fh qq{12:00:00 execve("fake-run", ["git-shell", "-c", "$ENV{SSH_ORIGINAL_COMMAND}"], [$envs]) = 0\n};
             my $exit_status = $ENV{GIT_PRE_EXIT_STATUS} || $ENV{GIT_EXIT_STATUS} // -1;
             print $fh "22:27:08.618365 +++ exited with $exit_status +++\n";
@@ -77,10 +84,12 @@ if (my $tracefile = "$ipc/log.trace") {
 
 if ($log =~ s/[\s\S]*?^(.*?execve.*git-shell.* = 0)//m) {
     my $launch = $1;
-    $ENV{SSH_ORIGINAL_COMMAND} ||= $1 if $launch =~ s/.*?execve.*\[.*git-shell.*?"-c",\s*"([^\"]+)".*?\],\s*//;
+    $ENV{SSH_ORIGINAL_COMMAND} ||= $1 if $launch =~ s/.*?execve.*?\[.*git-shell.*?"-c",\s*"([^\"]+)".*?\],\s*//;
     while ($launch =~ s/\["([^=\"]+)=([^\"]*)",?\s?/\[/) {
         my $key = $1;
         my $val = $2;
+        $val =~ s/\\n/\n/g;
+        $val =~ s/\\\\/\\/g;
         $ENV{$key} ||= $val;
     }
 }
