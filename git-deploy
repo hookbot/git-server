@@ -214,8 +214,8 @@ if ($chdir) {
     $cwd = getcwd();
 }
 
-if ($umask and $umask =~ /^(0\d+)$/) {
-    umask eval $1;
+if ($umask and $umask =~ /^(\d+)$/) {
+    umask oct $1;
 }
 
 if (@$opts) {
