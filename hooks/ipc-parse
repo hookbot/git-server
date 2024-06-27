@@ -208,11 +208,12 @@ if ($operation eq "pull" and @$want and !@$have) {
 $info->{client_git_version} = $1 if $client_to_server =~ m{(?:^|\s|\b)agent=([\w/\.\-\(\)]+)};
 $info->{server_git_version} = $1 if $server_to_client =~ m{(?:^|\s|\b)agent=([\w/\.\-\(\)]+)};
 
-$info->{error_code} = $ENV{GIT_PRE_EXIT_STATUS} || $ENV{GIT_EXIT_STATUS} // -1;
-$info->{success} = $info->{error_code} ? 0 : 1;
+$info->{code} = $ENV{GIT_PRE_EXIT_STATUS} || $ENV{GIT_EXIT_STATUS} // -1;
+$info->{SUCCESS} = $info->{code} ? 0 : 1;
+$info->{refs} = [];
 
-if ($info->{success}) {
-    my $refs = [];
+if ($info->{SUCCESS}) {
+    my $refs = $info->{refs};
     if ($operation eq "push") {
         # Did the client PUSH anything?
         # Sniff out tags and branches from pushinfo.log
@@ -317,7 +318,6 @@ if ($info->{success}) {
             }
         }
     }
-    $info->{refs} = $refs;
 }
 
 if (eval { require JSON }) {
