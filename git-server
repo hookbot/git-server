@@ -210,7 +210,7 @@ if ($xmods) {
         `git config --list 2>/dev/null` =~ /^receive.advertisePushOptions=/im
          or system qw(git config --global receive.advertisePushOptions true);
     $xmods =~ s/(^\s*|\s*$)//g;
-    if ($xmods =~ /\bDEBUG\s*=\s*([^,]*)/i) {
+    if ($xmods =~ /\bDEBUG\s*=\s*(.[^\,\n]*)/i) {
         my $debug = $1;
         $ENV{DEBUG} =
             $debug =~ /^(?:|0|off|false)$/i ? 0 :
