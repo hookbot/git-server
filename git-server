@@ -249,6 +249,10 @@ if (!$pre_failure) {
 
 my $post_failure = 0;
 if (-x "$dir/hooks/post-$hook") {
+    if ($cmd) {
+        # Restore SSH_ORIGINAL_COMMAND in case the post hook wants it.
+        $ENV{SSH_ORIGINAL_COMMAND} = $cmd;
+    }
     if ($post_failure = spawn($dir, "hooks/post-$hook")) {
         warn "post-$hook: failed! $post_failure\n";
     }
@@ -256,7 +260,7 @@ if (-x "$dir/hooks/post-$hook") {
 
 if ($ENV{IPC}) {
     if ($ENV{DEBUG}) {
-        warn localtime().": [$KEY\@$ip] git-server: DEBUG: Leaving $ENV{IPC} in tact\n";
+        warn localtime().": [$KEY\@$ip] git-server: DEBUG: Leaving $ENV{IPC} intact\n";
     }
     else {
         # Wipe out anything in the IPC folder

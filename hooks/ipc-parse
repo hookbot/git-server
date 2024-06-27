@@ -56,9 +56,24 @@ sub get_fork_hash {
 
 my $ipc = $ENV{IPC} || shift or crash "Not invoked properly from git hooks.";
 
-open my $fh, "<", "$ipc/log.trace" or crash "$ipc/log.trace: Unable to read IPC info file? $!";
-my $log = join "", <$fh>;
-close $fh;
+my $log = "";
+if (my $tracefile = "$ipc/log.trace") {
+    my $fh;
+    if (!-r $tracefile) {
+        # No log.trace? Conjure up a fake log from the current ENV:
+        if (open $fh, ">>", $tracefile) {
+            my $envs = join ", ", map { qq{"$_=$ENV{$_}"} } keys %ENV;
+            print $fh qq{12:00:00 execve("fake-run", ["git-shell", "-c", "$ENV{SSH_ORIGINAL_COMMAND}"], [$envs]) = 0\n};
+            my $exit_status = $ENV{GIT_PRE_EXIT_STATUS} || $ENV{GIT_EXIT_STATUS} // -1;
+            print $fh "22:27:08.618365 +++ exited with $exit_status +++\n";
+            close $fh;
+        }
+    }
+    if (open my $fh, "<", $tracefile) {
+        $log .= join "", <$fh>;
+        close $fh;
+    }
+}
 
 if ($log =~ s/[\s\S]*?^(.*?execve.*git-shell.* = 0)//m) {
     my $launch = $1;
