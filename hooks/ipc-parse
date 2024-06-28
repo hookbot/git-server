@@ -63,7 +63,7 @@ if (my $tracefile = "$ipc/log.trace") {
         # No log.trace? Conjure up a fake log from the current ENV:
         if (open $fh, ">>", $tracefile) {
             my $envs = [];
-            foreach my $key (keys %ENV) {
+            foreach my $key (sort keys %ENV) {
                 my $val = $ENV{$key};
                 $val =~ s/\\/\\\\/g;
                 $val =~ s/\n/\\n/g;
@@ -297,8 +297,8 @@ if ($info->{SUCCESS}) {
                 }
             }
         }
-        foreach my $refname (keys %$want_ref_hash) {
-            my $hashes = [ keys %{ $want_ref_hash->{$refname} } ];
+        foreach my $refname (sort keys %$want_ref_hash) {
+            my $hashes = [ sort keys %{ $want_ref_hash->{$refname} } ];
             my $type = $refname =~ s/^refs\/tags\/// ? "tag" :
                 $refname =~ s/^refs\/heads\/// ? "branch" : "";
             if ($type) {
