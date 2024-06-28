@@ -82,22 +82,50 @@ if (my $tracefile = "$ipc/log.trace") {
     }
 }
 
-if ($log =~ s/[\s\S]*?^(.*?execve.*git-shell.* = 0)//m) {
-    my $launch = $1;
-    $ENV{SSH_ORIGINAL_COMMAND} ||= $1 if $launch =~ s/.*?execve.*?\[.*git-shell.*?"-c",\s*"([^\"]+)".*?\],\s*//;
-    while ($launch =~ s/\["([^=\"]+)=([^\"]*)",?\s?/\[/) {
-        my $key = $1;
-        my $val = $2;
-        $val =~ s/\\n/\n/g;
-        $val =~ s/\\\\/\\/g;
-        $ENV{$key} ||= $val;
+my $client_to_server = "";
+my $server_to_client = "";
+my $stderr = "";
+if (open my $log_fh, "<", \$log) {
+    binmode $log_fh;
+    while (<$log_fh>) {
+        if (/^(.*?execve.*git-shell.* = 0)/) {
+            my $launch = $1;
+            $ENV{SSH_ORIGINAL_COMMAND} ||= $1 if $launch =~ s/.*?execve.*?\[.*git-shell.*?"-c",\s*"([^\"]+)".*?\],\s*//;
+            while ($launch =~ s/\["([^=\"]+)=([^\"]*)",?\s?/\[/) {
+                my $key = $1;
+                my $val = $2;
+                $val =~ s/\\n/\n/g;
+                $val =~ s/\\\\/\\/g;
+                $ENV{$key} ||= $val;
+            }
+        }
+        elsif (/.*\+\+\+ exited with (\d+) \+\+\+\s*$/) {
+            # Found exit code
+            $ENV{GIT_EXIT_STATUS} //= $1;
+        }
+        elsif (/^[\s\d:\.\-]+?(read|write)\(([012]),\s*(.+)/) {
+            my $op = $1;
+            my $fd = $2;
+            my $s = $3;
+            $s = $1 if $s =~ /"(.*)"/;
+            $s =~ s/\\([0-7]{1,3})/chr oct $1/eg;
+            $s =~ s/\\x([0-9a-f]{2})/chr hex $1/eg;
+            $s =~ s/\\t/\t/g;
+            $s =~ s/\\r/\r/g;
+            $s =~ s/\\n/\n/g;
+            $s =~ s/\\\\/\\/g;
+            if ($op eq "read" and $fd eq "0") {
+                $client_to_server .= $s;
+            }
+            elsif ($op eq "write" and $fd eq "1") {
+                $server_to_client .= $s;
+            }
+            elsif ($op eq "write" and $fd eq "2") {
+                $stderr .= $s;
+            }
+        }
     }
-}
-
-if (!defined $ENV{GIT_EXIT_STATUS}) {
-    while ($log =~ s/^.*\+\+\+ exited with (\d+) \+\+\+\s*$//m) {
-        $ENV{GIT_EXIT_STATUS} = $1;
-    }
+    close $log_fh;
 }
 
 my $ssh = $ENV{SSH_CONNECTION} or crash "Only SSH supported";
@@ -113,30 +141,6 @@ elsif ($cmd =~ /^git-upload-pack\s/) {
 }
 die "Unrecognized invocation [$cmd]\n" unless $operation;
 
-my $client_to_server = "";
-my $server_to_client = "";
-my $stderr = "";
-while ($log =~ s/^[\s\d:\.\-]+?(read|write)\(([012]),\s*(.+)//m) {
-    my $op = $1;
-    my $fd = $2;
-    my $s = $3;
-    $s = $1 if $s =~ /"(.*)"/;
-    $s =~ s/\\([0-7]{1,3})/chr oct $1/eg;
-    $s =~ s/\\x([0-9a-f]{2})/chr hex $1/eg;
-    $s =~ s/\\t/\t/g;
-    $s =~ s/\\r/\r/g;
-    $s =~ s/\\n/\n/g;
-    $s =~ s/\\\\/\\/g;
-    if ($op eq "read" and $fd eq "0") {
-        $client_to_server .= $s;
-    }
-    elsif ($op eq "write" and $fd eq "1") {
-        $server_to_client .= $s;
-    }
-    elsif ($op eq "write" and $fd eq "2") {
-        $stderr .= $s;
-    }
-}
 my $extracted = "";
 while ($client_to_server =~ s/^([0-9a-f]{4})//) {
     my $packet_len = -4 + hex $1;
