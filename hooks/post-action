@@ -9,7 +9,8 @@ if (!$ENV{DEBUG}) {
         # Parent
         close $wr_wake;
         # Wait for child to be done
-        ~~<$rd_wait> and close $rd_wait;
+        sysread $rd_wait, my $char, 1;
+        close $rd_wait;
         open STDIN,  "</dev/null";
         open STDOUT, ">/dev/null";
         open STDERR, ">/dev/null";
@@ -21,6 +22,7 @@ if (!$ENV{DEBUG}) {
         # Tell ipc-parse to signal me when the IPC files are ready to wipe.
         $SIG{INT} = sub {
             if ($ENV{PLEASE_INT} and $wr_wake) {
+                warn localtime().": PLEASE_INT triggered. Releasing parent.\n";
                 # XXX: Is this handler code a signal-safe?
                 print $wr_wake "\n";
                 close $wr_wake;
