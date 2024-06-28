@@ -55,6 +55,10 @@ sub get_fork_hash {
 }
 
 my $ipc = $ENV{IPC} || shift or crash "Not invoked properly from git hooks.";
+
+# Check PLEASE_INT before messing with ENV
+my $signal_who = delete $ENV{PLEASE_INT};
+
 my $pushinfo = "";
 if (open my $fh, "<", "$ipc/pushinfo.log") {
     $pushinfo = join "", <$fh>;
@@ -85,6 +89,14 @@ if (my $tracefile = "$ipc/log.trace") {
         $log .= join "", <$fh>;
         close $fh;
     }
+}
+
+if ($signal_who) {
+    # This is the first point where we don't need the IPC files anymore.
+    # Later, we can do the data processing now that everything is in memory.
+    # Signal parent to wipe out the IPC files and
+    # release the non-debugging git client right NOW.
+    kill -INT, $signal_who;
 }
 
 my $client_to_server = "";
