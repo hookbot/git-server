@@ -55,6 +55,11 @@ sub get_fork_hash {
 }
 
 my $ipc = $ENV{IPC} || shift or crash "Not invoked properly from git hooks.";
+my $pushinfo = "";
+if (open my $fh, "<", "$ipc/pushinfo.log") {
+    $pushinfo = join "", <$fh>;
+    close $fh;
+}
 
 my $log = "";
 if (my $tracefile = "$ipc/log.trace") {
@@ -218,7 +223,7 @@ if ($info->{SUCCESS}) {
     if ($operation eq "push") {
         # Did the client PUSH anything?
         # Sniff out tags and branches from pushinfo.log
-        if (open my $fh, "<", "$ipc/pushinfo.log") {
+        if ($pushinfo and open my $fh, "<", \$pushinfo) {
             my $ref = {};
             while (<$fh>) {
                 if (/^(\s*)(\w+):\s*(.*)/) {
