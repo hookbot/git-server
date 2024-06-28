@@ -58,10 +58,9 @@ my $ipc = $ENV{IPC} || shift or crash "Not invoked properly from git hooks.";
 
 my $log = "";
 if (my $tracefile = "$ipc/log.trace") {
-    my $fh;
     if (!-r $tracefile) {
         # No log.trace? Conjure up a fake log from the current ENV:
-        if (open $fh, ">>", $tracefile) {
+        if (open my $fh, ">>", $tracefile) {
             my $envs = [];
             foreach my $key (sort keys %ENV) {
                 my $val = $ENV{$key};
@@ -77,6 +76,7 @@ if (my $tracefile = "$ipc/log.trace") {
         }
     }
     if (open my $fh, "<", $tracefile) {
+        binmode $fh;
         $log .= join "", <$fh>;
         close $fh;
     }
