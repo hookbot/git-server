@@ -121,8 +121,8 @@ while ($log =~ s/^[\s\d:\.\-]+?(read|write)\(([012]),\s*(.+)//m) {
     my $fd = $2;
     my $s = $3;
     $s = $1 if $s =~ /"(.*)"/;
-    $s =~ s/\\([0-7]{1,3})/eval "chr 0$1"/eg;
-    $s =~ s/\\x([0-9a-f]{2})/eval "chr 0x$1"/eg;
+    $s =~ s/\\([0-7]{1,3})/chr oct $1/eg;
+    $s =~ s/\\x([0-9a-f]{2})/chr hex $1/eg;
     $s =~ s/\\t/\t/g;
     $s =~ s/\\r/\r/g;
     $s =~ s/\\n/\n/g;
