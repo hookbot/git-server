@@ -10,6 +10,7 @@ if (!$ENV{DEBUG}) {
         close $wr_wake;
         # Wait for child to be done
         sysread $rd_wait, my $char, 1;
+        # Child let go of the pipe.
         close $rd_wait;
         open STDIN,  "</dev/null";
         open STDOUT, ">/dev/null";
@@ -19,20 +20,20 @@ if (!$ENV{DEBUG}) {
     else {
         # Child
         $ENV{PLEASE_INT} = $$;
+        # Avoid signalling Parent directly because we want a clean death.
         # Tell ipc-parse to signal me when the IPC files are ready to wipe.
         $SIG{INT} = sub {
             if ($ENV{PLEASE_INT} and $wr_wake) {
-                warn localtime().": PLEASE_INT triggered. Releasing parent.\n";
-                # XXX: Is this handler code a signal-safe?
-                print $wr_wake "\n";
+                warn localtime().": PLEASE_INT caught.\n";
                 close $wr_wake;
-                # To avoid SIGPIPE Crashing, keep reader open until writes are completed.
-                # Leave whatever is in the pipe for the parent to read.
-                # Or if in DEBUG mode, then just throw it away.
                 close $rd_wait;
                 delete $ENV{PLEASE_INT};
             }
         };
+        # Middle process doesn't need any inputs nor outputs.
+        open STDIN,  "</dev/null";
+        open STDOUT, ">/dev/null";
+        open STDERR, ">/dev/null";
     }
 }
 
