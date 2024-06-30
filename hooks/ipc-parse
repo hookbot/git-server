@@ -96,7 +96,7 @@ if ($signal_who) {
     # Later, we can do the data processing now that everything is in memory.
     # Signal parent to wipe out the IPC files and
     # release the non-debugging git client right NOW.
-    kill -INT, $signal_who;
+    kill INT => $signal_who;
 }
 
 my $client_to_server = "";
