@@ -1,5 +1,19 @@
 Revision History for git-server
 
+0.022  2024-06-30 12:00:00
+ - Use GIT_CONFIG_GLOBAL instead of monkeying HOME.
+ - Restore %ENV even when the "pre" hook fails.
+ - Escape and Unescape ENV values properly.
+ - Canonize JSON output.
+ - Fix SIGPIPE crashing in DEBUG mode.
+ - Parse -o "options" properly for DEBUG mode.
+ - Provide {git_client_options} to webhook instead
+   of the cryptic {xmodifiers} string.
+ - Security Optimization: Use block eval instead of
+   more dangerous slower stringy eval cheese method.
+ - Release git client as soon as log files are read.
+   The processing of webhooks can be backgrounded.
+
 0.021  2024-06-26 12:00:00
  - Fix race condition when backgrounding "post" hook.
  - Fix proctitle mapping when --chdir is used.
