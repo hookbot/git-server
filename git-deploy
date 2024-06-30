@@ -331,12 +331,12 @@ while (1) {
             print run_output_include_err qw(sleep 60);
         }
     }
-    # Ge out of here if someone is monkeying a local file "error: cannot rebase: You have unstaged changes."
+    # Get out of here if someone is monkeying a local file "error: cannot rebase: You have unstaged changes."
     last if $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
     if ($update =~ /Current branch.*is up to date/) {
         $0 = "$Script - $cwd: Waiting because everything is updated ...";
         print "Everything was updated perfectly. Sleeping ...\n";
-        print run_output_ignore_err qw(sleep 60);
+        print run_output_ignore_err sleep => (5 + int(55 * rand()));
     }
     $0 = "$Script - Update complete";
     sleep 1;
