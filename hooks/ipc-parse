@@ -276,7 +276,7 @@ if ($info->{SUCCESS}) {
                     next;
                 }
                 my $scan = get_fork_hash($new, $old);
-                if (my $common = $scan->{common}) {
+                if (my $common = $scan->{common} || $scan->{old}) {
                     if (my $tip = $scan->{old}) {
                         if ($tip eq $old) {
                             $ref->{common} = $common;
