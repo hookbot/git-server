@@ -27,6 +27,11 @@ sub parent_of {
 
 sub get_fork_hash {
     my $new = shift;
+    if ("@_" =~ /^0*$/) {
+        # Don't bother grinding through the logs if there was nothing old to search for
+        my $old = "0" x length $new;
+        return { common => $old, old => $old };
+    }
     my @revs = ($new, @_);
     my $seen = { map {$_ => $_} @revs };
     while (@revs) {
