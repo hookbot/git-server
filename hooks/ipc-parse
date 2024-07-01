@@ -301,6 +301,12 @@ if ($info->{SUCCESS}) {
     else {
         # Did the client PULL anything?
         # Sniff out tags and branches from @$want
+        my $tips = {};
+        # Remember the ref tips
+        foreach my $tip (`git for-each-ref --format '%(objectname) %(refname)'`) {
+            my ($hash, $refname) = split /\s+/, $tip;
+            $tips->{$refname} = $hash;
+        }
         my $want_ref_hash = {};
         foreach my $hash (@$want) {
             # Security Emergency Taint Sniffing
@@ -324,6 +330,13 @@ if ($info->{SUCCESS}) {
             }
         }
         foreach my $refname (sort keys %$want_ref_hash) {
+            if ($want_ref_hash->{$refname}->{$tips->{$refname}}) {
+                # If the git client did want the refname tip,
+                # Then ignore any other hashes below that refname.
+                $want_ref_hash->{$refname} = {
+                    $tips->{$refname} => 1,
+                };
+            }
             my $hashes = [ sort keys %{ $want_ref_hash->{$refname} } ];
             my $type = $refname =~ s/^refs\/tags\/// ? "tag" :
                 $refname =~ s/^refs\/heads\/// ? "branch" : "";
