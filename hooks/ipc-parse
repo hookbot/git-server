@@ -25,6 +25,22 @@ sub parent_of {
     return $memoize_parent_of->{$new} = $dad;
 }
 
+my $memoize_refs_containing_hash = {};
+sub refs_containing_hash {
+    my $hash = shift;
+    return $memoize_refs_containing_hash->{$hash} if defined $memoize_refs_containing_hash->{$hash};
+    my $refs = {};
+    # Security Emergency Taint Sniffing
+    if ($hash =~ /^(\w+)$/) {
+        $hash = $1;
+        foreach my $refname (`git branch --format '%(refname)' --contains $hash ; git tag --format '%(refname)' --contains $hash`) {
+            chomp $refname;
+            $refs->{$refname} = 1;
+        }
+    }
+    return $memoize_refs_containing_hash->{$hash} = $refs;
+}
+
 sub get_fork_hash {
     my $new = shift;
     my @revs = ($new, @_);
@@ -300,42 +316,80 @@ if ($info->{SUCCESS}) {
     }
     else {
         # Did the client PULL anything?
-        # Sniff out tags and branches from @$want
-        my $tips = {};
-        # Remember the ref tips
+        # Remember all ref tips
+        my $tip_of_ref = {};
+        # Each commit hash may exist within multiple branches or tags.
+        # Each branch or tag has exactly one tip commit hash.
+        my $hash_in_ref = {};
         foreach my $tip (`git for-each-ref --format '%(objectname) %(refname)'`) {
             my ($hash, $refname) = split /\s+/, $tip;
-            $tips->{$refname} = $hash;
+            $tip_of_ref->{$refname} = $hash;
+            $hash_in_ref->{$hash}->{$refname} = 1;
         }
+        # Sniff out tags and branches from @$want
         my $want_ref_hash = {};
         foreach my $hash (@$want) {
-            # Security Emergency Taint Sniffing
-            if ($hash =~ /^(\w+)$/) {
-                $hash = $1;
-                foreach my $refname (`git branch --format '%(refname)' --contains $hash ; git tag --format '%(refname)' --contains $hash`) {
-                    chomp $refname;
-                    $want_ref_hash->{$refname}->{$hash} = 1;
-                }
+            my $refnames = refs_containing_hash($hash);
+            foreach my $ref (keys %$refnames) {
+                $want_ref_hash->{$ref}->{$hash} = 1;
+                $hash_in_ref->{$hash}->{$ref} = 1;
             }
         }
+        # Search for nearest known hash from @$have
         my $have_ref_hash = {};
         foreach my $hash (@$have) {
-            # Security Emergency Taint Sniffing
-            if ($hash =~ /^(\w+)$/) {
-                $hash = $1;
-                foreach my $refname (`git branch --format '%(refname)' --contains $hash ; git tag --format '%(refname)' --contains $hash`) {
-                    chomp $refname;
-                    $have_ref_hash->{$refname}->{$hash} = 1;
-                }
+            my $refnames = refs_containing_hash($hash);
+            foreach my $ref (keys %$refnames) {
+                $have_ref_hash->{$ref}->{$hash} = 1;
+                $hash_in_ref->{$hash}->{$ref} = 1;
             }
         }
+        # Guess which branch each $want hash belongs to
         foreach my $refname (sort keys %$want_ref_hash) {
-            if ($want_ref_hash->{$refname}->{$tips->{$refname}}) {
+            if ($want_ref_hash->{$refname}->{$tip_of_ref->{$refname}}) {
                 # If the git client did want the refname tip,
-                # Then ignore any other hashes below that refname.
+                # Then ignore any other non-tip hashes below that refname.
                 $want_ref_hash->{$refname} = {
-                    $tips->{$refname} => 1,
+                    $tip_of_ref->{$refname} => 1,
                 };
+            }
+            elsif (1 == scalar keys %{ $want_ref_hash->{$refname} }) {
+                # Only one hash for this branch?
+                # Then this is obviously the branch the $want hash came from.
+                # Nothing else needs to be done.
+            }
+            else {
+                # Pulled branch or tag, but not all the way to its tip? And covering multiple hashes?
+                # This might happen in a rare case where an update had been pushed since this pull.
+                # Pick the hash that is below this refname that is below the least number of refs.
+                my $winner_hash = $tip_of_ref->{$refname};
+                my $least = 0;
+                foreach my $hash (keys %{ $want_ref_hash->{$refname} }) {
+                    my $found_num_refs = 0;
+                    # Scan all known refnames containing this $hash
+                    foreach my $found_ref (keys %{ $hash_in_ref->{$hash} }) {
+                        # Count all refnames that aren't at its tip
+                        if ($want_ref_hash->{$found_ref} and
+                            $tip_of_ref->{$found_ref} ne $hash) {
+                            $found_num_refs++;
+                        }
+                    }
+                    if (!$least or $found_num_refs <= $least) {
+                        $least = $found_num_refs;
+                        $winner_hash = $hash;
+                    }
+                }
+                if ($least <= 1) {
+                    # Found a single non-tip hash for this branch.
+                    # Pick only this one and ignore the rest.
+                    $want_ref_hash->{$refname} = {
+                        $winner_hash => 1,
+                    };
+                }
+                else {
+                    # Too many possible hashes for this branch,
+                    # So just return all of them to be safe and inclusive.
+                }
             }
             my $hashes = [ sort keys %{ $want_ref_hash->{$refname} } ];
             my $type = $refname =~ s/^refs\/tags\/// ? "tag" :
