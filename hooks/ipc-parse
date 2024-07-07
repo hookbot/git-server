@@ -21,7 +21,7 @@ my $memoize_parents_of = {};
 sub parents_of {
     my $new = shift;
     return $memoize_parents_of->{$new} if $memoize_parents_of->{$new};
-    chomp (my $pretty = `git cat-file -p 88d399b88a5b43f3898df099150990925718c7e5`);
+    chomp (my $pretty = `git cat-file -p $new`);
     $pretty =~ s/\n\s*\n.*$/\n/s; # Ignore everything after the first nothing line
     my $parents = [];
     # There will be one parent for straight forward commit.
