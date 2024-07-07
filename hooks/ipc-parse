@@ -316,18 +316,39 @@ if ($info->{SUCCESS}) {
                     next;
                 }
                 my $scan = get_fork_hash($new, $old);
+                my $backward = [];
+                my $forward = [];
                 if (my $common = $scan->{common} || $scan->{old}) {
-                    if (my $tip = $scan->{old}) {
-                        if ($tip eq $old) {
-                            $ref->{common} = $common;
+                    my $left = [$old];
+                    while (@$left) {
+                        my $more = [];
+                        foreach my $curr (@$left) {
+                            if ($curr eq $common) {
+                                # quit looking since common hash is found
+                                $more = [];
+                                last;
+                            }
+                            push @$backward, $curr;
+                            push @$more, @{ parents_of($curr) };
                         }
-                        else {
-                            warn "BUG! $old => $new found tip $tip?\n";
+                        $left = $more;
+                    }
+                    $info->{backward} = $backward;
+                    $left = [$new];
+                    while (@$left) {
+                        my $more = [];
+                        foreach my $curr (@$left) {
+                            if ($curr eq $common) {
+                                # quit looking since common hash is found
+                                $more = [];
+                                last;
+                            }
+                            push @$forward, $curr;
+                            push @$more, @{ parents_of($curr) };
                         }
+                        $left = $more;
                     }
-                    else {
-                        warn "BUG! Unable to find any tip for old $old to new $new?\n";
-                    }
+                    $info->{forward} = $forward;
                 }
                 else {
                     warn "BUG! Unable to calculate nearest common parent for old $old to new $new?\n";
