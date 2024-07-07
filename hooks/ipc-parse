@@ -13,16 +13,21 @@ sub crash {
     die "$0: $err_message\n";
 }
 
-# Find nearest common hash
-my $memoize_parent_of = {};
-sub parent_of {
+# parents_of:
+# Find nearest parent hashes.
+# There might be more than one parent if it's a merge commit.
+# There might be zero parents if it's the very first commit.
+my $memoize_parents_of = {};
+sub parents_of {
     my $new = shift;
-    return $memoize_parent_of->{$new} if defined $memoize_parent_of->{$new};
-    chomp (my $dad = `git rev-parse $new~1 2>/dev/null`);
-    if (!$dad or $dad =~ /~/) {
-        return $memoize_parent_of->{$new} = "";
-    }
-    return $memoize_parent_of->{$new} = $dad;
+    return $memoize_parents_of->{$new} if $memoize_parents_of->{$new};
+    chomp (my $pretty = `git cat-file -p 88d399b88a5b43f3898df099150990925718c7e5`);
+    $pretty =~ s/\n\s*\n.*$/\n/s; # Ignore everything after the first nothing line
+    my $parents = [];
+    # There will be one parent for straight forward commit.
+    # There will be two parents for a merge commit.
+    push @$parents, $1 while $pretty =~ s/^parent\s+(\w+)\s*$//m;
+    return $memoize_parents_of->{$new} = $parents;
 }
 
 my $memoize_refs_containing_hash = {};
@@ -41,6 +46,8 @@ sub refs_containing_hash {
     return $memoize_refs_containing_hash->{$hash} = $refs;
 }
 
+# get_fork_hash:
+# Find the nearest common fork hash
 sub get_fork_hash {
     my $new = shift;
     my @revs = ($new, @_);
@@ -53,20 +60,37 @@ sub get_fork_hash {
         my @prevs = ();
         foreach my $rev (@revs) {
             my $tip = $seen->{$rev} or crash "Implementation Fatality! Missing seen value for rev=[$rev] ?\n";
-            my $prev = parent_of($rev);
-            if (!$prev) {
-                #warn "FOUND GENESIS COMMIT [$rev]\n";
-                next;
+            my $parents = parents_of($rev);
+            foreach my $prev (@$parents) {
+                if (my $common_tip = $seen->{$prev}) {
+                    # Found where a split came back together
+                    if ($tip ne $new and $common_tip eq $new) {
+                        # This is where an old ancestry smacked into the new ancestory.
+                        # Keep track of myself as the winner old line
+                        my $old = $tip;
+                        my $ret = { old => $old };
+                        # $prev is the winning common hash where nothing has changed
+                        $ret->{common} = $prev if $prev ne $old;
+                        return $ret;
+                    }
+                    elsif ($tip eq $new and $common_tip ne $new) {
+                        # This is where the new line smacked into some old line.
+                        # Keep track of his line as the winning old line
+                        my $old = $common_tip;
+                        my $ret = { old => $old };
+                        # $prev is the winning common hash where nothing has changed
+                        $ret->{common} = $prev if $prev ne $old;
+                        return $ret;
+                    }
+                    else {
+                        # Either old hit another old line, or new hit another new line
+                        # So we don't want to duplicate track this line anymore.
+                        next;
+                    }
+                }
+                $seen->{$prev} = $tip;
+                push @prevs, $prev;
             }
-            push @prevs, $prev;
-            if (my $common_tip = $seen->{$prev}) {
-                # Found first occurence of common hash
-                my $old = $common_tip eq $new ? $tip : $common_tip;
-                my $ret = { old => $old };
-                $ret->{common} = $prev if $prev ne $old;
-                return $ret;
-            }
-            $seen->{$prev} = $tip;
         }
         @revs = @prevs;
     }
