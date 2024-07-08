@@ -126,7 +126,7 @@ use strict;
 use warnings;
 use Cwd qw(abs_path);
 
-our $VERSION = "0.023";
+our $VERSION = "0.024";
 
 my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
 
