@@ -301,13 +301,43 @@ if ($info->{SUCCESS}) {
         else {
             warn "The push operation didn't actually push anything.\n";
         }
+        my $pushed_branches = {};
         foreach my $ref (@$refs) {
+            if ($ref->{type} eq "branch") {
+                $pushed_branches->{$ref->{ref}} = 1;
+            }
             if (my $new = $ref->{new} and
                 my $old = $ref->{old} and
                 !$ref->{common}) {
                 if ($old =~ /^0+$/) {
                     delete $ref->{old};
                     $ref->{created} = 1;
+                    if ($ref->{type} eq "branch") {
+                        # Scan back until a different branch is found to guess which commit this was forked from.
+                        my $branched_from = undef;
+                        my $curr = $new;
+                        while ($curr and !$branched_from) {
+                            foreach my $fullref (keys %{ refs_containing_hash($curr)}) {
+                                if ($fullref =~ m{^refs/heads/(.+)$}) {
+                                    if (!$pushed_branches->{$1}) {
+                                        # Found a foreigh branch! Remember this commit ID as its origin.
+                                        $branched_from = $curr;
+                                        $ref->{created_from} = {
+                                            branch => $1,
+                                            commit => $curr,
+                                        };
+                                        last;
+                                    }
+                                }
+                            }
+                            last if $branched_from;
+                            ($curr) = @{ parents_of($curr) };
+                        }
+                        if ($branched_from) {
+                            my $forward = [ split /\s+/, `git log --reverse --format=%H $branched_from...$new` ];
+                            push @{ $ref->{forward} ||= [] }, @$forward if @$forward;
+                        }
+                    }
                     next;
                 }
                 if ($new =~ /^0+$/) {
