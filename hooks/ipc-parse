@@ -316,39 +316,14 @@ if ($info->{SUCCESS}) {
                     next;
                 }
                 my $scan = get_fork_hash($new, $old);
-                my $backward = [];
-                my $forward = [];
                 if (my $common = $scan->{common} || $scan->{old}) {
-                    my $left = [$old];
-                    while (@$left) {
-                        my $more = [];
-                        foreach my $curr (@$left) {
-                            if ($curr eq $common) {
-                                # quit looking since common hash is found
-                                $more = [];
-                                last;
-                            }
-                            push @$backward, $curr;
-                            push @$more, @{ parents_of($curr) };
-                        }
-                        $left = $more;
+                    if ($common ne $old) {
+                        $ref->{common} = $common;
+                        my $backward = [ split /\s+/, `git log --format=%H $common...$old` ];
+                        push @{ $ref->{backward} ||= [] }, @$backward if @$backward;
                     }
-                    $info->{backward} = $backward;
-                    $left = [$new];
-                    while (@$left) {
-                        my $more = [];
-                        foreach my $curr (@$left) {
-                            if ($curr eq $common) {
-                                # quit looking since common hash is found
-                                $more = [];
-                                last;
-                            }
-                            push @$forward, $curr;
-                            push @$more, @{ parents_of($curr) };
-                        }
-                        $left = $more;
-                    }
-                    $info->{forward} = $forward;
+                    my $forward = [ split /\s+/, `git log --reverse --format=%H $common...$new` ];
+                    push @{ $ref->{forward} ||= [] }, @$forward if @$forward;
                 }
                 else {
                     warn "BUG! Unable to calculate nearest common parent for old $old to new $new?\n";
