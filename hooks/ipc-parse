@@ -306,6 +306,7 @@ if ($info->{SUCCESS}) {
             if ($ref->{type} eq "branch") {
                 $pushed_branches->{$ref->{ref}} = 1;
             }
+            delete $ref->{force} unless $ref->{force};
             if (my $new = $ref->{new} and
                 my $old = $ref->{old} and
                 !$ref->{common}) {
