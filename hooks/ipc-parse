@@ -321,11 +321,7 @@ if ($info->{SUCCESS}) {
                                 if ($fullref =~ m{^refs/heads/(.+)$}) {
                                     if (!$pushed_branches->{$1}) {
                                         # Found a foreigh branch! Remember this commit ID as its origin.
-                                        $branched_from = $curr;
-                                        $ref->{created_from} = {
-                                            branch => $1,
-                                            commit => $curr,
-                                        };
+                                        $ref->{branched_off_commit} = $branched_from = $curr;
                                         last;
                                     }
                                 }
