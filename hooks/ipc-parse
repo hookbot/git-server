@@ -307,6 +307,10 @@ if ($info->{SUCCESS}) {
                 $pushed_branches->{$ref->{ref}} = 1;
             }
             delete $ref->{force} unless $ref->{force};
+            if ($ref->{crash}) {
+                $info->{SUCCESS} = 0;
+                last;
+            }
             if (my $new = $ref->{new} and
                 my $old = $ref->{old} and
                 !$ref->{common}) {
