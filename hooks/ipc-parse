@@ -423,9 +423,8 @@ if ($info->{SUCCESS}) {
                 foreach my $hash (@$hashes) {
                     # Look up old hash based on @$have hashes.
                     my $scan = get_fork_hash($hash, @$have) || {};
-                    if (my $old = $scan->{common} || $scan->{old} and
-                        my $new = $scan->{new}) {
-                        my $forward = [ split /\s+/, `git log --reverse --format=%H $old...$new` ];
+                    if (my $old = $scan->{common} || $scan->{old}) {
+                        my $forward = [ split /\s+/, `git log --reverse --format=%H $old...$hash` ];
                         push @{ $scan->{forward} ||= [] }, @$forward if @$forward;
                     }
                     push @$refs, {
