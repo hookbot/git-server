@@ -324,7 +324,7 @@ if ($info->{SUCCESS}) {
                             foreach my $fullref (keys %{ refs_containing_hash($curr)}) {
                                 if ($fullref =~ m{^refs/heads/(.+)$}) {
                                     if (!$pushed_branches->{$1}) {
-                                        # Found a foreigh branch! Remember this commit ID as its origin.
+                                        # Found a foreign branch! Remember this commit ID as its origin.
                                         $ref->{branched_off_commit} = $branched_from = $curr;
                                         last;
                                     }
@@ -345,18 +345,23 @@ if ($info->{SUCCESS}) {
                     $ref->{deleted} = 1;
                     next;
                 }
-                my $scan = get_fork_hash($new, $old);
-                if (my $common = $scan->{common} || $scan->{old}) {
-                    if ($common ne $old) {
-                        $ref->{common} = $common;
-                        my $backward = [ split /\s+/, `git log --format=%H $common...$old` ];
-                        push @{ $ref->{backward} ||= [] }, @$backward if @$backward;
-                    }
-                    my $forward = [ split /\s+/, `git log --reverse --format=%H $common...$new` ];
-                    push @{ $ref->{forward} ||= [] }, @$forward if @$forward;
+                if ($ref->{type} eq "tag") {
+                    $ref->{moved} = 1;
                 }
                 else {
-                    warn "BUG! Unable to calculate nearest common parent for old $old to new $new?\n";
+                    my $scan = get_fork_hash($new, $old);
+                    if (my $common = $scan->{common} || $scan->{old}) {
+                        if ($common ne $old) {
+                            $ref->{common} = $common;
+                            my $backward = [ split /\s+/, `git log --format=%H $common...$old` ];
+                            push @{ $ref->{backward} ||= [] }, @$backward if @$backward;
+                        }
+                        my $forward = [ split /\s+/, `git log --reverse --format=%H $common...$new` ];
+                        push @{ $ref->{forward} ||= [] }, @$forward if @$forward;
+                    }
+                    else {
+                        warn "BUG! Unable to calculate nearest common parent for old $old to new $new?\n";
+                    }
                 }
             }
             else {
