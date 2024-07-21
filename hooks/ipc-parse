@@ -313,9 +313,10 @@ if ($info->{SUCCESS}) {
             if (my $new = $ref->{new} and
                 my $old = $ref->{old} and
                 !$ref->{common}) {
+                delete $ref->{new};
+                delete $ref->{old};
                 if ($old =~ /^0+$/) {
-                    delete $ref->{old};
-                    $ref->{created} = 1;
+                    $ref->{created} = $new;
                     if ($ref->{type} eq "branch") {
                         # Scan back until a different branch is found to guess which commit this was forked from.
                         my $branched_from = undef;
@@ -335,34 +336,32 @@ if ($info->{SUCCESS}) {
                         }
                         if ($branched_from) {
                             my $forward = [ split /\s+/, `git log --reverse --format=%H $branched_from...$new` ];
-                            push @{ $ref->{forward} ||= [] }, @$forward if @$forward;
+                            push @{ $ref->{forward} ||= [] }, map { { commit => $_ } }@$forward if @$forward;
                         }
                     }
                     next;
                 }
                 if ($new =~ /^0+$/) {
-                    delete $ref->{new};
-                    $ref->{deleted} = 1;
+                    $ref->{deleted_from} = $old;
                     next;
                 }
                 if ($ref->{type} eq "tag") {
-                    $ref->{moved} = 1;
+                    $ref->{tag_moved_from} = $old;
+                    $ref->{tag_moved_to} = $new;
+                    next;
                 }
-                else {
-                    my $scan = get_fork_hash($new, $old);
-                    if (my $common = $scan->{common} || $scan->{old}) {
-                        if ($common ne $old) {
-                            $ref->{common} = $common;
-                            my $backward = [ split /\s+/, `git log --format=%H $common...$old` ];
-                            push @{ $ref->{backward} ||= [] }, map { { commit => $_ } } @$backward if @$backward;
-                        }
-                        my $forward = [ split /\s+/, `git log --reverse --format=%H $common...$new` ];
-                        push @{ $ref->{forward} ||= [] }, map { { commit => $_ } } @$forward if @$forward;
+                my $scan = get_fork_hash($new, $old);
+                if (my $common = $scan->{common} || $old) {
+                    if ($common ne $old) {
+                        $ref->{common} = $common;
+                        my $backward = [ split /\s+/, `git log --format=%H $common...$old` ];
+                        push @{ $ref->{backward} ||= [] }, map { { commit => $_ } } @$backward if @$backward;
                     }
-                    else {
-                        warn "BUG! Unable to calculate nearest common parent for old $old to new $new?\n";
-                    }
+                    my $forward = [ split /\s+/, `git log --reverse --format=%H $common...$new` ];
+                    push @{ $ref->{forward} ||= [] }, map { { commit => $_ } } @$forward if @$forward;
+                    next;
                 }
+                warn "BUG! Unable to calculate nearest common parent for old $old to new $new?\n";
             }
             else {
                 warn "BUG! Found strange push ref without valid {old} and {new} elements?\n";
