@@ -354,10 +354,10 @@ if ($info->{SUCCESS}) {
                         if ($common ne $old) {
                             $ref->{common} = $common;
                             my $backward = [ split /\s+/, `git log --format=%H $common...$old` ];
-                            push @{ $ref->{backward} ||= [] }, @$backward if @$backward;
+                            push @{ $ref->{backward} ||= [] }, map { { commit => $_ } } @$backward if @$backward;
                         }
                         my $forward = [ split /\s+/, `git log --reverse --format=%H $common...$new` ];
-                        push @{ $ref->{forward} ||= [] }, @$forward if @$forward;
+                        push @{ $ref->{forward} ||= [] }, map { { commit => $_ } } @$forward if @$forward;
                     }
                     else {
                         warn "BUG! Unable to calculate nearest common parent for old $old to new $new?\n";
