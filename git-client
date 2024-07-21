@@ -108,15 +108,20 @@ if (@ARGV and $ARGV[0] =~ /^(clone|fetch|pull|push)$/) {
 
 my $myself = (stat $0)[1] or die "$0: Can't find my inode?\n";
 my $real_git = "/usr/bin/git";
+$ENV{GIT_CLIENT_TRIED} ||= "";
 foreach my $path (split /:/,$ENV{PATH}) {
     my $try = "$path/git";
     if (my @stat = stat $try) {
         if ($stat[1] == $myself) {
             # Ignore myself
         }
+        elsif ($ENV{GIT_CLIENT_TRIED} =~ /(?:^|:)\Q$try\E(?:$|:)/) {
+            # Already tried
+        }
         else {
             # First executable one in the path that isn't me is the winner
             $real_git = $try;
+            $ENV{GIT_CLIENT_TRIED} = join ":", $real_git, split /:/, $ENV{GIT_CLIENT_TRIED};
             last;
         }
     }
@@ -141,4 +146,4 @@ while (1) {
     }
 }
 
-exec $real_git, @ARGV unless $ENV{GIT_CLIENT_SCANNER}++;
+exec $real_git, @ARGV;
