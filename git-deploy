@@ -155,7 +155,7 @@ GetOptions
     or exec perldoc => $0;
 
 sub run_how_cmd {
-    my $keep = shift;
+    my $stderr = shift;
     my @cmd = @_;
     if (my $pid = open my $fh_out, "-|") {
         # Parent process waiting for kid to say something
@@ -167,21 +167,16 @@ sub run_how_cmd {
         return $output;
     }
     # Child process
-    if ($keep) {
-        open STDERR, ">&STDOUT";
-    }
-    else {
-        open STDERR, ">", "/dev/null";
-    }
+    open STDERR, $stderr;
     exec @cmd or die "$cmd[0]: Failed to spawn? $!\n";
 }
 
 sub run_output_ignore_err {
-    return run_how_cmd 0, @_;
+    return run_how_cmd ">/dev/null", @_;
 }
 
 sub run_output_include_err {
-    return run_how_cmd 1, @_;
+    return run_how_cmd ">&STDOUT", @_;
 }
 
 sub getps {
