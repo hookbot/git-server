@@ -1,6 +1,12 @@
 Revision History for git-server
 
-0.023  2020-07-08 19:00:00
+0.024  2024-07-22 12:00:00
+ - SECURITY: git-client wrapper skips calling others again
+ - Remove {old} and {new} elements from webhook data.
+ - Remove rare empty elements in webhook data.
+ - Include {commit} key for {backward} and {forward} lists.
+
+0.023  2024-07-08 19:00:00
  - Optimize clone case info.
  - Optimize failed push case info.
  - Try to only return each branch once for pull requests.
