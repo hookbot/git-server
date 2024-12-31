@@ -130,6 +130,7 @@ use strict;
 use Cwd qw(getcwd);
 use FindBin qw($Script $Bin);
 use Getopt::Long qw(GetOptions);
+use Fcntl qw(LOCK_EX LOCK_NB);
 
 our $VERSION = "0.025";
 
@@ -186,8 +187,12 @@ sub getps {
 
 sub rebuild {
     if (defined $build) {
-        $0 = "$Script - Running build hook ...";
-        print run_output_include_err $build;
+        $0 = "$Script - $cwd: Waiting for build to finish ...";
+        chomp (my $lock_file = `git rev-parse --git-dir`);
+        $lock_file .= "/config";
+        my $lock;
+        print run_output_include_err $build if open $lock, "+<", $lock_file and flock $lock, LOCK_NB | LOCK_EX;
+        close $lock;
     }
 }
 
