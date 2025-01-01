@@ -155,6 +155,8 @@ GetOptions
     "max-delay:i" => \$maxpatience,
     or exec perldoc => $0;
 
+$ENV{GIT_DIR} ||= `git rev-parse --absolute-git-dir 2>/dev/null` =~ /^(.+)/ && $1;
+
 sub run_how_cmd {
     my $stderr = shift;
     my @cmd = @_;
@@ -188,8 +190,7 @@ sub getps {
 sub rebuild {
     if (defined $build) {
         $0 = "$Script - $cwd: Waiting for build to finish ...";
-        chomp (my $lock_file = `git rev-parse --git-dir`);
-        $lock_file .= "/config";
+        my $lock_file = "$ENV{GIT_DIR}/config";
         my $lock;
         print run_output_include_err $build if open $lock, "+<", $lock_file and flock $lock, LOCK_NB | LOCK_EX;
         close $lock;
