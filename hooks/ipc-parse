@@ -13,6 +13,44 @@ sub crash {
     die "$0: $err_message\n";
 }
 
+# my $details_hash = commit_details($commit_id);
+sub commit_details {
+    my $c = shift;
+    my $hash = "HASHREF" eq ref $c && $c->{commit} ? $c : { commit => $c };
+    $c = $hash->{commit};
+    if (my $pid = open my $fh, "-|", qw[git show --format=%ae%n%an%n%ai%n%s --name-status], $c) {
+        # %ae  Author Email
+        chomp ($hash->{email} = <$fh>);
+        # %an  Author Name
+        chomp ($hash->{name} = <$fh>);
+        # %ai  Author Date
+        chomp ($hash->{date} = <$fh>);
+        # %s   Commit Comment Subject Line
+        $hash->{comment} = <$fh>;
+        # --name-status  Brief File Change Statuses
+        while (<$fh>) {
+            my ($how,$file,$to) = split /[\t\n]/;
+            # $how (A)dded (D)eleted (M)odified (R)enamed (C)opied (T)ypeChange (U)nmerged (X)unknown (B)orkedPairing
+            if (defined $file and length $file) {
+                push @{ $hash->{files} ||= [] }, $file;
+                if (defined $to and length $to) {
+                    push @{ $hash->{files} }, $to;
+                }
+            }
+        }
+        close $fh;
+        waitpid($pid, 0);
+        @{ $hash->{files} } = sort {$a<=>$b} @{ $hash->{files} } if $hash->{files};
+    }
+    if (my $s = $hash->{comment}) {
+        $s =~ s{\s+}{ }g;
+        $s =~ s/\s+$//m;
+        $s =~ s<^(.{80}).{3,}><$1...>s;
+        $hash->{comment} = $s;
+    }
+    return $hash;
+}
+
 # parents_of:
 # Find nearest parent hashes.
 # There might be more than one parent if it's a merge commit.
@@ -336,7 +374,7 @@ if ($info->{SUCCESS}) {
                         }
                         if ($branched_from) {
                             my $forward = [ split /\s+/, `git log --reverse --format=%H $branched_from...$new` ];
-                            push @{ $ref->{forward} ||= [] }, map { { commit => $_ } }@$forward if @$forward;
+                            push @{ $ref->{forward} ||= [] }, map { commit_details($_) } @$forward if @$forward;
                         }
                     }
                     next;
@@ -355,10 +393,10 @@ if ($info->{SUCCESS}) {
                     if ($common ne $old) {
                         $ref->{common} = $common;
                         my $backward = [ split /\s+/, `git log --format=%H $common...$old` ];
-                        push @{ $ref->{backward} ||= [] }, map { { commit => $_ } } @$backward if @$backward;
+                        push @{ $ref->{backward} ||= [] }, map { commit_details($_) } @$backward if @$backward;
                     }
                     my $forward = [ split /\s+/, `git log --reverse --format=%H $common...$new` ];
-                    push @{ $ref->{forward} ||= [] }, map { { commit => $_ } } @$forward if @$forward;
+                    push @{ $ref->{forward} ||= [] }, map { commit_details($_) } @$forward if @$forward;
                     next;
                 }
                 warn "BUG! Unable to calculate nearest common parent for old $old to new $new?\n";
@@ -433,7 +471,7 @@ if ($info->{SUCCESS}) {
                     my $scan = get_fork_hash($hash, @$have) || {};
                     if (my $old = $scan->{common} || $scan->{old}) {
                         my $forward = [ split /\s+/, `git log --reverse --format=%H $old...$hash` ];
-                        push @{ $scan->{forward} ||= [] }, @$forward if @$forward;
+                        push @{ $scan->{forward} ||= [] }, map { commit_details($_) } @$forward if @$forward;
                     }
                     push @$refs, {
                         ref => $refname,
