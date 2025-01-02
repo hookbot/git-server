@@ -1,5 +1,19 @@
 Revision History for git-server
 
+0.025  2025-01-01 23:00:00
+ - SECURITY: Prevent concurrent --build executions.
+ - Recover from duplicate rebase conflict.
+ - Populate GIT_DIR for convention.
+ - Include git comment line in webhook post.
+ - Add log rotation support:
+   * git config log.logfile logs/access_log
+   * git config log.compress true
+   * git config log.daily true
+   * git config log.weekly false
+   * git config log.rotate 365
+ - Include more commit details to webhook post:
+   Date,Subject,Author,Files
+
 0.024  2024-07-22 12:00:00
  - SECURITY: git-client wrapper skips calling others again
  - Remove {old} and {new} elements from webhook data.
@@ -26,8 +40,8 @@ Revision History for git-server
    of the cryptic {xmodifiers} string.
  - Security Optimization: Use block eval instead of
    more dangerous slower stringy eval cheese method.
- - Release git client as soon as log files are read.
-   The processing of webhooks can be backgrounded.
+ - Release git client as soon as log files are read
+   so the processing of webhooks can be backgrounded.
 
 0.021  2024-06-26 12:00:00
  - Fix race condition when backgrounding "post" hook.
