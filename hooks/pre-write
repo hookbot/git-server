@@ -35,8 +35,35 @@ if (my $file = $log->{logfile}) {
         $file = "$base/$file";
     }
     if ($file =~ m{^(.*)/[^/]+$}) {
+        # Make sure directory for logfile exists
         my $log_dir = $1;
         system mkdir => -p => $log_dir if !-d $log_dir;
+
+        # Check if rotation is needed
+        $log->{compress} = "false" if !exists $log->{compress};
+        $log->{rotate} = 10 if !exists $log->{rotate};
+        $log->{weekly} = "true" if !$log->{daily} and !$log->{weekly};
+        foreach my $bool (qw[compress daily weekly]) {
+            $log->{$bool} //= "false";
+            $log->{$bool} = $log->{$bool}=~/^($|0|f|und|n)/i ? 0 : 1;
+        }
+        if (-e $file) {
+            my $old = (stat _)[9];
+            my $new = time;
+            if ($log->{daily}  && int($old/86400)  != int($new/86400) or
+                $log->{weekly} && int($old/604800) != int($new/604800)) {
+                # Time to rotate
+                my $i = $log->{rotate} + 1;
+                while (my $t = $i--) {
+                    rename "$file.$i", "$file.$t";
+                    rename "$file.$i.gz", "$file.$t.gz";
+                    system gzip => "$file.$t" if $log->{compress} and -e "$file.$t" and !-e "$file.$t.gz";
+                }
+                rename $file => "$file.0";
+            }
+        }
+        system gzip => "$file.0" if $log->{compress} and -e "$file.0" and !-e "$file.0.gz";
+
         if (open my $fh, ">>", $file) {
             if ($allowed) {
                 print $fh localtime().": [$KEY\@$ip]: pushed\n";
