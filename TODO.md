@@ -26,24 +26,15 @@ Some features we need or want, plus some neat ideas that may not be too feasible
    # Most, if not all of these, may also be implemented externally via callback webhooks
    # Or even provide multiple ways to accomplish the two-way sync
 
- - Add support for automatic rotation of log.logfile, i.e:
-   * git config log.compress true (default false)
-   * git config log.{daily|weekly} true (default "weekly" is true)
-   * git config log.rotate 365 (default 5)
-
  - Provide branch, old hash, and new hash (for every branch updated by the git client) to post-read hook args (Requires man-in-the-middle sniffer)
    * If nothing is updated to the client, then there will be no arguments to post-read.
    * There will be a multiple of 3 args, each triple being branch, old hash, new hash, (depending on how many branches the client updates).
    * In order to facilitate the InterProcessCommunication to post-read, information should be stored in $GIT_DIR/tmp/current-*-io/ until the post-read completes.
 
- - Determine files involved with the pull (Requires man-in-the-middle sniffer)
-
  - Provide branch, old hash, new hash, and common parent "fork" commit hash to pre-write hook and post-write hook args. (Requires man-in-the-middle sniffer)
    * This fork hash can be used for debugging
    * or for callback webhook.
    * In order to facilitate the InterProcessCommunication between the pre-write and post-write, information should be stored in $GIT_DIR/last-write-state.<git-server-pid>.txt until the post-write completes.
-
- - Determine files involved with the push
 
  - Add [restrictfile.___.pushers] support to block pushes including changes to specified files, except authorized "pushers"
    * Only restrict WRITING certain files
@@ -69,15 +60,6 @@ Some features we need or want, plus some neat ideas that may not be too feasible
    * at least provide when FORCE push destroys branch history
      : common fork point hash
      : list of commits that were destroyed
-   * for each NEW commit pushed and OLD commit destroyed back until $found_fork_commit_hash, provide:
-     : commit hash
-     : author name
-     : author email
-     : subject of commit excuse reason, i.e., (my $squish = `git show -s --format=\%s 665bd34 `)=~s{\s+}{ }g; $squish =~ s/\s+$//m; $squish =~ s<^(.{80}).{3,}><$1...>s;
-     : files added
-     : files modified
-     : files removed
-   * provide files affected for each commit
 
  - Get rid of all XMODIFIERS hacks, and use "-o" instead?
    WHOOPS! It seems the "-o" option can NOT be caught unless something is modified.
