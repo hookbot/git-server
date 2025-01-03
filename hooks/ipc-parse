@@ -275,7 +275,7 @@ $info->{debug} = $ENV{DEBUG} if defined $ENV{DEBUG};
 $info->{git_client_connected} = $ENV{GIT_CONNECTED_EPOCH} || time;
 
 if (my $i = $ENV{GIT_OPTION_COUNT}) {
-    while (0<=--$i and my $opt = $ENV{"GIT_OPTION_$i"}) {
+    while (0<=--$i and defined(my $opt = $ENV{"GIT_OPTION_$i"})) {
         unshift @{ $info->{git_client_options} ||= [] }, $opt;
     }
 }
