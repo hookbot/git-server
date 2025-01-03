@@ -129,6 +129,7 @@ use Cwd qw(abs_path);
 our $VERSION = "0.026";
 
 my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
+$ENV{GIT_CONNECTED_EPOCH} = time;
 
 my $git_op_hook = {
     "git-upload-pack" => "read", # i.e., clone, pull, fetch
