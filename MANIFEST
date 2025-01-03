@@ -13,6 +13,7 @@ contrib/post-read
 contrib/pre-write
 contrib/post-write
 contrib/authorized_keys
+hooks/logger
 hooks/ipc-parse
 hooks/git-shell
 hooks/pre-read

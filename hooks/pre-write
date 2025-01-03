@@ -24,54 +24,20 @@ $SIG{PIPE} = sub { exit 1; };
 
 my $KEY = $ENV{KEY} || "UNKNOWN";
 my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
-warn localtime().": [$KEY\@$ip] git-server: RUNNING PUSH ...\n";
 # Cannot pass without writers access:
 my $allowed = $acl->{writers}->{$KEY};
+warn localtime().": [$KEY\@$ip] git-server: RUNNING PUSH ...\n" if $allowed;
 
-# Check for logfile:
-if (my $file = $log->{logfile}) {
-    if ($file =~ m{^[^/]}) {
-        # Force start with a / for absolute path
-        $file = "$base/$file";
+if (my $pid = open my $fh, "|$base/hooks/logger") {
+    if ($allowed) {
+        print $fh localtime().": [$KEY\@$ip]: pushed\n";
     }
-    if ($file =~ m{^(.*)/[^/]+$}) {
-        # Make sure directory for logfile exists
-        my $log_dir = $1;
-        system mkdir => -p => $log_dir if !-d $log_dir;
-
-        # Check if rotation is needed
-        $log->{compress} = "false" if !exists $log->{compress};
-        $log->{rotate} = 10 if !exists $log->{rotate};
-        $log->{weekly} = "true" if !$log->{daily} and !$log->{weekly};
-        foreach my $bool (qw[compress daily weekly]) {
-            $log->{$bool} //= "false";
-            $log->{$bool} = $log->{$bool}=~/^($|0|f|und|n)/i ? 0 : 1;
-        }
-        if (-e $file) {
-            my $old = (stat _)[9];
-            my $new = time;
-            if ($log->{daily}  && int($old/86400)  != int($new/86400) or
-                $log->{weekly} && int($old/604800) != int($new/604800)) {
-                # Time to rotate
-                my $i = $log->{rotate} + 1;
-                while (my $t = $i--) {
-                    rename "$file.$i", "$file.$t";
-                    rename "$file.$i.gz", "$file.$t.gz";
-                    system gzip => "$file.$t" if $log->{compress} and -e "$file.$t" and !-e "$file.$t.gz";
-                }
-                rename $file => "$file.0";
-            }
-        }
-        system gzip => "$file.0" if $log->{compress} and -e "$file.0" and !-e "$file.0.gz";
-
-        if (open my $fh, ">>", $file) {
-            if ($allowed) {
-                print $fh localtime().": [$KEY\@$ip]: pushed\n";
-            }
-            else {
-                print $fh localtime().": [$KEY\@$ip]: Missing [acl.writers] permission. Blocked push attempt!\n";
-            }
-        }
+    else {
+        print $fh localtime().": [$KEY\@$ip]: Missing [acl.writers] permission. Blocked push attempt!\n";
     }
+    close $fh;
+    waitpid $pid, 0;
+    die localtime().": [$KEY\@$ip] git-server: SERVER ERROR! log.logfile failed! $?\n" if $?;
 }
+
 die localtime().": [$KEY\@$ip] git-server: You cannot push changes. Missing [writers] permissons.\n" unless $allowed;
