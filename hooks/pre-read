@@ -34,7 +34,7 @@ if ($acl->{deploy}->{$KEY}) {
 my $allowed = $acl->{readers}->{$KEY} || $acl->{writers}->{$KEY} || $acl->{deploy}->{$KEY};
 warn localtime().": [$KEY\@$ip] git-server: RUNNING PULL ...\n" if $allowed;
 
-if (my $pid = open my $fh, "|$base/hooks/logger") {
+if (my $pid = open my $fh, "|-", "$base/hooks/logger") {
     if ($allowed) {
         print $fh localtime().": [$KEY\@$ip]: pulled\n";
     }
@@ -42,7 +42,6 @@ if (my $pid = open my $fh, "|$base/hooks/logger") {
         print $fh localtime().": [$KEY\@$ip]: Missing [acl.readers] or [acl.deploy] permission. Blocked clone or pull attempt!\n";
     }
     close $fh;
-    waitpid $pid, 0;
     die localtime().": [$KEY\@$ip] git-server: SERVER ERROR! log.logfile failed! $?\n" if $?;
 }
 

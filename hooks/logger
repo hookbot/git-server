@@ -63,7 +63,7 @@ if (my $file = $log->{logfile}) {
     if (open my $fh, ">>", $file) {
         while (<STDIN>) {
             # Send input to logfile
-            print $fh;
+            print $fh $_;
         }
         close $fh;
     }

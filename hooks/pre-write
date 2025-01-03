@@ -28,7 +28,7 @@ my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
 my $allowed = $acl->{writers}->{$KEY};
 warn localtime().": [$KEY\@$ip] git-server: RUNNING PUSH ...\n" if $allowed;
 
-if (my $pid = open my $fh, "|$base/hooks/logger") {
+if (my $pid = open my $fh, "|-", "$base/hooks/logger") {
     if ($allowed) {
         print $fh localtime().": [$KEY\@$ip]: pushed\n";
     }
@@ -36,7 +36,6 @@ if (my $pid = open my $fh, "|$base/hooks/logger") {
         print $fh localtime().": [$KEY\@$ip]: Missing [acl.writers] permission. Blocked push attempt!\n";
     }
     close $fh;
-    waitpid $pid, 0;
     die localtime().": [$KEY\@$ip] git-server: SERVER ERROR! log.logfile failed! $?\n" if $?;
 }
 
