@@ -473,9 +473,12 @@ if ($info->{SUCCESS}) {
                 foreach my $hash (@$hashes) {
                     # Look up old hash based on @$have hashes.
                     my $scan = get_fork_hash($hash, @$have) || {};
-                    if (my $old = $scan->{common} || $scan->{old}) {
+                    if (my $old = delete $scan->{common} || $scan->{old}) {
+                        delete $scan->{old};
+                        # If "git clone" then start from the beginning
+                        $old = "" if $old =~ /^0+$/;
                         my $forward = [ split /\s+/, `git log --reverse --format=%H $old...$hash` ];
-                        push @{ $scan->{forward} ||= [] }, map { commit_details($_) } @$forward if @$forward;
+                        push @{ $scan->{forward} ||= [] }, @$forward if @$forward;
                     }
                     push @$refs, {
                         ref => $refname,
