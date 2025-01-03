@@ -18,13 +18,15 @@ sub commit_details {
     my $c = shift;
     my $hash = "HASHREF" eq ref $c && $c->{commit} ? $c : { commit => $c };
     $c = $hash->{commit};
-    if (my $pid = open my $fh, "-|", qw[git show --format=%ae%n%an%n%ai%n%s --name-status], $c) {
-        # %ae  Author Email
+    if (my $pid = open my $fh, "-|", qw[git show --format=%ae%n%an%n%ci%n%ct%n%s --name-status], $c) {
+        # %ae%n  Author Email\n
         chomp ($hash->{email} = <$fh>);
-        # %an  Author Name
+        # %an%n  Author Name\n
         chomp ($hash->{name} = <$fh>);
-        # %ai  Author Date
+        # %ci%n  Commit Date\n
         chomp ($hash->{date} = <$fh>);
+        # %ct%n  Commit Epoch\n
+        chomp ($hash->{time} = <$fh>);
         # %s   Commit Comment Subject Line
         $hash->{comment} = <$fh>;
         # --name-status  Brief File Change Statuses
