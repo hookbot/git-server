@@ -126,6 +126,18 @@ git config restrictedbranch.'/permanent/'.forcers admin # Block all **writers** 
 git config restrictedbranch.'release/*'.forcers NOBODY  # Block everyone from losing or reverting any commits already pushed into any of the branches beginning with 'release/'.
 ```
 
+### restrictedfile.FILE.pushers
+
+Specify which file to block all **writers** from making
+changes to unless allowed in the pushers comma-delimited list.
+You can also specify a pattern or regex to restrict.
+
+```
+git config restrictedfile.'lib/config.php'.pushers 'alice'       # Only `alice` can push any changes to config.php on any branch.
+git config restrictedfile.'*.html'.pushers 'art,dev'             # Only `art` or `dev` can push changes to any html file, such as `htdocs/index.html`.
+git config restrictedfile.'/^(templates|docs)\//'.pushers 'sam'  # Use RegularExpression to block anyone from pushing changes to any file within either the `templates` or the `docs` folders and their descent, except 'sam'
+```
+
 
 Client Side:
 ------------
