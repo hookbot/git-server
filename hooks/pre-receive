@@ -133,6 +133,35 @@ while (my $push_info = <STDIN>) {
             die localtime().": [$KEY\@$ip] git-server: Missing [restrictedbranch.forcers] permission! Failed to rewrite git history for restricted $type [$branch]. Do not run 'git push --force'. Try 'git pull --rebase' or 'git pull' to clean up your local repo.\n";
         }
     }
+    if ($conf =~ /^restrictedfile\./m) {
+        my $diff = `git diff $old $new | grep '^diff '`;
+        my $files_changed = {};
+        my $change_users = {};
+        while ($diff =~ s{^diff .*\bb/(.+?)\r?\n}{}m) {
+            $files_changed->{$1} = 1;
+        }
+        while (keys %$files_changed and $conf =~ s/^restrictedfile\.(.+)\.pushers=(.+)$//m) {
+            my $sniff = $1;
+            my $keys = $2;
+            my $regex = $sniff =~ m{^/(.+)/$} ? qr{$1} : eval {
+                my $wild = $sniff;
+                $wild =~ s/\\/\\\\/g;
+                $wild =~ s/\./\\./g;
+                $wild =~ s/\*/.+/g;
+                return qr{^$wild$};
+            } or die localtime().": [$KEY\@$ip] git-server: Unimplemented [restrictedfile.pushers] syntax? [$sniff]=>[$keys]\n";
+            foreach my $file (keys %$files_changed) {
+                if ($file =~ $regex) {
+                    foreach my $key (split /,/, $keys) {
+                        $change_users->{$key} = $file;
+                    }
+                }
+            }
+        }
+        if (%$change_users and !$change_users->{$KEY}) {
+            die localtime().": [$KEY\@$ip] git-server: Missing [restrictedfile.pushers] permission! Failed to modify [".[values %$change_users]->[0]."]\n";
+        }
+    }
 }
 
 # Remember this info that might be needed later
