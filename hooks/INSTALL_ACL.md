@@ -33,7 +33,11 @@ ACL settings you wish. For example:
 [git@gitsrvhost ProjX]$ git config acl.deploy push_notification_key1
 [git@gitsrvhost ProjX]$ git config restrictedbranch.'master'.pushers admin
 [git@gitsrvhost ProjX]$ git config restrictedbranch.'master'.forcers NOBODY
+[git@gitsrvhost ProjX]$ git config restrictedfile.'*Makefile*'.pushers techbob
 [git@gitsrvhost ProjX]$ git config log.logfile logs/access_log
+[git@gitsrvhost ProjX]$ git config log.rotate 61
+[git@gitsrvhost ProjX]$ git config log.daily true
+[git@gitsrvhost ProjX]$ git config log.compress true
 [git@gitsrvhost ProjX]$ cd
 [git@gitsrvhost ~]$
 ```
@@ -93,9 +97,46 @@ git config acl.writers 'admin,seniordev'
 
 Optional path to logfile where timestamps and operations and
 IP addresses for git server operation will be logged.
+Default is to not log anywhere.
 
 ```
 git config log.logfile 'logs/access_log'
+```
+
+### log.rotate
+
+Specify how many log files to keep after rotating the log.
+The default is to keep 10 rotated log files.
+
+```
+git config log.rotate 91
+```
+
+### log.compress
+
+Specify true or false whether to compress the rotated logfiles.
+The default is NO.
+
+```
+git config log.compress true
+```
+
+### log.daily
+
+Specify to rotate logs every day.
+The default is NO.
+
+```
+git config log.daily true
+```
+
+### log.weekly
+
+Specify to rotate logs every week.
+The default is YES.
+
+```
+git config log.weekly true
 ```
 
 ### restrictedbranch.BRANCH.pushers
