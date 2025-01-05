@@ -31,6 +31,7 @@ ACL settings you wish. For example:
 [git@gitsrvhost ProjX]$ git config acl.readers hookbot,rob
 [git@gitsrvhost ProjX]$ git config acl.writers hookbot,alice,bob
 [git@gitsrvhost ProjX]$ git config acl.deploy push_notification_key1
+[git@gitsrvhost ProjX]$ git config acl.restrictemail '@github.com'
 [git@gitsrvhost ProjX]$ git config restrictedbranch.'master'.pushers admin
 [git@gitsrvhost ProjX]$ git config restrictedbranch.'master'.forcers NOBODY
 [git@gitsrvhost ProjX]$ git config restrictedfile.'*Makefile*'.pushers techbob
@@ -38,6 +39,7 @@ ACL settings you wish. For example:
 [git@gitsrvhost ProjX]$ git config log.rotate 61
 [git@gitsrvhost ProjX]$ git config log.daily true
 [git@gitsrvhost ProjX]$ git config log.compress true
+[git@gitsrvhost ProjX]$ git config webhook."https://site.io/op.cgi".method post
 [git@gitsrvhost ProjX]$ cd
 [git@gitsrvhost ~]$
 ```
@@ -138,6 +140,19 @@ The default is YES unless log.daily is set.
 
 ```
 git config log.weekly true
+```
+
+### acl.restrictemail
+
+Restrict committer user.email address to whitelist specified.
+Multiple acceptable emails can be specified in a comma-delimited list.
+Or "\*" can be used as wildcard match, like "\*@github\*".
+Or you can provide a regular expression in slashes, like "/bob@/".
+
+```
+git config acl.restrictemail 'alice@gmail.com,bob@yahoo.com' # Must be either one
+  # or
+git config acl.restrictemail '*@cpan.org,/billy@*.com/'      # Wildcard or RegExp
 ```
 
 ### restrictedbranch.BRANCH.pushers
