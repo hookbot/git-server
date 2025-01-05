@@ -24,6 +24,33 @@ while (my $push_info = <STDIN>) {
     ipclog("  OLD:$old");
     ipclog("  NEW:$new");
     my $conf = `git config --list`;
+    if ($conf =~ s/^acl.restrictemail=(.+)//m) {
+        my $restrictemail = $1;
+        my $sniffers = [];
+        foreach my $sniff (split /,/, $restrictemail) {
+            $sniff =~ s/^@/\*@/;
+            my $regex = $sniff =~ m{^/(.+)/$} ? qr{$1} : eval {
+                my $wild = $sniff;
+                $wild =~ s/\\/\\\\/g;
+                $wild =~ s/\./\\./g;
+                $wild =~ s/\*/.+/g;
+                return qr{^$wild$};
+            } or die localtime().": [$KEY\@$ip] git-server: Unimplemented [acl.restrictemail] syntax? [$sniff]\n";
+            push @$sniffers, $regex;
+        }
+        my $commits = `git log --reverse --format='%H %ae' $old..$new`;
+        my $prev = $old;
+        while ($commits =~ s/^(\w+)\s+(.*)\n//) {
+            my $commit = $1;
+            my $email = $2;
+            my $matched = 0;
+            foreach my $regex (@$sniffers) {
+                $matched = 1 if $email =~ $regex;
+            }
+            die localtime().": [$KEY\@$ip] git-server: [acl.restrictemail] Illegal email [$email] on commit [$commit] Must match [$restrictemail]. (Hint: 'git rebase -i $prev ; git commit --reset-author --amend')\n" if !$matched;
+            $prev = $commit;
+        }
+    }
     my $allowed_users = {};
     while ($conf =~ s/^restrictedbranch\.(.+)\.pushers=(.+)$//m) {
         my $sniff = $1;
