@@ -1,5 +1,16 @@
 Revision History for git-server
 
+0.026  2025-01-04 23:00:00
+ - Include commit {time} epoch stamp in webhook details.
+ - And push/pull {git_client_connected} stamp.
+ - And git clone commits list.
+ - Fixed log.rotate logic to ensure rotation.
+ - Make log.rotate "0" mean unlimited rotating log files.
+ - Add restrictedfile.pushers feature to restrict pushing changes
+   to specified file(s) by only allowing certain users.
+ - Add acl.restrictemail feature to whitelist commit Author email.
+ - Add acl.restrictip feature to whitelist IPs.
+
 0.025  2025-01-01 23:00:00
  - SECURITY: Prevent concurrent --build executions.
  - Recover from duplicate rebase conflict.
