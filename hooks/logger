@@ -37,7 +37,7 @@ if (my $file = $log->{logfile}) {
             $log->{$bool} = $log->{$bool}=~/^($|0|f|und|n)/i ? 0 : 1;
         }
 
-        if ($log->{rotate} and $log->{rotate} =~ /^(\d+)$/) {
+        if ($log->{rotate} =~ /^(\d+)$/) {
             my $i = $1 + 1;
             my $mark = "$file.rotate";
             my $old = (stat $mark)[9] || 0;
@@ -47,7 +47,12 @@ if (my $file = $log->{logfile}) {
                 # Time to rotate
                 if (open my $fh, ">>", $mark) {
                     close $fh;
-                    utime time, time, $mark;
+                    utime $new, $new, $mark;
+                    if ($log->{rotate} eq "0") {
+                        # "0" means Unlimited Log Rotations.
+                        # Find the first gap:
+                        $i++ while -e "$file.$i" or -e "$file.$i.gz";
+                    }
                     while (my $t = $i--) {
                         rename "$file.$i",    "$file.$t";
                         rename "$file.$i.gz", "$file.$t.gz";

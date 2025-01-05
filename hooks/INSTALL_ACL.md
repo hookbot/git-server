@@ -106,6 +106,7 @@ git config log.logfile 'logs/access_log'
 ### log.rotate
 
 Specify how many log files to keep after rotating the log.
+You can set log.rotate "0" to mean unlimited log files.
 The default is to keep 10 rotated log files.
 
 ```
@@ -133,7 +134,7 @@ git config log.daily true
 ### log.weekly
 
 Specify to rotate logs every week.
-The default is YES.
+The default is YES unless log.daily is set.
 
 ```
 git config log.weekly true
