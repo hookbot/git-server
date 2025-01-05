@@ -156,6 +156,19 @@ git config acl.restrictemail 'alice@gmail.com,bob@yahoo.com' # Must be either on
 git config acl.restrictemail '*@cpan.org,/billy@*.com/'      # Wildcard or RegExp
 ```
 
+### acl.restrictip
+
+Restrict read and write access to the IP Address whitelist specified.
+The value can be a single IP address or a CIDR network block definition.
+Or a comma-delimited list of all networks you wish to allow.
+Default is no restrictions, meaning any IP will be allowed to push and pull.
+
+```
+git config acl.restrictip '127.0.0.1,10.0.0.0/8,192.168.0.0/16'  # Allow Private Networks
+  # or
+git config acl.restrictip '2a00:1450:400e:800::/56,96.0.0.0/8'   # Supports both IPv4 and IPv6 CIDR
+```
+
 ### restrictedbranch.BRANCH.pushers
 
 Specify which branches to block all **writers** from making

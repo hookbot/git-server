@@ -24,6 +24,10 @@ $SIG{PIPE} = sub { exit 1; };
 
 my $KEY = $ENV{KEY} || "UNKNOWN";
 my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
+# Verify IP
+if (my $banned = system "hooks/restrictip") {
+    exit $banned;
+}
 # Cannot pass without writers access:
 my $allowed = $acl->{writers}->{$KEY};
 warn localtime().": [$KEY\@$ip] git-server: RUNNING PUSH ...\n" if $allowed;

@@ -23,6 +23,10 @@ $SIG{PIPE} = sub { exit 1; };
 
 my $KEY = $ENV{KEY} || "UNKNOWN";
 my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
+# Verify IP
+if (my $banned = system "hooks/restrictip") {
+    exit $banned;
+}
 if ($acl->{deploy}->{$KEY}) {
     warn localtime().": [$KEY\@$ip] git-server: PULL waiting for notification ...\n";
     my $who = "$KEY\@$ip:$base";
