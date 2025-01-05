@@ -11,10 +11,6 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
- - Add [acl.allowip] IP Whitelist feature
-
- - Add [acl.allowauthor] feature to whitelist Author Email or RegExp for all commits being pushed.
-
  - Two-Way Git "Proxy" support for remote git server to allow for slow migration of a repo from one system to another.
    # Like the client: $ git pull --rebase foreign-repo
    # but instead of on the client, automatically merge on the server side.
@@ -36,15 +32,9 @@ Some features we need or want, plus some neat ideas that may not be too feasible
    * or for callback webhook.
    * In order to facilitate the InterProcessCommunication between the pre-write and post-write, information should be stored in $GIT_DIR/last-write-state.<git-server-pid>.txt until the post-write completes.
 
- - Add [restrictfile.___.pushers] support to block pushes including changes to specified files, except authorized "pushers"
-   * Only restrict WRITING certain files
-   * Not feasible to block READ of files
-   * EXAMPLE: git config restrictfile."lib/config.txt".pushers alice,bob
-
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6
 
  - [webhook] features for callback:
-   * support for pull/clone/fetch (setup proxy sniffer to scan for "want" and "have" packets from client to determine updates downloaded to the git client)
    * Allow for WhiteList or BlackList filters to trigger webhook or ignore webhooks under certain conditions:
      : When specified branches are involved
      : When certain KEY users are involved
@@ -52,11 +42,6 @@ Some features we need or want, plus some neat ideas that may not be too feasible
      : When certain files are affected (tricky for pull reads)
      : When certain strings exist in any of the commit comments being pushed. (Tricky for pull reads.)
    * provide failover queue retry mechanism fibinacci backoff until remote webhook server returns 2xx or 3xx status.
-   * provide epoch time stamp of client connection.
-   * provide type of reference pushing ("tag" or "branch").
-   * provide branch or tag affected by push or pull operation.
-   * provide PREV commit hash for the tag or branch
-   * provide whether or not FORCE was used to rewrite or destroy history
    * at least provide when FORCE push destroys branch history
      : common fork point hash
      : list of commits that were destroyed
