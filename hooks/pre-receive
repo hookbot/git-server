@@ -47,7 +47,7 @@ while (my $push_info = <STDIN>) {
             foreach my $regex (@$sniffers) {
                 $matched = 1 if $email =~ $regex;
             }
-            die localtime().": [$KEY\@$ip] git-server: [acl.restrictemail] Illegal email [$email] on commit [$commit] Must match [$restrictemail]. (Hint: 'git rebase -i $prev ; git commit --reset-author --amend')\n" if !$matched;
+            die localtime().": [$KEY\@$ip] git-server: [acl.restrictemail] Illegal email [$email] on commit [$commit]. (Hint: 'git rebase -i $prev ; git commit --reset-author --amend')\n" if !$matched;
             $prev = $commit;
         }
     }
