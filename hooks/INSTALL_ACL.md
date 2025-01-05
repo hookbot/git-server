@@ -148,6 +148,7 @@ Restrict committer user.email address to whitelist specified.
 Multiple acceptable emails can be specified in a comma-delimited list.
 Or "\*" can be used as wildcard match, like "\*@github\*".
 Or you can provide a regular expression in slashes, like "/bob@/".
+Default is no restrictions, meaning any email will be allowed.
 
 ```
 git config acl.restrictemail 'alice@gmail.com,bob@yahoo.com' # Must be either one
@@ -159,6 +160,7 @@ git config acl.restrictemail '*@cpan.org,/billy@*.com/'      # Wildcard or RegEx
 
 Specify which branches to block all **writers** from making
 changes to unless allowed in the pushers comma-delimited list.
+Default is no restrictions, meaning anyone can push to any branch.
 
 ```
 git config restrictedbranch.'master'.pushers 'alice'           # Only `alice` can make any changes to `master` branch.
@@ -175,6 +177,7 @@ edit authors and can even undo commits by rolling backwards.
 Any branches NOT protected with [forcers] will be exposed to the
 security danger of some commits on the branch being overwritten
 or lost forever and may diminish proof of work.
+Default is no restrictions, meaning anyone can rewrite history using --force.
 
 ```
 git config restrictedbranch.'*'.forcers NOBODY          # Block everyone from using 'git push --force' to rewrite git history on any branch (since KEY=NOBODY doesn't exist).
@@ -188,6 +191,7 @@ git config restrictedbranch.'release/*'.forcers NOBODY  # Block everyone from lo
 Specify which file to block all **writers** from making
 changes to unless allowed in the pushers comma-delimited list.
 You can also specify a pattern or regex to restrict.
+Default is no restrictions, meaning anyone can commit changes to any file.
 
 ```
 git config restrictedfile.'lib/config.php'.pushers 'alice'       # Only `alice` can push any changes to config.php on any branch.
