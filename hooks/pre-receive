@@ -188,7 +188,7 @@ while (my $push_info = <STDIN>) {
             }
         }
         if (%$files_blocked) {
-            die localtime().": [$KEY\@$ip] git-server: Missing [restrictedfile.pushers] permission! You can't modify [".join(" ",keys %$files_blocked)."] Do not 'git push' until changes have been reverted. (Hint: 'git rebase -i $old')\n";
+            die localtime().": [$KEY\@$ip] git-server: Missing [restrictedfile.pushers] permission! You can't modify [".join(" ",keys %$files_blocked)."] Do not 'git push' until changes have been reverted. (Hint: 'git diff origin HEAD ".[keys %$files_blocked]->[0]." ; git rebase -i $old')\n";
         }
     }
 }
