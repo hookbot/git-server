@@ -1,5 +1,8 @@
 Revision History for git-server
 
+0.027  2025-01-13 18:00:00
+ - Backwards compatible fix for git 1.8.x and older.
+
 0.026  2025-01-04 23:00:00
  - Include commit {time} epoch stamp in webhook details.
  - And push/pull {git_client_connected} stamp.
