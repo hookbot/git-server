@@ -127,7 +127,7 @@ This library is free software; you can redistribute it and/or modify it under th
 =cut
 
 use strict;
-use Cwd qw(getcwd);
+use Cwd qw(getcwd abs_path);
 use FindBin qw($Script $Bin);
 use Getopt::Long qw(GetOptions);
 use Fcntl qw(LOCK_EX LOCK_NB);
@@ -155,7 +155,7 @@ GetOptions
     "max-delay:i" => \$maxpatience,
     or exec perldoc => $0;
 
-$ENV{GIT_DIR} ||= `git rev-parse --absolute-git-dir 2>/dev/null` =~ /^(.+)/ && $1;
+$ENV{GIT_DIR} ||= abs_path(`git rev-parse --git-dir 2>/dev/null` =~ /^(.+)/ && $1 || ".git");
 
 sub run_how_cmd {
     my $stderr = shift;
