@@ -74,7 +74,7 @@ This library is free software; you can redistribute it and/or modify it under th
 use strict;
 use Cwd qw(abs_path);
 
-our $VERSION = "0.027";
+our $VERSION = "0.028";
 
 if (@ARGV and $ARGV[0] =~ /^(clone|fetch|pull|push)$/) {
     # Need to search for special "-o" options

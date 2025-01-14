@@ -126,7 +126,7 @@ use strict;
 use warnings;
 use Cwd qw(abs_path);
 
-our $VERSION = "0.027";
+our $VERSION = "0.028";
 
 my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
 $ENV{GIT_CONNECTED_EPOCH} = time;
