@@ -46,8 +46,8 @@ All the normal git hooks will continue to work, plus the following:
 
 =head2 hooks/pre-read
 
-Executed before any repository read operation,
-such as "git clone" or "git pull" or "git fetch".
+Executed before any repository read operation, such as
+"git clone" or "git pull" or "git fetch" or "git ls-remote".
 The Environment variable GIT_PRE_EXIT_STATUS will
 be set to the exit status of this pre-read.
 If this exit status is exactly zero, then the
@@ -132,7 +132,7 @@ my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
 $ENV{GIT_CONNECTED_EPOCH} = time;
 
 my $git_op_hook = {
-    "git-upload-pack" => "read", # i.e., clone, pull, fetch
+    "git-upload-pack" => "read", # i.e., clone, pull, fetch, ls-remote
     "git-receive-pack" => "write", # i.e., push
 };
 

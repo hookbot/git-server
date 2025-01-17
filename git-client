@@ -76,7 +76,7 @@ use Cwd qw(abs_path);
 
 our $VERSION = "0.028";
 
-if (@ARGV and $ARGV[0] =~ /^(clone|fetch|pull|push)$/) {
+if (@ARGV and $ARGV[0] =~ /^(clone|fetch|pull|ls-remote|push)$/) {
     # Need to search for special "-o" options
     my $op = $1;
     my @options = ();
