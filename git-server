@@ -25,6 +25,11 @@ git-server - Secure Git Server with more granular hooks capabilities than defaul
 You can set as many %ENV variables as you want
 within the authorized_keys configuration.
 
+=head2 KEY
+
+KEY has a special meaning to define a word for the associated user
+and will be used for ACL rules.
+
 =head1 INSTALL
 
 This can be used with any existing git repositories or as a drop-in replacement
