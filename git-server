@@ -10,7 +10,7 @@ git-server - Secure Git Server with more granular hooks capabilities than defaul
 
   Standard Method:
   With SHELL=/bin/bash, use the following format in ~/.ssh/authorized_keys:
-  command="~/git-server/gitserver KEY=USER1" ssh-rsa AAAA___blah_pub__ user1@workstation
+  command="~/git-server/gitserver KEY=user1" ssh-rsa AAAA___blah_pub__ user1@workstation
 
    -- OR --
 
@@ -18,7 +18,7 @@ git-server - Secure Git Server with more granular hooks capabilities than defaul
   Set SHELL=/path/to/git-server (in /etc/passwd) and
   Set "PermitUserEnvironment yes" (in /etc/ssh/sshd_config)
   Then use the following format in ~/.ssh/authorized_keys:
-  environment="KEY=USER1" ssh-rsa AAAA___blah_pub__ user1@workstation
+  environment="KEY=user1" ssh-rsa AAAA___blah_pub__ user1@workstation
 
 =head1 ENV
 
@@ -34,7 +34,7 @@ for git-shell or you can create a fresh repo on the git host:
 
 Then add whatever hooks you want:
 
-  vi project/.git/hooks/pre-read
+  vi project/hooks/pre-read
 
 Each hook can read the ENV settings defined in authorized_keys.
 
@@ -116,7 +116,7 @@ Rob Brown <bbb@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2015-2024 by Rob Brown <bbb@cpan.org>
+Copyright 2015-2025 by Rob Brown <bbb@cpan.org>
 
 This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
