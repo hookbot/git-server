@@ -26,5 +26,6 @@ hooks/post-update
 hooks/post-action
 hooks/push-notify
 hooks/push-notification
+hooks/proxy
 hooks/INSTALL_ACL.md
 t/00_compile.t
