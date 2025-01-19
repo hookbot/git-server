@@ -65,8 +65,8 @@ if ($here eq $there) {
     exit 0;
 }
 warn localtime().": [$KEY\@$ip] git-server: Proxy Sync required.\n";
-system qw(git fetch here);
-system qw(git fetch there);
+system qw(git fetch here --tags);
+system qw(git fetch there --tags);
 my $tips = {};
 while ($here =~ s{^(\w+)\s+refs/(\w+)/(\S+)}{}m) {
     my $hash = $1;
