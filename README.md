@@ -22,7 +22,7 @@ Initialized empty Git repository in /home/git/projectx/
 Put something like the following in ~git/.ssh/authorized_keys:
 
 ```
-command="git-server KEY=USER1" ssh-rsa AAAA___blah_pub__ user1@workstation
+command="git-server KEY=user1" ssh-rsa AAAA___blah_pub__ user1@dev
 ```
 
 Then, without any hooks, this user should have full access to this repo:
@@ -38,15 +38,5 @@ Then, without any hooks, this user should have full access to this repo:
 [user1@dev projectx]$
 ```
 
-Then add whatever hooks you want:
-
-```
-[admin@git-host ~]$ sudo vi ~git/projectx/hooks/pre-read
-```
-
-Each hook can read the ENV settings defined in authorized_keys.
-
-See contrib/* for some working "hooks" examples.
-
-See hooks/INSTALL_ACL.md to setup granular read and write access
-and/or a simple push-notification instant deployment configuration.
+See INSTALL.md to setup granular read and write access and/or
+a simple push-notification instant deployment configuration.
