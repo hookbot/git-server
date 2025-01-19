@@ -22,7 +22,7 @@ if (!-d $working) {
     if ($proxy =~ m{^(?:|ssh://)(?:|\w+\@)([a-z0-9\-\.]+)/}i) {
         my $remotehost = $1;
         warn localtime().": [$KEY\@$ip] git-server: DEBUG: Detected remote proxy SSH server [$remotehost]\n" if $ENV{DEBUG};
-        `grep '^$remotehost' ~/.ssh/known_hosts` or system "ssh-keyscan -t rsa,dsa,ecdsa $remotehost >> ~/.ssh/known_hosts";
+        `grep '^$remotehost' ~/.ssh/known_hosts` or system "ssh-keyscan $remotehost | grep -v '^#' >> ~/.ssh/known_hosts";
     }
     if (0 != system "git fetch there" or !`git ls-remote there`) {
         system "rm","-rf",$working;

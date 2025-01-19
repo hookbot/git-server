@@ -281,9 +281,10 @@ while (1) {
                 if (my $ip = Socket::inet_ntoa(Socket::inet_aton($nasty))) {
                     $nasty .= ",$ip";
                 }
-                if (my $real_ssh_server_key = run_output_ignore_err "ssh-keyscan", "-t", "rsa,dsa", $nasty) {
+                if (my $real_ssh_server_key = run_output_ignore_err "ssh-keyscan", $nasty) {
+                    $real_ssh_server_key =~ s/^#.*\n//gm;
                     open my $fh_known, ">>", "$ENV{HOME}/.ssh/known_hosts";
-                    print $real_ssh_server_key;
+                    print $fh_known $real_ssh_server_key;
                     close $fh_known;
                 }
             }
