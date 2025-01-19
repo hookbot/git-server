@@ -22,7 +22,7 @@ Initialized empty Git repository in /home/git/projectx/
 Put something like the following in ~git/.ssh/authorized_keys:
 
 ```
-command="git-server KEY=user1" ssh-rsa AAAA___blah_pub__ user1@dev
+command="git-server KEY=user1" ssh-ed25519 AAAA_OAX+blah_pub__ user1@dev
 ```
 
 Then, without any hooks, this user should have full access to this repo:

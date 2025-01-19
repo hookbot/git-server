@@ -67,7 +67,7 @@ hosted by this server.
 Put something like the following on a single line in ~git/.ssh/authorized_keys:
 
 ```
-command="~/git-server/git-server KEY=user1" ssh-rsa AAAA___blah_pub__ user1@workstation
+command="~/git-server/git-server KEY=user1" ssh-ed25519 AAAA_OAX+blah_pub__ user1@workstation
 ```
 
 You can add unlimited client users and SSH public keys.
@@ -323,15 +323,15 @@ It should have no passphrase so it can easily be used from cron.
 
 ```
 [admin@deploy-host ~]$ sudo su - puller
-[puller@deploy-host ~]$ ssh-keygen -t rsa
+[puller@deploy-host ~]$ ssh-keygen -t ed25519
 Generating public/private dsa key pair.
-Enter file in which to save the key (/home/puller/.ssh/id_rsa):
+Enter file in which to save the key (/home/puller/.ssh/id_ed25519):
 Enter passphrase (empty for no passphrase):
 Enter same passphrase again:
-Your identification has been saved in /home/puller/.ssh/id_rsa.
-Your public key has been saved in /home/puller/.ssh/id_rsa.pub.
-[puller@deploy-host ~]$ cat ~/.ssh/id_rsa.pub
-ssh-rsa AAAAB3NzaC1W3w1Ee4nu3f03ck4OW puller@deploy-host
+Your identification has been saved in /home/puller/.ssh/id_ed25519.
+Your public key has been saved in /home/puller/.ssh/id_ed25519.pub.
+[puller@deploy-host ~]$ cat ~/.ssh/id_ed25519.pub
+ssh-ed25519 AAAAC1NTE5/FiREggu4HKIZPpJSe puller@deploy-host
 [puller@deploy-host ~]$
 ```
 
@@ -342,7 +342,7 @@ ensure this name is in the acl.deploy comma-delimited list.
 
 ```
 [admin@gitsrvhost ~]$ sudo su - git
-[git@gitsrvhost ~]$ echo 'command="~/git-server/git-server KEY=push_notification_key1" ssh-rsa AAAAB3NzaC1W3w1Ee4nu3f03ck4OW puller@deploy-host' >> ~/.ssh/authorized_keys
+[git@gitsrvhost ~]$ echo 'command="~/git-server/git-server KEY=push_notification_key1" ssh-ed25519 AAAAC1NTE5/FiREggu4HKIZPpJSe puller@deploy-host' >> ~/.ssh/authorized_keys
 [git@gitsrvhost ~]$ cd ~/ProjX
 [git@gitsrvhost ProjX]$ git config acl.deploy
 srv7
