@@ -1,9 +1,0 @@
-#!/usr/bin/perl
-
-warn localtime().": [$0] Running hook ...\n";
-$ENV{KEY} ||= "UNKNOWN";
-mkdir "logs" unless -d "logs";
-# NOTE: This will log ALL "git push" attempts, even if nothing was actually pushed.
-system q{echo `date` PUSH $SSH_CLIENT key=$KEY $ARGV[0] >> logs/access_log};
-# NOTE: If you only wish to catch actual modifications, then use hooks/post-update instead of hooks/post-write
-exit 0;

@@ -1,2 +1,0 @@
-# This file would go into ~/.ssh on the git server host. And for security: chmod -v -R go-w ~/.ssh
-command="~/git-server/git-server KEY=push_notification_key1" ssh-dss AAAAB3NzaC1W3w1Ee4nu3f03ck4OW puller@deploy-host
