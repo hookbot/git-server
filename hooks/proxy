@@ -127,7 +127,7 @@ foreach my $n (sort keys %$diff) {
             $target = $l;
         }
         if (!$target) {
-            warn localtime().": [$KEY\@$ip] git-server: $t $n is too divergent to reconcile automatically.\n";
+            warn localtime().": [$KEY\@$ip] git-server: $t [$n] is too divergent to reconcile automatically.\n";
             next;
         }
         warn localtime().": [$KEY\@$ip] git-server: DEBUG: READY: old[$older] new[$newer] target[$target]\n" if $ENV{DEBUG};
