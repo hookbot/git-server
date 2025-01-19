@@ -51,6 +51,9 @@ my $there = `git ls-remote there | sort` or do {
     exit 0;
 };
 
+# Ignore "HEAD" and ignore everything that isn't a regular branch or tag, such as /pull/ requests:
+s{^(?:.*refs/heads/HEAD|(?!.*refs/(?:heads|tags)/.*).*)\n}{}gm foreach ($here,$there);
+
 if ($here eq $there) {
     warn localtime().": [$KEY\@$ip] git-server: DEBUG: Two-Way Proxy already synced.\n" if $ENV{DEBUG};
     open my $fh, ">", "$ENV{IPC}/synced";
@@ -62,18 +65,16 @@ warn localtime().": [$KEY\@$ip] git-server: Proxy Sync required.\n";
 system qw(git fetch here);
 system qw(git fetch there);
 my $tips = {};
-while ($here =~ s{^(\w+)\s+refs/(heads|tags)/(\S+)}{}m) {
+while ($here =~ s{^(\w+)\s+refs/(\w+)/(\S+)}{}m) {
     my $hash = $1;
     my $name = $3;
     my $type = $2 eq "heads" ? "branch" : $2 eq "tags" ? "tag" : die localtime().": [$KEY\@$ip] git-server: Unimplemented ref type [$2] for [$name]\n";
-    next if $name eq "HEAD";
     $tips->{here}->{$type}->{$name} = $hash;
 }
-while ($there =~ s{^(\w+)\s+refs/(heads|tags)/(\S+)}{}m) {
+while ($there =~ s{^(\w+)\s+refs/(\w+)/(\S+)}{}m) {
     my $hash = $1;
     my $name = $3;
     my $type = $2 eq "heads" ? "branch" : $2 eq "tags" ? "tag" : die localtime().": [$KEY\@$ip] git-server: Unimplemented ref type [$2] for [$name]\n";
-    next if $name eq "HEAD";
     $tips->{there}->{$type}->{$name} = $hash;
 }
 my $diff = {};
