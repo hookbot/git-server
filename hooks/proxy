@@ -13,6 +13,9 @@ chomp $proxy;
 $proxy or exit 0;
 my $working = "$base.workingdir";
 if (!-d $working) {
+    # If /pre/ couldn't create the directory, then /post/ shouldn't bother trying:
+    exit 0 if $how =~ /post/ && !-s "$ENV{IPC}/synced";
+
     # Initial setup
     warn localtime().": [$KEY\@$ip] git-server: Initial proxy setup ...\n";
     system qw(git clone -o here), $base, $working;
