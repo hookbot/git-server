@@ -150,7 +150,7 @@ foreach my $n (sort keys %$diff) {
         if (!$l) {
             # Need to delete the remote tag or branch
             system "git $t -d $n 1>&2";
-            system "git push --delete there 1>&2";
+            system "git push --delete there $n 1>&2";
         }
         elsif ($t eq "tag") {
             # Move tag $n to $l
