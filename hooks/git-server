@@ -128,6 +128,7 @@ This library is free software; you can redistribute it and/or modify it under th
 
 use strict;
 use warnings;
+use FindBin qw($Bin);
 
 our $VERSION = "0.028";
 
@@ -170,6 +171,28 @@ if ($xmods) {
     for (my $i = 0; $i < @options; $i++) {
         $ENV{"GIT_OPTION_$i"} = $options[$i];
         warn localtime().": [$KEY\@$ip] git-server: Transported GIT_OPTION_$i=[$options[$i]]\n";
+    }
+}
+
+if ($0 !~ m{^\Q$dir\E/hooks/} and    # Launched outside of repo/hooks
+    !-x "$dir/hooks/git-server" and  # repo is missing hooks/git-server
+    -e "$dir/config" and             # repo is properly --bare
+    $Bin =~ m{/hooks$} and           # Launched from "hooks" folder somewhere
+    !-l $Bin and                     # Spawned from real "hooks" folder, not a symlink
+    !-l "$dir/hooks") {              # repo hooks is not a symlink, so it's probably the original "sample" stock
+    warn localtime().": [$KEY\@$ip] git-server: Automatically configuring repo [$dir] to use hooks properly...\n";
+    # Don't delete stock "hooks" folder in case there is something needed in there. Just move it out of the way to be safe.
+    system "mv -v '$dir/hooks' '$dir/hooks.$$.PLEASE_DELETE' 1>&2" if -e "$dir/hooks";
+    system "ln -s -v '$Bin' '$dir/.' 1>&2";
+    if (-l "$dir/hooks" and -d "$dir/hooks") {
+        warn localtime().": [$KEY\@$ip] git-server: Successfully upgraded hooks to myself.\n";
+        if (!`git config acl.writers`) {
+            warn localtime().": [$KEY\@$ip] git-server: No [acl.writers] found? Running: [git config acl.writer $KEY]\n";
+            system "git config acl.writers $KEY 1>&2";
+        }
+    }
+    else {
+        warn localtime().": [$KEY\@$ip] git-server: FAILED configuring repo [$dir/hooks]! Manual intervention required.\n";
     }
 }
 
