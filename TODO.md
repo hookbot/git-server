@@ -11,17 +11,6 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
- - Two-Way Git "Proxy" support for remote git server to allow for slow migration of a repo from one system to another.
-   # Like the client: $ git pull --rebase foreign-repo
-   # but instead of on the client, automatically merge on the server side.
-   # i.e., pre-read and pre-write to attempt importing remote repo first can quickly run "git pull --rebase ; git rebase --abort" from the server side?
-   # and post-write can run "git push remote BRANCH" to sync up any fresh changes out to the remote repo.
-   # -OR-
-   # This surely can all be done on the client side using "git merge". Provide commandline or alias to sync either way or both.
-   # -OR-
-   # Most, if not all of these, may also be implemented externally via callback webhooks
-   # Or even provide multiple ways to accomplish the two-way sync
-
  - Provide branch, old hash, and new hash (for every branch updated by the git client) to post-read hook args (Requires man-in-the-middle sniffer)
    * If nothing is updated to the client, then there will be no arguments to post-read.
    * There will be a multiple of 3 args, each triple being branch, old hash, new hash, (depending on how many branches the client updates).
