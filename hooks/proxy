@@ -13,8 +13,8 @@ chomp $proxy;
 $proxy or exit 0;
 my $working = "$base.workingdir";
 if (!-d $working) {
-    # If /pre/ couldn't create the directory, then /post/ shouldn't bother trying:
-    exit 0 if $how =~ /post/ && !-s "$ENV{IPC}/synced";
+    # If /pre/ couldn't create this directory, then /post/ definitely shouldn't bother trying:
+    exit 0 if $how =~ /post/;
 
     # Initial setup
     warn localtime().": [$KEY\@$ip] git-server: Initial proxy setup ...\n";
@@ -59,7 +59,7 @@ s{^(?:.*refs/heads/HEAD|(?!.*refs/(?:heads|tags)/.*).*)\n}{}gm foreach ($here,$t
 
 if ($here eq $there) {
     warn localtime().": [$KEY\@$ip] git-server: DEBUG: Two-Way Proxy already synced.\n" if $ENV{DEBUG};
-    open my $fh, ">", "$ENV{IPC}/synced";
+    open my $fh, ">", "$working/.git/SYNCED";
     print $fh $here;
     close $fh;
     exit 0;
@@ -100,8 +100,10 @@ foreach my $n (sort keys %$diff) {
     my $r = $tips->{there}->{$t}->{$n} || "";
     $l or $r or next;
     warn localtime().": [$KEY\@$ip] git-server: DEBUG: Sync[$n] local[$l] remote[$r] type($t)\n" if $ENV{DEBUG};
-    if ($how =~ /pre/) {
-        # Pre operation, so sync Both Ways
+    if ($how =~ /pre/ and !-s "$working/.git/SYNCED") {
+        # Pre operation, but it still wasn't even synced before either,
+        # so do our best guess to sync Both Ways without deleting anything:
+        # ( local <=> remote ):
         my ($older, $newer, $target);
         if ($l and $r) {
             # Both exist but are different
@@ -145,8 +147,29 @@ foreach my $n (sort keys %$diff) {
             system "(git pull --rebase $newer $n && git push $older $n) 1>&2";
         }
     }
-    elsif ($how =~ /write/ and -s "$ENV{IPC}/synced") {
-        # Post write operation, and it was synced before, so push local to remote
+    elsif ($how =~ /pre/) {
+        # Pre operation, but something suddenly became out of sync since the last time?
+        # Thus we know the remote proxy must have changed, which need to be pushed to local:
+        # ( remote => local ):
+        if (!$r) {
+            # Need to delete the local tag or branch
+            system "git $t -d $n 1>&2";
+            system "git push --delete here $n 1>&2";
+        }
+        elsif ($t eq "tag") {
+            # Move tag $n to $r
+            system "(git tag -f $n $r && git push --force here $n) 1>&2";
+        }
+        elsif ($t eq "branch") {
+            # Push remote proxy changes on branch $n to local
+            0 == system "(git checkout $n || git checkout --track there/$n) 1>&2" or next;
+            system "(git pull --rebase there $n && git push here) 1>&2";
+        }
+    }
+    elsif ($how =~ /write/ and -s "$working/.git/SYNCED") {
+        # Post write operation, and it was synced during the Pre operation,
+        # Thus we are confident we just changed local, so push it to remote:
+        # ( local => remote ):
         if (!$l) {
             # Need to delete the remote tag or branch
             system "git $t -d $n 1>&2";
@@ -171,8 +194,12 @@ $here  = `git ls-remote here  | sort`;
 $there = `git ls-remote there | sort`;
 if ($here eq $there) {
     warn localtime().": [$KEY\@$ip] git-server: Two-Way Proxy now synced.\n" if $ENV{DEBUG};
-    open my $fh, ">", "$ENV{IPC}/synced";
+    open my $fh, ">", "$working/.git/SYNCED";
     print $fh $here;
     close $fh;
+}
+else {
+    warn localtime().": [$KEY\@$ip] git-server: Unable to complete the Proxy sync.\n" if $ENV{DEBUG};
+    unlink "$working/.git/SYNCED";
 }
 exit 0;
