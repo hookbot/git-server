@@ -24,6 +24,11 @@ hooks, including the pre-* hooks.
 Note that for this to work, the git ssh server must have
 "AcceptEnv XMODIFIERS" enabled in its sshd_config.
 
+=head2 DEBUG
+
+Sets DEBUG environment on server side to match the same numeric value
+as set on the client invoker.
+
 =head1 INSTALL
 
 Just make sure this program comes BEFORE the
@@ -80,6 +85,7 @@ if (@ARGV and $ARGV[0] =~ /^(clone|fetch|pull|ls-remote|push)$/) {
     # Need to search for special "-o" options
     my $op = $1;
     my @options = ();
+    push @options, "DEBUG=$ENV{DEBUG}" if defined $ENV{DEBUG};
     for (my $i = 1; $i < @ARGV; $i++) {
         my $pre = $ARGV[$i-1];
         my $option = $ARGV[$i];
