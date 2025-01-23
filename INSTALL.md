@@ -47,6 +47,34 @@ Receiving[...]
 [git@gitsrvhost ~]$
 ```
 
+You may want to make sure this "git" user has access
+to the proxy.url repo just to be safe:
+
+```
+[git@gitsrvhost ~]$ git clone https://github.com/user/ProjX /tmp/ProjX-test
+remote[...]
+Receiving[...]
+[git@gitsrvhost ~]$ cd /tmp/ProjX-test
+[git@gitsrvhost ProjX-testt]$ git pull
+[git@gitsrvhost ProjX-testt]$ cd
+[git@gitsrvhost ~]$ rm -rf /tmp/ProjX-test
+[git@gitsrvhost ~]$
+```
+
+The git-server will only be able to proxy sync from
+remote git repo to local git repo if it has READ access.
+If you want two-way sync both directions, then this
+"git" user needs to have WRITE access too.
+
+If the remote git repo is SSH and this "git" user doesn't
+have SSH client access to the proxy.url, then it will try
+to utilize the Agent Forwarding of the real git client
+connection in order to reach the remote repo. It can be
+tricky for some git clients to setup Agent Forwarding.
+Failure to have write access to the proxy.url repo may
+cause the repos to become out of sync, so it may not
+be the best long-term solution to use the proxy feature.
+
 C. Or if you already have the project checked out locally
 on this server, then you can just copy its ".git" folder:
 
