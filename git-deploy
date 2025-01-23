@@ -155,8 +155,6 @@ GetOptions
     "max-delay:i" => \$maxpatience,
     or exec perldoc => $0;
 
-$ENV{GIT_DIR} ||= abs_path(`git rev-parse --git-dir 2>/dev/null` =~ /^(.+)/ && $1 || ".git");
-
 sub run_how_cmd {
     my $stderr = shift;
     my @cmd = @_;
@@ -214,6 +212,8 @@ if ($chdir) {
     }
     $cwd = getcwd();
 }
+
+$ENV{GIT_DIR} ||= abs_path(`git rev-parse --git-dir 2>/dev/null` =~ /^(.+)/ && $1 || ".git");
 
 if ($umask and $umask =~ /^(\d+)$/) {
     umask oct $1;
