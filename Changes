@@ -1,5 +1,9 @@
 Revision History for git-server
 
+0.029  2025-01-23 13:00:00
+ - Fix git-deploy --chdir option
+   (Broken since 0.025)
+
 0.028  2025-01-20 03:00:00
  - Handle "git ls-remote" as a remote operation.
  - Initial add of proxy.url feature to do Two-Way
