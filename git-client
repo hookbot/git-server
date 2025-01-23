@@ -79,7 +79,7 @@ This library is free software; you can redistribute it and/or modify it under th
 use strict;
 use Cwd qw(abs_path);
 
-our $VERSION = "0.029";
+our $VERSION = "0.030";
 
 if (@ARGV and $ARGV[0] =~ /^(clone|fetch|pull|ls-remote|push)$/) {
     # Need to search for special "-o" options
