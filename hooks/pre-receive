@@ -51,8 +51,7 @@ while (my $push_info = <STDIN>) {
             $prev = $commit;
         }
     }
-    my $allowed_users = {};
-    while ($conf =~ s/^restrictedbranch\.(.+)\.pushers=(.+)$//m) {
+    while ($conf =~ s{^restrictedbranch\.([^\*\s]+|/.+/)\.pushers=(.+)$}{}m or $conf =~ s/^restrictedbranch\.(.+)\.pushers=(.+)$//m) {
         my $sniff = $1;
         my $keys = $2;
         my $regex = $sniff =~ m{^/(.+)/$} ? qr{$1} : eval {
@@ -63,16 +62,16 @@ while (my $push_info = <STDIN>) {
             return qr{^$wild$};
         } or die localtime().": [$KEY\@$ip] git-server: Unimplemented [restrictedbranch.pushers] syntax? [$sniff]=>[$keys]\n";
         if ($branch =~ $regex) {
+            my $allowed = 0;
             foreach my $key (split /,/, $keys) {
-                $allowed_users->{$key} = $sniff;
+                $allowed = $sniff if $key eq $KEY;
             }
+            $allowed or die localtime().": [$KEY\@$ip] git-server: Missing [restrictedbranch.pushers] permission! Failed to modify restricted $type [$branch].\n";
+            last;
         }
     }
-    if (%$allowed_users and !$allowed_users->{$KEY}) {
-        die localtime().": [$KEY\@$ip] git-server: Missing [restrictedbranch.pushers] permission! Failed to modify restricted $type [$branch].\n";
-    }
-    my $rewrite_users = {};
-    while ($conf =~ s/^restrictedbranch\.(.+)\.forcers=(.+)$//m) {
+    my $can_change_history = 1;
+    while ($conf =~ s{^restrictedbranch\.([^\*\s]+|/.+/)\.forcers=(.+)$}{}m or $conf =~ s/^restrictedbranch\.(.+)\.forcers=(.+)$//m) {
         my $sniff = $1;
         my $keys = $2;
         my $regex = $sniff =~ m{^/(.+)/$} ? qr{$1} : eval {
@@ -83,12 +82,13 @@ while (my $push_info = <STDIN>) {
             return qr{^$wild$};
         } or die localtime().": [$KEY\@$ip] git-server: Unimplemented [restrictedbranch.forcers] syntax? [$sniff]=>[$keys]\n";
         if ($branch =~ $regex) {
+            $can_change_history = 0;
             foreach my $key (split /,/, $keys) {
-                $rewrite_users->{$key} = $sniff;
+                $can_change_history = $sniff if $key eq $KEY;
             }
+            last;
         }
     }
-    my $can_change_history = !%$rewrite_users || $rewrite_users->{$KEY};
     if ($old =~ /^0+$/) {
         ipclog("  FORCE:0");
         if ($can_change_history) {
