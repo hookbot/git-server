@@ -233,19 +233,24 @@ if (-x "$dir/hooks/post-$hook") {
 if ($ENV{IPC}) {
     if ($ENV{DEBUG}) {
         warn localtime().": [$KEY\@$ip] git-server: DEBUG: Leaving $ENV{IPC} intact\n";
-        if (opendir my $tmp, $tmpdir) {
-            while (my $f = readdir $tmp) {
-                next if $f !~ /^current-/; # Only wipe stuff that I made
-                my $crusty = "$tmpdir/$f";
-                if (-M $crusty > 32) {
-                    warn localtime().": [$KEY\@$ip] git-server: Wiping crusty files: [$crusty] ...\n".`rm -rfv $crusty 2>&1`;
-                }
-            }
-        }
     }
     else {
         # Wipe out anything in the IPC folder
         system "rm -rf $ENV{IPC}*";
+    }
+    if (opendir my $tmp, $tmpdir) {
+        # Look for stale IPC files
+        while (my $f = readdir $tmp) {
+            next if $f !~ /^current-/; # Only wipe stuff that I made
+            my $crusty = "$tmpdir/$f";
+            if ($ENV{DEBUG} && -M $crusty > 32) {
+                warn localtime().": [$KEY\@$ip] git-server: Wiping crusty files: [$crusty] ...\n".`rm -rfv $crusty 2>&1`;
+            }
+            elsif (-M $crusty > 62) {
+                # Silently wipe out old IPC files left over from DEBUG mode.
+                `rm -rf $crusty 2>&1`;
+            }
+        }
     }
 }
 
