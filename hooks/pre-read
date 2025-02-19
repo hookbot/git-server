@@ -7,7 +7,6 @@ use FindBin qw($Script);
 my $ssh = $ENV{SSH_CLIENT} or die "Only SSH allowed\n";
 my $base = $ENV{GIT_DIR} or die "GIT hook ENV malfunction!\n";
 my $acl = {};
-my $log = {};
 my $conf = `git config --list`;
 while ($conf =~ s/^acl.(\w+)=(.*)$//m) {
     my $param = $1;
@@ -15,9 +14,6 @@ while ($conf =~ s/^acl.(\w+)=(.*)$//m) {
     foreach my $key (split /,/, $keys) {
         $acl->{$param}->{$key} = 1;
     }
-}
-while ($conf =~ s/^log.(\w+)=(.*)$//m) {
-    $log->{$1} = $2;
 }
 
 $SIG{PIPE} = sub { exit 1; };
