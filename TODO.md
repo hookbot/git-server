@@ -3,8 +3,6 @@ TODO
 
 Some features we need or want, plus some neat ideas that may not be too feasible to implement.
 
- - Make exact RegEx branch ref match stronger than one with a "*" for pushers and forcers directive.
-
  - Once "post" method is sure to run, then move logger step from "pre" to "post".
 
  - Make sure ipc-parse can determine if action was actually performed or else the reason of why not.
@@ -34,15 +32,3 @@ Some features we need or want, plus some neat ideas that may not be too feasible
    * at least provide when FORCE push destroys branch history
      : common fork point hash
      : list of commits that were destroyed
-
- - Get rid of all XMODIFIERS hacks, and use "-o" instead?
-   WHOOPS! It seems the "-o" option can NOT be caught unless something is modified.
-   The "git pull" needs to actually download something for the "-o" to work.
-   The "git push" needs to actually push something for the "-o" to work.
-   The "-o" more-supported method is not as general as the XMODIFIERS hack method.
-   Maybe it's not feasible to use the "-o" for what I was hoping. So what?
-   Why would the server need to read the "-o" option anyways if nothing changed?
-   #1. For push and pull, the DEBUG flag is used to provide extra info to the client,
-   which currently still works even if nothing is modified.
-   #2. For pull, the deploy_patience setting is used in the pre-hook handler,
-   which is impossible to obtain "-o" settings that early in the process.
