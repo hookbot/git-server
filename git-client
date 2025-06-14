@@ -108,7 +108,8 @@ if (@ARGV and $ARGV[0] =~ /^(clone|fetch|pull|ls-remote|push)$/) {
     push @options, $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
     if (@options) {
         $ENV{XMODIFIERS} = join "\n", @options;
-        $ENV{GIT_SSH_COMMAND} = "ssh -o SendEnv=XMODIFIERS";
+        $ENV{GIT_SSH_COMMAND} //= "ssh";
+        $ENV{GIT_SSH_COMMAND} = "$ENV{GIT_SSH_COMMAND} -o SendEnv=XMODIFIERS";
     }
 }
 
