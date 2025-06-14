@@ -1,5 +1,13 @@
 Revision History for git-server
 
+0.030  2025-06-14 15:00:00
+ - Clear old tmpdir entries from DEBUG sessions.
+ - Make exact branch match stronger than RegEx or
+   "*" branch for restrictedbranch.pushers and
+   restrictedbranch.forcers directives.
+ - Allow repo names to have single quotes.
+ - Honor GIT_SSH_COMMAND in git-client.
+
 0.029  2025-01-23 13:00:00
  - Fix git-deploy --chdir option
    (Broken since 0.025)
