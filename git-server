@@ -103,7 +103,10 @@ my $dir = undef;
 if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
     my $op = $1;
     my $repo = $2;
-    $repo = $1 if $repo =~ /^'(.+)'$/;
+    if ($repo =~ /^'(.+)'$/) {
+        $repo = $1;
+        $repo =~ s/\'\\\'\'/\'/g;
+    }
     $repo =~ s/\.git$//;
     my $home = $ENV{HOME} || (getpwuid $<)[7];
     foreach my $try ("$repo.git/.git", "$repo/.git", "$repo.git", $repo) {
@@ -124,7 +127,10 @@ if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
         }
     }
     die localtime().": [$KEY\@$ip] git-server: You can't access '$repo' git repository\n" unless $dir;
-    $cmd = "$op '$ENV{GIT_DIR}'";
+    my $escape_dir = $ENV{GIT_DIR};
+    $escape_dir =~ s/\'/\'\\'\'/g;
+    $escape_dir = "'$escape_dir'";
+    $cmd = "$op $escape_dir";
 }
 else {
     die localtime().": [$KEY\@$ip] git-server: Unable to run the command: $cmd\n";

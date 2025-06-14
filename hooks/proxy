@@ -20,7 +20,7 @@ if (!-d $working) {
     warn localtime().": [$KEY\@$ip] git-server: Initial proxy setup ...\n";
     system qw(git clone -o here), $base, $working;
     chdir $working or die localtime().": [$KEY\@$ip] git-server: Failed local working directory for proxy!\n";
-    0 == system qw(git remote add there), $proxy or die localtime().": [$KEY\@$ip] git-server: Failed to remote add $proxy\n".`rm -rf $working`;
+    0 == system qw(git remote add there), $proxy or system "rm","-rf",$working or die localtime().": [$KEY\@$ip] git-server: Failed to remote add $proxy\n";
     # Make sure known_hosts contains remote server pub keys for SSH style repos
     if ($proxy =~ m{^(?:|ssh://)(?:|\w+\@)([a-z0-9\-\.]+)/}i) {
         my $remotehost = $1;

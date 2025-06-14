@@ -29,7 +29,7 @@ if (my $banned = system "hooks/restrictip") {
 my $allowed = $acl->{writers}->{$KEY};
 warn localtime().": [$KEY\@$ip] git-server: RUNNING PUSH ...\n" if $allowed;
 
-if (my $pid = open my $fh, "|-", "$base/hooks/logger") {
+if (my $pid = open my $fh, "|-", "$base/hooks/logger", "") {
     if ($allowed) {
         print $fh localtime().": [$KEY\@$ip]: pushed\n";
     }

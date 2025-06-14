@@ -182,8 +182,8 @@ if ($0 !~ m{^\Q$dir\E/hooks/} and    # Launched outside of repo/hooks
     !-l "$dir/hooks") {              # repo hooks is not a symlink, so it's probably the original "sample" stock
     warn localtime().": [$KEY\@$ip] git-server: Automatically configuring repo [$dir] to use hooks properly...\n";
     # Don't delete stock "hooks" folder in case there is something needed in there. Just move it out of the way to be safe.
-    system "mv -v '$dir/hooks' '$dir/hooks.$$.PLEASE_DELETE' 1>&2" if -e "$dir/hooks";
-    system "ln -s -v '$Bin' '$dir/.' 1>&2";
+    rename "$dir/hooks","$dir/hooks.$$.PLEASE_DELETE" and warn "rename: $dir/hooks -> $dir/hooks.$$.PLEASE_DELETE\n" if -e "$dir/hooks";
+    symlink $Bin, "$dir/hooks" and warn "symlink: $dir/hooks -> $Bin\n";
     if (-l "$dir/hooks" and -d "$dir/hooks") {
         warn localtime().": [$KEY\@$ip] git-server: Successfully upgraded hooks to myself.\n";
         if (!`git config acl.writers`) {
@@ -236,7 +236,7 @@ if ($ENV{IPC}) {
     }
     else {
         # Wipe out anything in the IPC folder
-        system "rm -rf $ENV{IPC}*";
+        system "rm", "-rf", glob "$ENV{IPC}*";
     }
     if (opendir my $tmp, $tmpdir) {
         # Look for stale IPC files
@@ -244,11 +244,12 @@ if ($ENV{IPC}) {
             next if $f !~ /^current-/; # Only wipe stuff that I made
             my $crusty = "$tmpdir/$f";
             if ($ENV{DEBUG} && -M $crusty > 32) {
-                warn localtime().": [$KEY\@$ip] git-server: Wiping crusty files: [$crusty] ...\n".`rm -rfv $crusty 2>&1`;
+                warn localtime().": [$KEY\@$ip] git-server: Wiping crusty files: [$crusty] ...\n";
+                system "rm", "-rf", $crusty;
             }
             elsif (-M $crusty > 62) {
                 # Silently wipe out old IPC files left over from DEBUG mode.
-                `rm -rf $crusty 2>&1`;
+                system "rm", "-rf", $crusty;
             }
         }
     }
