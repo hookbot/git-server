@@ -54,7 +54,7 @@ my $there = `git ls-remote there | sort` or do {
         warn localtime().": [$KEY\@$ip] git-server: WARNING! Proxy remote worked before but failed this time.\n";
     }
     else {
-        warn localtime().": [$KEY\@$ip] git-server: WARNING! Proxy remote temporarily failed. Did you enable ForwardAgent? Hint: \"export GIT_SSH_COMMAND='ssh -A'\"\n";
+        warn localtime().": [$KEY\@$ip] git-server: WARNING! Proxy remote failed. Did you enable ForwardAgent this time? Hint: \"export GIT_SSH_COMMAND='ssh -A'\"\n";
     }
     exit 0;
 };
