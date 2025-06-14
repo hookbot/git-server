@@ -50,7 +50,12 @@ if (`git config remote.here.url`  ne "$base\n" or
 warn localtime().": [$KEY\@$ip] git-server: DEBUG: Working directory setup correctly.\n" if $ENV{DEBUG};
 my $here  = `git ls-remote here  | sort`;
 my $there = `git ls-remote there | sort` or do {
-    warn localtime().": [$KEY\@$ip] git-server: WARNING! Proxy remote temporarily failed\n";
+    if ($ENV{SSH_AUTH_SOCK}) {
+        warn localtime().": [$KEY\@$ip] git-server: WARNING! Proxy remote worked before but failed this time.\n";
+    }
+    else {
+        warn localtime().": [$KEY\@$ip] git-server: WARNING! Proxy remote temporarily failed. Did you enable ForwardAgent? Hint: \"export GIT_SSH_COMMAND='ssh -A'\"\n";
+    }
     exit 0;
 };
 
