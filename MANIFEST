@@ -12,7 +12,7 @@ hooks/logger
 hooks/restrictip
 hooks/ipc-parse
 hooks/git-shell
-hooks/git-server
+hooks/run-git-hooks
 hooks/pre-read
 hooks/pre-write
 hooks/pre-receive

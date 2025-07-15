@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-git-server - Secure Git Server with more granular hooks capabilities than default git.
+run-git-hooks - Secure Git Server with more granular hooks capabilities than default git.
 
 =head1 SYNOPSIS
 
@@ -174,8 +174,9 @@ if ($xmods) {
     }
 }
 
+my $base = $0 =~ /([\w\-\.]+)$/ ? $1 : die "$0: Stank base\n";
 if ($0 !~ m{^\Q$dir\E/hooks/} and    # Launched outside of repo/hooks
-    !-x "$dir/hooks/git-server" and  # repo is missing hooks/git-server
+    !-x "$dir/hooks/$base" and       # repo is missing hooks/git-server
     -e "$dir/config" and             # repo is properly --bare
     $Bin =~ m{/hooks$} and           # Launched from "hooks" folder somewhere
     !-l $Bin and                     # Spawned from real "hooks" folder, not a symlink

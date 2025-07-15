@@ -38,12 +38,12 @@ for git-shell or you can create a fresh repo on the git host:
 
   git init --bare project
 
-Then add hooks/git-server to override the default behavior:
+Then add hooks/run-git-hooks to override the default behavior:
 
-  vi project/hooks/git-server
-  chmod 755 project/hooks/git-server
+  vi project/hooks/run-git-hooks
+  chmod 755 project/hooks/run-git-hooks
 
-If hooks/git-server exists from within the repository being targeted,
+If hooks/run-git-hooks exists from within the repository being targeted,
 then this will run with the correct GIT_DIR
 and any other ENV settings defined in authorized_keys.
 
@@ -138,6 +138,6 @@ else {
 
 # Hand off request to the best handler
 my $handler =
-    -x "$ENV{GIT_DIR}/hooks/git-server" ? "$ENV{GIT_DIR}/hooks/git-server" :
-    -x "$Bin/hooks/git-server" ? "$Bin/hooks/git-server" : "git-shell";
+    -x "$ENV{GIT_DIR}/hooks/run-git-hooks" ? "$ENV{GIT_DIR}/hooks/run-git-hooks" :
+    -x "$Bin/hooks/run-git-hooks" ? "$Bin/hooks/run-git-hooks" : "git-shell";
 exec $handler, "-c", $cmd;
