@@ -10,12 +10,13 @@ git-server - Secure Git Server with more granular hooks capabilities than defaul
 
   Standard Method:
   With SHELL=/bin/bash, use the following format in ~/.ssh/authorized_keys:
-  command="~/git-server/gitserver KEY=user1" ssh-ed25519 AAAA_OAX+blah_pub__ user1@workstation
+  command="/path/to/git-server KEY=user1" ssh-ed25519 AAAA_OAX+blah_pub__ user1@workstation
 
    -- OR --
 
   Advanced Method:
   Set SHELL=/path/to/git-server (in /etc/passwd) and
+  Add /path/to/git-server to /etc/shells and
   Set "PermitUserEnvironment yes" (in /etc/ssh/sshd_config)
   Then use the following format in ~/.ssh/authorized_keys:
   environment="KEY=user1" ssh-ed25519 AAAA_OAX+blah_pub__ user1@workstation
@@ -46,6 +47,8 @@ Then add hooks/run-git-hooks to override the default behavior:
 If hooks/run-git-hooks exists from within the repository being targeted,
 then this will run with the correct GIT_DIR
 and any other ENV settings defined in authorized_keys.
+If it doesn't exist, then it will look for a way to use
+these git-server hooks with this project.
 
 =head1 SEE ALSO
 
