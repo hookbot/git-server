@@ -112,7 +112,7 @@ if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
     }
     $repo =~ s/\.git$//;
     my $home = $ENV{HOME} || (getpwuid $<)[7];
-    foreach my $try ("$repo.git/.git", "$repo/.git", "$repo.git", $repo) {
+    foreach my $try ("$repo.git", $repo) {
         if (-d $try) {
             $dir = $try;
             $ENV{GIT_DIR} = abs_path $dir;
@@ -130,6 +130,7 @@ if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
         }
     }
     die localtime().": [$KEY\@$ip] git-server: You can't access '$repo' git repository\n" unless $dir;
+    die localtime().": [$KEY\@$ip] git-server: Non-Bare Git Repository '$repo' not supported\n" if "$dir/.git";
     my $escape_dir = $ENV{GIT_DIR};
     $escape_dir =~ s/\'/\'\\'\'/g;
     $escape_dir = "'$escape_dir'";
