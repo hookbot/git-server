@@ -129,8 +129,7 @@ if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
             last;
         }
     }
-    die localtime().": [$KEY\@$ip] git-server: You can't access '$repo' git repository\n" unless $dir;
-    die localtime().": [$KEY\@$ip] git-server: Non-Bare Git Repository '$repo' not supported\n" if "$dir/.git";
+    die localtime().": [$KEY\@$ip] git-server: You can't access '$repo' git repository\n" if !$dir or `git config core.bare 2>/dev/null` !~ /true/;
     my $escape_dir = $ENV{GIT_DIR};
     $escape_dir =~ s/\'/\'\\'\'/g;
     $escape_dir = "'$escape_dir'";
