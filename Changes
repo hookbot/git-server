@@ -1,5 +1,9 @@
 Revision History for git-server
 
+0.031  2025-07-17 21:00:00
+ - Only support bare repositories on the server.
+ - Package distribution modifications.
+
 0.030  2025-06-14 15:00:00
  - Clear old tmpdir entries from DEBUG sessions.
  - Make exact branch match stronger than RegEx or
