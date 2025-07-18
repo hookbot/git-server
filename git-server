@@ -111,6 +111,7 @@ if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
         $repo =~ s/\'\\\'\'/\'/g;
     }
     $repo =~ s/\.git$//;
+    $repo =~ s/\/+$//;
     my $home = $ENV{HOME} || (getpwuid $<)[7];
     foreach my $try ("$repo.git", $repo) {
         if (-d $try) {
