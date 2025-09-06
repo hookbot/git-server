@@ -152,6 +152,46 @@ my $ip = $ssh =~ /^([\da-f\.:]+) /i ? $1 : "UNKNOWN";
 die localtime().": [$KEY\@$ip] git-server: Unexpected invocation.\n" unless $cmd;
 
 my $dir = $ENV{GIT_DIR} or die localtime().": [$KEY\@$ip] git-server: Unable to determine repo!\n";
+die localtime().": [$KEY\@$ip] git-server: You can't access '$1' git repository\n" if $dir =~ m{([^/]*\.workingdir)\b};
+
+my $bare = `git config core.bare 2>/dev/null`;
+if ($bare =~ /true/) {
+    # Safe! Nothing to worry about.
+}
+elsif ($bare =~ /false/) {
+    # If non-bare, then make sure no uncommitted changes are sitting on the server.
+    my $server_monkeys = `git diff 2>&1`;
+    if ($? or $server_monkeys) {
+        my $where = $dir =~ m{^(.+)/\.git$} ? $1 : $dir;
+        die localtime().": [$KEY\@$ip] git-server: Broken non-bare git server [$where] contains illegal uncommitted changes. Manual intervention required.\n".
+          "  Option a) Discard changes: git checkout .\n".
+          "  Option b) Commit changes: git commit -a -m 'Keep the modifications found on the server'\n".
+          "  Option c) Wipe out checkout working directory by converting to bare repository: git clone --bare $where $where.git && rm -rf $where && mv $where.git $where\n".
+          "$server_monkeys\n";
+    }
+    # And make sure NOT to be stuck on any branch just to be safe.
+    # Otherwise, if the client attempts to push any changes to that branch, it will crash with the following:
+    #   remote: error: refusing to update checked out branch: refs/heads/main
+    open my $head_fh, "<", "$dir/HEAD" or die localtime().": [$KEY\@$ip] git-server: Broken non-bare repo missing $$dir/HEAD\n";
+    my $stuck = <$head_fh> || "";
+    close $head_fh;
+    if ($stuck =~ /^[0-9a-f]+\s*$/) {
+        # Looks like a great detached commit, so it is safe to proceed.
+    }
+    else {
+        $stuck =~ m{^ref:\s+refs/heads/(\S+)} or die localtime().": [$KEY\@$ip] git-server: Unable to determine non-bare checkout branch: $stuck\n";
+        my $current_branch = $1;
+        if (`git log 2>&1` =~ /[\S\s]+^commit\s+([0-9a-f]+)/m) {
+            my $detach = $1;
+            die localtime().": [$KEY\@$ip] git-server: Detected non-bare with checkout on [$current_branch] to detaching to [$detach] ...\n".`(cd \$GIT_DIR/.. && git checkout $detach) 2>&1 | cat >/dev/null`."\n\nPlease try again.\n";
+        }
+        die localtime().": [$KEY\@$ip] git-server: Unable to determine any commit for non-bare checkout on branch $current_branch\n";
+    }
+}
+else {
+    die localtime().": [$KEY\@$ip] git-server: Broken bare git repo configuration! $dir/config: ".`git config core.bare 2>&1`."\n";
+}
+
 my $hook = $cmd =~ /^(git-[\w\-]+)/ && $git_op_hook->{$1} or die localtime().": [$KEY\@$ip] git-server: Unimplemented operation!\n";
 
 my $xmods = $ENV{XMODIFIERS} || "";
