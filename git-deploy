@@ -138,7 +138,7 @@ my @invoked = ($0, @ARGV);
 my $cwd = getcwd();
 my $opts = [];
 my $build = undef;
-my $branch = undef;
+my $force_branch = undef;
 my $chdir = undef;
 my $umask = undef;
 my $fix_nasty = undef;
@@ -148,7 +148,7 @@ GetOptions
     "O|o:s" => \$opts,
     "build:s" => \$build,
     "umask:s" => \$umask,
-    "branch:s" => \$branch,
+    "branch:s" => \$force_branch,
     "chdir|C:s" => \$chdir,
     "fix-nasty" => \$fix_nasty,
     "background" => \$background,
@@ -195,11 +195,22 @@ sub rebuild {
     }
 }
 
-if ($branch and @ARGV) {
+sub current_branch {
+    my $scan = run_output_ignore_err qw(git branch -a);
+    return $1 if $scan =~ m{^\* ([\w/\-]+)}m;
+    if ($scan =~ m{^\* .*detached at (\w+)}m) {
+        $scan = run_output_ignore_err("git", "branch", "-a", "--contains", $1).$scan;
+    }
+    return $1 if $scan =~ m{^\s+([\w/]+)}m;
+    die localtime().": [$$] Unable to determine which branch to deploy.\n$scan\n";
+}
+
+if ($force_branch and @ARGV) {
     warn "$0: Don't specify both --branch and commandline argument.\n";
     sleep 1;
     exec perldoc => $0 or die "$0: help menu unavailable\n";
 }
+$force_branch ||= shift;
 
 if ($chdir) {
     chdir $chdir or die "chdir: $chdir $!\n";
@@ -227,17 +238,8 @@ if (@$opts) {
     }
 }
 
-$branch ||= shift || eval {
-    my $scan = run_output_ignore_err qw(git branch -a);
-    return $1 if $scan =~ m{^\* ([\w/\-]+)}m;
-    if ($scan =~ m{^\* .*detached at (\w+)}m) {
-        $scan = run_output_ignore_err("git", "branch", "-a", "--contains", $1).$scan;
-    }
-    return $1 if $scan =~ m{^\s+([\w/]+)}m;
-} or die localtime().": [$$] Unable to determine which branch to deploy.\n";
-
 $0 = "$Script - Initial checkout";
-run_output_ignore_err "git", "checkout", $branch;
+run_output_ignore_err "git", "checkout", ($force_branch || current_branch);
 sleep 1;
 rebuild;
 if ($background) {
@@ -258,6 +260,7 @@ while (1) {
     $0 = "$Script - $cwd: Waiting for push notification ...";
     my $update = "";
     $update .= run_output_include_err qw(git fetch);
+    my $branch = $force_branch || current_branch;
     $update .= run_output_include_err "git", "checkout", $branch;
     $update .= run_output_include_err "git", "rebase", "origin/$branch";
     $0 = "$Script - Scanning updates";
