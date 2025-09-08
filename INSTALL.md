@@ -102,10 +102,9 @@ You can add unlimited client users and SSH public keys.
 
 5. HOOKS
 
-By default, any client in the authorized_keys file will be
-allowed to do any operations to any repo on this server.
-To utilize any of these git-server features, then you can
-symlink the entire hooks folder on the server. For example:
+By default, the entire "hooks" folder will be symlinked
+to utilize these git-server features provided, but you
+may symlink it to wherever you wish. For example:
 
 ```
 [git@gitsrvhost ~]$ cd ProjX
