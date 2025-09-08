@@ -17,6 +17,6 @@ WriteMakefile
     dist => {
         COMPRESS => "gzip -9 -vf",
     },
-    EXE_FILES => [ `cat MANIFEST` =~ /^(git-.*)/gm ],
-    PM => { map { $_ => "\$(INST_SCRIPT)/$_" } `cat MANIFEST` =~ /^(git-.*|hooks.*)/gm },
+    EXE_FILES => [ `cat MANIFEST` =~ /^(git-.{6})$/gm ],
+    PM => { map { $_ => "\$(INST_SCRIPT)/$_" } `cat MANIFEST` =~ /^(git-.{6}|hooks.*)$/gm },
     ;
