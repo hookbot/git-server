@@ -28,7 +28,7 @@ for git clients to access on this server:
 A. You can create a brand new naked project:
 
 ```
-[git@gitsrvhost ~]$ git init --bare ProjX
+[git@gitsrvhost ~]$ git init --initial-branch=main --bare ProjX
 Initialized empty Git repository in /home/git/ProjX/
 [git@gitsrvhost ~]$
 ```
