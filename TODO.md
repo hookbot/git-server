@@ -23,6 +23,10 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Add Support for HTTP protocol git read and write operations using Basic password Authorization (instead of only pubkeys over SSH protocol).
 
+ - Integrate or convert to be compatible with Git::Hooks::* plugins.
+
+ - Monkey the core.hooksPath setting on the git server to point to these hooks provided.
+
  - [webhook] features for callback:
    * Allow for WhiteList or BlackList filters to trigger webhook or ignore webhooks under certain conditions:
      : When specified branches are involved
