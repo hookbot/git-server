@@ -160,36 +160,46 @@ if ($bare =~ /true/) {
 }
 elsif ($bare =~ /false/) {
     # If non-bare, then make sure no uncommitted changes are sitting on the server.
+    my $where = $dir =~ m{^(.+)/\.git$} ? $1 : $dir;
     my $server_monkeys = `git diff 2>&1`;
     if ($? or $server_monkeys) {
-        my $where = $dir =~ m{^(.+)/\.git$} ? $1 : $dir;
-        die localtime().": [$KEY\@$ip] git-server: Broken non-bare git server [$where] contains illegal uncommitted changes. Manual intervention required.\n".
-          "  Option a) Discard changes: git checkout .\n".
-          "  Option b) Commit changes: git commit -a -m 'Keep the modifications found on the server'\n".
-          "  Option c) Wipe out checkout working directory by converting to bare repository: git clone --bare $where $where.git && rm -rf $where && mv $where.git $where\n".
-          "$server_monkeys\n";
+        die localtime().": [$KEY\@$ip] git-server: Illegal uncommitted changes found on Non-bare git server! Manual intervention required.\n".
+            "  Option a) Discard changes: git -C $where checkout .\n".
+            "  Option b) Commit changes: git -C $where commit -a -m 'Keep modifications found on server'\n".
+            "$server_monkeys\n";
     }
-    # And make sure NOT to be stuck on any branch just to be safe.
+    if ($where =~ /^(.*?)\/?\.git$/) {
+        my $gitless = $1;
+        my $recommendation = -e $gitless ? "mv -v $gitless $gitless-CRUSTY-PLEASE-DELETE-\$\$ && " : "";
+        $recommendation .= "git clone --bare $where $gitless";
+        $recommendation .= qq{ && (grep -q "ref: " $gitless/HEAD || grep " refs/heads/" $gitless/packed-refs | head -1 | awk '{print "ref: ", \$2}' > $gitless/HEAD)};
+        $recommendation .= qq{ && mv -v $where $where-CRUSTY-PLEASE-DELETE-\$\$};
+        die localtime().": [$KEY\@$ip] git-server: Non-bare git folder ending with '.git' is too dangerous for a server repo! Manual intervention required.\n".
+            "  Recommendation: $recommendation\n";
+    }
+    # Make sure NOT to be stuck on any branch just to be safe.
     # Otherwise, if the client attempts to push any changes to that branch, it will crash with the following:
     #   remote: error: refusing to update checked out branch: refs/heads/main
-    open my $head_fh, "<", "$dir/HEAD" or die localtime().": [$KEY\@$ip] git-server: Broken non-bare repo missing $$dir/HEAD\n";
+    open my $head_fh, "<", "$dir/HEAD" or die localtime().": [$KEY\@$ip] git-server: Broken non-bare repo missing $dir/HEAD?\n";
     my $stuck = <$head_fh> || "";
     close $head_fh;
     if ($stuck =~ /^[0-9a-f]+\s*$/) {
-        # Looks like a great detached commit, so it is safe to proceed.
+        # Looks like a great detached commit, so it is safe enough to proceed.
     }
     else {
         $stuck =~ m{^ref:\s+refs/heads/(\S+)} or die localtime().": [$KEY\@$ip] git-server: Unable to determine non-bare checkout branch: $stuck\n";
         my $current_branch = $1;
-        if (`git log 2>&1` =~ /[\S\s]+^commit\s+([0-9a-f]+)/m) {
+        if (`git log 2>&1` =~ /^commit\s+([0-9a-f]+)/m) {
             my $detach = $1;
-            die localtime().": [$KEY\@$ip] git-server: Detected non-bare with checkout on [$current_branch] to detaching to [$detach] ...\n".`(cd \$GIT_DIR/.. && git checkout $detach) 2>&1 | cat >/dev/null`."\n\nPlease try again.\n";
+            die localtime().": [$KEY\@$ip] git-server: Non-bare git checkout linked to branch [$current_branch] is too dangerous to use server repo. Manual intervention required.\n".
+                " Option a) Fork a copy into a safe bare git folder: git clone --bare $where $where.git\n".
+                " Option b) Detach checkout from branch to lock onto a safe commit: git -C $where checkout $detach\n";
         }
         die localtime().": [$KEY\@$ip] git-server: Unable to determine any commit for non-bare checkout on branch $current_branch\n";
     }
 }
 else {
-    die localtime().": [$KEY\@$ip] git-server: Broken bare git repo configuration! $dir/config: ".`git config core.bare 2>&1`."\n";
+    die localtime().": [$KEY\@$ip] git-server: Broken bare for git repo configuration! $dir/config: ".`git config core.bare 2>&1`."\n";
 }
 
 my $hook = $cmd =~ /^(git-[\w\-]+)/ && $git_op_hook->{$1} or die localtime().": [$KEY\@$ip] git-server: Unimplemented operation!\n";
@@ -198,7 +208,7 @@ my $xmods = $ENV{XMODIFIERS} || "";
 if ($xmods) {
     $cmd !~ /^git-receive-pack\b/ or
         `git config --list 2>/dev/null` =~ /^receive.advertisePushOptions=/im
-         or system qw(git config --global receive.advertisePushOptions true);
+        or system qw(git config --global receive.advertisePushOptions true);
     $xmods =~ s/(^\s*|\s*$)//g;
     if ($xmods =~ /\bDEBUG\s*=\s*(.[^\,\n]*)/i) {
         my $debug = $1;
@@ -216,14 +226,15 @@ if ($xmods) {
 
 my $base = $0 =~ /([\w\-\.]+)$/ ? $1 : die "$0: Stank base\n";
 if ($0 !~ m{^\Q$dir\E/hooks/} and    # Launched outside of repo/hooks
-    !-x "$dir/hooks/$base" and       # repo is missing hooks/git-server
+    !-x "$dir/hooks/$base" and       # repo is missing hooks/run-git-hooks
     -e "$dir/config" and             # repo is properly --bare
     $Bin =~ m{/hooks$} and           # Launched from "hooks" folder somewhere
     !-l $Bin and                     # Spawned from real "hooks" folder, not a symlink
-    !-l "$dir/hooks") {              # repo hooks is not a symlink, so it's probably the original "sample" stock
+    !-l "$dir/hooks"                 # Repo hooks is not a symlink, (so it's probably the original "sample" stock)
+    || !-d _) {                      # Or it's not even a directory (maybe non-existent or plain "hooks" file or a special mknod file or unix socket)
     warn localtime().": [$KEY\@$ip] git-server: Automatically configuring repo [$dir] to use hooks properly...\n";
     # Don't delete stock "hooks" folder in case there is something needed in there. Just move it out of the way to be safe.
-    rename "$dir/hooks","$dir/hooks.$$.PLEASE_DELETE" and warn "rename: $dir/hooks -> $dir/hooks.$$.PLEASE_DELETE\n" if -e "$dir/hooks";
+    rename "$dir/hooks","$dir/hooks-CRUSTY-PLEASE-DELETE-$$" and warn "rename: $dir/hooks -> $dir/hooks-CRUSTY-PLEASE-DELETE-$$\n" if lstat "$dir/hooks";
     symlink $Bin, "$dir/hooks" and warn "symlink: $dir/hooks -> $Bin\n";
     if (-l "$dir/hooks" and -d "$dir/hooks") {
         warn localtime().": [$KEY\@$ip] git-server: Successfully upgraded hooks to myself.\n";
