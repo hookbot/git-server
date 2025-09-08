@@ -4,8 +4,8 @@
 
 Secure Git Server with more granular hooks capabilities than default git.
 
-This is intented to be a light-weight drop-in replacement for any
-standard git server, but provides more powerful server hooks.
+This is intented to be a drop-in replacement for any standard git server,
+but provides more powerful server hooks and ACLs.
 
 # USAGE
 
@@ -13,19 +13,18 @@ If you do not already have a git server or git repo ready, then make one:
 
 ```
 [admin@git-host ~]$ sudo useradd git
-[admin@git-host ~]$ sudo su - git -c 'git init --bare projectx'
-hint: Using 'master' as the name for the initial branch.
+[admin@git-host ~]$ sudo su - git -c 'git init --initial-branch=main --bare projectx'
 Initialized empty Git repository in /home/git/projectx/
 [admin@git-host ~]$
 ```
 
-Put something like the following in ~git/.ssh/authorized_keys:
+Put something like the following in its ~git/.ssh/authorized_keys:
 
 ```
 command="git-server KEY=user1" ssh-ed25519 AAAA_OAX+blah_pub__ user1@dev
 ```
 
-Then, without any hooks, this user should have full access to this repo:
+Then the first authorized user to touch the repo should have full access:
 
 ```
 [user1@dev ~]$ git config --global user.name 'Mr Developer User1'
