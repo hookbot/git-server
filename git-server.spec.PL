@@ -1,3 +1,5 @@
+#!perl
+
 # Copyright (C) 2025 Rob Brown (bbb@cpan.org)
 # SPEC file generator.
 
