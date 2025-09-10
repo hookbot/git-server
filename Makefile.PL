@@ -8,9 +8,9 @@ if (!-f $spec) { open my $fh, ">>", $spec; }
 utime 1, 1, $spec if 0 == system "which cpan2rpm >/dev/null 2>/dev/null";
 
 WriteMakefile
-    NAME          => 'git-server',
+    NAME          => 'Git::Server',
     AUTHOR        => 'Rob Brown <bbb@cpan.org>',
-    VERSION_FROM  => 'git-server',
+    VERSION_FROM  => 'lib/Git/Server.pm',
     PREREQ_PM     => {
         Cwd => 0,
     },
@@ -18,5 +18,8 @@ WriteMakefile
         COMPRESS => "gzip -9 -vf",
     },
     EXE_FILES => [ `cat MANIFEST` =~ /^(git-.{6})$/gm ],
-    PM => { map { $_ => "\$(INST_SCRIPT)/$_" } `cat MANIFEST` =~ /^(git-.{6}|hooks.*)$/gm },
+    PM => {
+        map ( ( "lib/$_" => "\$(INST_LIB)/$_" ), `cat MANIFEST` =~ m{^lib/(.+\.pm)$}gm ),
+        map ( ( $_ => "\$(INST_SCRIPT)/$_" ), `cat MANIFEST` =~ /^(git-.{6}|hooks.*)$/gm ),
+    },
     ;

@@ -5,6 +5,7 @@ LICENSE
 README.md
 INSTALL.md
 TODO.md
+lib/Git/Server.pm
 git-server.spec
 git-server.spec.PL
 git-server
