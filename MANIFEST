@@ -26,4 +26,6 @@ hooks/post-action
 hooks/push-notify
 hooks/push-notification
 hooks/proxy
-t/00_compile.t
+t/00-git.t
+t/01-compile-modules.t
+t/02-compile-scripts.t
