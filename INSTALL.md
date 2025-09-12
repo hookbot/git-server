@@ -1,4 +1,4 @@
-# git-server
+# Git::Server
 
 INSTALL
 =======
