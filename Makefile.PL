@@ -11,6 +11,7 @@ WriteMakefile
     NAME          => 'Git::Server',
     AUTHOR        => 'Rob Brown <bbb@cpan.org>',
     VERSION_FROM  => 'lib/Git/Server.pm',
+    ABSTRACT_FROM  => 'lib/Git/Server.pm',
     PREREQ_PM     => {
         Cwd => 0,
     },
