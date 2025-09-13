@@ -9,6 +9,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
+ - Convert get_fork_hash common fork sniffer scan to use "git merge-base" instead of grinding through the logs.
+
  - Provide branch, old hash, and new hash (for every branch updated by the git client) to post-read hook args (Requires man-in-the-middle sniffer)
    * If nothing is updated to the client, then there will be no arguments to post-read.
    * There will be a multiple of 3 args, each triple being branch, old hash, new hash, (depending on how many branches the client updates).
