@@ -8,12 +8,11 @@ use strict;
 my @cmd = (
     "cpan2rpm",
     (eval "require File::Temp; 1;" ? () : ("--tempdir","/tmp/git-server-build") ),
-    "--no-sign",
     "--force",
+    "--requires", "strace",
     "--no-fixin",
     "--spec-only",
     "--spec", "./git-server.spec",
-    "--no-prfx",
     "."
     );
 
