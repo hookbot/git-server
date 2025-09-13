@@ -1,4 +1,13 @@
-Revision History for git-server
+Revision History for Git::Server
+
+0.032  2025-09-12 20:00:00
+ - Migrate to real module Git::Server
+ - Allow dangerous non-bare repositories again.
+ - But prevent cloning proxy workingdir.
+ - Ensure octal trace chars are below 0400.
+ - Allow git-deploy to follow updated branch.
+ - Split out test suites.
+ - Other package distribution modifications.
 
 0.031  2025-07-17 21:00:00
  - Only support bare repositories on the server.
