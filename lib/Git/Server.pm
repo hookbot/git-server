@@ -42,4 +42,24 @@ Then the first authorized user to touch the repo should have full access:
 See INSTALL.md to setup granular read and write access and/or
 a simple push-notification instant deployment configuration.
 
+=head1 SEE ALSO
+
+Similar purpose and functionality with L<Git::Hooks> but more powerful and less dependencies.
+
+=head1 AUTHOR
+
+Rob Brown <bbb@cpan.org>
+
+=head1 DEVELOPMENT
+
+This module is maintained on github:
+
+https://github.com/hookbot/git-server
+
+Report feature requests or bugs here:
+
+https://github.com/hookbot/git-server/issues
+
+Pull requests welcome.
+
 =cut
