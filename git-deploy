@@ -104,14 +104,14 @@ By default, max-delay is 7200 seconds (or 2 hours).
 
 As super user:
 
-  [root@deploy-host ~]# wget -N -P /usr/bin https://raw.githubusercontent.com/hookbot/git-server/master/git-deploy
-  [root@deploy-host ~]# chmod 755 /usr/bin/git-deploy
+  [root@deploy-host ~]# wget -N -P /usr/local/bin https://metacpan.org/dist/Git-Server/source/git-deploy
+  [root@deploy-host ~]# chmod 755 /usr/local/bin/git-deploy
   [root@deploy-host ~]#
 
 As deploy user:
 
-  [puller@deploy-host projectz]$ git deploy master
-  [puller@deploy-host projectz]$ echo '0 * * * * cd ~/projectz && git deploy >/dev/null 2>/dev/null' | crontab -
+  [puller@deploy-host projectz]$ git deploy --branch=master
+  [puller@deploy-host projectz]$ echo '0 * * * * git deploy --chdir ~/projectz </dev/null >/dev/null 2>/dev/null' | crontab -
   [puller@deploy-host projectz]$
 
 =head1 AUTHOR

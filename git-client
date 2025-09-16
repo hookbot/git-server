@@ -36,17 +36,17 @@ real "git" program in the PATH.
 
 For example, as super user, you could do this:
 
-  [root@deploy-host ~]# wget https://raw.githubusercontent.com/hookbot/git-server/master/git-client
-  [root@deploy-host ~]# chmod 755 git-client
-  [root@deploy-host ~]# mv -i git-client /usr/local/bin/git
+  [root@deploy-host ~]# wget -N -P /usr/local/bin https://metacpan.org/dist/Git-Server/source/git-client
+  [root@deploy-host ~]# chmod 755 /usr/local/bin/git-client
+  [root@deploy-host ~]# ln -s -v git-client /usr/local/bin/git
   [root@deploy-host ~]#
 
 Or as normal user, you could do this:
 
-  [root@deploy-host ~]$ wget https://raw.githubusercontent.com/hookbot/git-server/master/git-client
-  [root@deploy-host ~]$ chmod 755 git-client
   [root@deploy-host ~]$ mkdir -p ~/bin
-  [root@deploy-host ~]$ mv -i git-client ~/bin/git
+  [root@deploy-host ~]$ wget -N -P ~/bin https://metacpan.org/dist/Git-Server/source/git-client
+  [root@deploy-host ~]$ chmod 755 ~/bin/git-client
+  [root@deploy-host ~]$ ln -s -v git-client ~/bin/git
   [root@deploy-host ~]$ grep 'PATH=$HOME/bin' ~/.bash_profile || echo 'export PATH=$HOME/bin:$PATH' | tee -a ~/.bash_profile
   [root@deploy-host ~]$
 
