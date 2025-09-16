@@ -7,15 +7,15 @@ use strict;
 
 my @cmd = (
     "cpan2rpm",
-    (eval "require File::Temp; 1;" ? () : ("--tempdir","/tmp/git-server-build") ),
+    (eval "require File::Temp; 1;" ? () : ("--tempdir","/tmp/Git-Server-build") ),
     "--force",
     "--requires", "strace",
     "--no-fixin",
     "--spec-only",
-    "--spec", "./git-server.spec",
+    "--spec", "./Git-Server.spec",
     "."
     );
 
 exec(@cmd);
 warn "cpan2rpm: Broken [@cmd]\n";
-exec "touch", "git-server.spec";
+exec "touch", "Git-Server.spec";
