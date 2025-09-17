@@ -234,7 +234,8 @@ if (@$opts) {
     push @$opts, $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
     if (@$opts) {
         $ENV{XMODIFIERS} = join "\n", @$opts;
-        $ENV{GIT_SSH_COMMAND} = "ssh -o SendEnv=XMODIFIERS";
+        $ENV{GIT_SSH_COMMAND} //= "ssh";
+        $ENV{GIT_SSH_COMMAND} = "$ENV{GIT_SSH_COMMAND} -o SendEnv=XMODIFIERS";
     }
 }
 
