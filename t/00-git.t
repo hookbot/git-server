@@ -17,7 +17,7 @@ ok (!$?, "git installed");
 # strace can be used to help with more granular git hooks
 SKIP: {
     # But strace is Linux-specific
-    skip "strace works on Linux, but not expected on [$^O]", 1 unless $^O =~ /linux/i;
+    skip "strace should work on Linux but not found here [$^O]", 1 unless -x "/usr/bin/strace";
 
     $try = `strace --help`;
     ok (!$?, "strace installed");

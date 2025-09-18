@@ -14,6 +14,7 @@ git-deploy
 hooks/logger
 hooks/restrictip
 hooks/ipc-parse
+hooks/iotrace
 hooks/git-shell
 hooks/run-git-hooks
 hooks/pre-read

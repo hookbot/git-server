@@ -1,0 +1,133 @@
+#!/usr/bin/perl
+
+# Program: iotrace
+# Purpose: Act like strace for Linux enough to log STDIN STDOUT STDERR I/O
+
+use strict;
+use warnings;
+use Getopt::Long qw(GetOptions);
+use IPC::Open3 qw(open3);
+use IO::Select;
+use IO::Handle;
+use Symbol 'gensym'; # vivify a separate handle for STDERR
+
+our $xx_ify = 0;
+Getopt::Long::Configure("require_order");
+GetOptions
+    "o:s" => \(my $output_log_file),
+    "v" => \(my $verbose),
+    "x" => \(my $x_ify),
+    "xx" => \$xx_ify,
+    "t" => \(my $time_baby),
+    "tt" => \(my $time_super),
+    "s:i" => \(my $size_of_strings), # Ignored
+    "e:s" => \(my $events),  # Ignored
+    or die "Usage> $0 -o <output_log> CMD [ARGS]\n";
+
+my @run = @ARGV or die "$0: Missing command?\n";
+
+if ($time_super and not eval { require Time::HiRes; 1 }) {
+    # If requesting get high precision, but without HiRes, then just change "-tt" to "-t"
+    $time_baby = 1;
+    $time_super = 0;
+}
+
+sub t {
+    return "" if !$time_baby && !$time_super;
+    my $now = $time_super ? Time::HiRes::time() : time();
+    my @t = localtime $now;
+    return sprintf "%02d:%02d:%02d.%06d ", $t[2], $t[1], $t[0], 1000000*($now - int($now)) if $time_super;
+    return sprintf "%02d:%02d:%02d ", $t[2], $t[1], $t[0];
+}
+
+# Escape strings like strace does
+sub e {
+    my $chars = shift;
+    if ($xx_ify) {
+        # -xx: Super Hex Encode everything
+        $chars =~ s/([\s\S])/sprintf "\\x%02x", ord($1)/eg;
+    }
+    else {
+        $chars =~ s/\\/\\\\/g;
+        $chars =~ s/\"/\\\"/g;
+        $chars =~ s/\n/\\n/g;
+        $chars =~ s/\r/\\r/g;
+        if ($x_ify) {
+            # -x: Hex encode only non-ascii chars
+            $chars =~ s/([^\ -\~])/sprintf "\\x%02x", ord $1/eg;
+        }
+        else {
+            # Default is octal encoding non-ascii only
+            $chars =~ s/([^\ -\~])/sprintf "\\%03o", ord $1/eg;
+        }
+   }
+   return qq{"$chars"};
+}
+
+my ($in, $out, $err, $fh_log);
+$err = gensym; # open3 doesn't like undef for its STDERR for some reason
+if (defined $output_log_file) {
+    open $fh_log, ">", $output_log_file or die "$output_log_file: open failure: $!\n";
+}
+else {
+    # XXX - Is it ok to spew all the trace lines out to STDERR if no -o option provided?
+    open $fh_log, ">&STDERR";
+}
+
+my $pid = open3 $in, $out, $err, @run or die "$run[0]: fork exec failure: $!\n";
+$fh_log->autoflush(1);
+{
+    # Don't super encode execve params even with -xx option
+    local $xx_ify = 0;
+    print $fh_log t.qq{execve("$run[0]",[}.join(', ', map { e($_) } @run).'], '.(
+        $verbose ? (
+            '['.join(', ', map { e("$_=$ENV{$_}") } sort keys %ENV).']'
+        ) :
+        \%ENV.' /* '.(scalar keys %ENV).' vars */'
+    ).qq{) = 0\n};
+}
+
+my $proxy = {
+    fileno(*STDIN) => $in,
+    fileno($out) => *STDOUT,
+    fileno($err) => *STDERR,
+};
+
+my $io = IO::Select->new(\*STDIN, $in, $out, $err);
+# Block waiting for I/O
+while (my @ready = $io->can_read(8000)) {
+    foreach my $fh (@ready) {
+        my $fn = fileno($fh);
+        my $pr = $proxy->{$fn};
+        if (!$pr) {
+            $io->remove($fh);
+            close STDIN;
+            next;
+        }
+        my $bytes = sysread($fh, (my $buffer), 16384);
+        if (!$fn) {
+            print $fh_log t."read($fn, ".e($buffer).", $bytes) = $bytes\n";
+        }
+        if ($bytes) {
+            syswrite($proxy->{$fn}, $buffer, $bytes);
+            if ($fn) {
+                print $fh_log t.'write('.fileno($proxy->{$fn}).', '.e($buffer).", $bytes) = $bytes\n";
+            }
+        }
+        else {
+            if ($fn) {
+                print $fh_log t.'close('.fileno($proxy->{$fn}).") = 0\n";
+            }
+            else {
+                print $fh_log t."close($fn) = 0\n";
+            }
+            $io->remove($fh);
+        }
+    }
+    last if !$io->handles;
+}
+
+waitpid( $pid, 0 );
+my $child_exit_status = $? >> 8;
+print $fh_log t."+++ exited with $child_exit_status +++\n";
+close $fh_log;
