@@ -181,8 +181,7 @@ sub run_output_include_err {
 }
 
 sub getps {
-    return run_output_ignore_err qw(ps fauwwx)
-        || run_output_include_err qw(ps auwwx);
+    return (run_output_ignore_err qw[ps fauwwx] or run_output_include_err qw[ps auwwx]);
 }
 
 sub rebuild {
