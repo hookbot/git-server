@@ -229,6 +229,7 @@ if ($umask and $umask =~ /^(\d+)$/) {
     umask oct $1;
 }
 
+push @$opts, "deploy_patience=$maxpatience" if $maxpatience;
 if (@$opts) {
     push @$opts, $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
     if (@$opts) {
@@ -249,11 +250,6 @@ if ($background) {
     close STDIN;
     close STDOUT;
     close STDERR;
-}
-
-if ($maxpatience) {
-    $ENV{GIT_SSH_COMMAND} = "ssh -o SendEnv=XMODIFIERS";
-    $ENV{XMODIFIERS} = "deploy_patience=$maxpatience";
 }
 
 while (1) {
