@@ -118,7 +118,7 @@ while (my @ready = $io->can_read(8000)) {
         my $real_fileno = $fn < 3 ? $fn : fileno($proxy->{$fn});
         # Only STDIN (fileno = 0) is "read", otherwise "write"
         my $op = $real_fileno ? "write" : "read";
-        print $fh_log t."$op($real_fileno, ".e($buffer).", $bytes) = $bytes\n";
+        print $fh_log t."$op($real_fileno, ".e($buffer).", $bytes) = $bytes\n" if $bytes or $op eq "read";
         if ($bytes) {
             # Forward non-empty packet to the proxy file handle
             syswrite($pr, $buffer, $bytes);
