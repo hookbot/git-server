@@ -81,15 +81,16 @@ use Cwd qw(abs_path);
 
 our $VERSION = "0.034";
 
-if (@ARGV and $ARGV[0] =~ /^(clone|fetch|pull|ls-remote|push)$/) {
+my $op = "";
+if (grep { /^(clone|fetch|pull|ls-remote|push)$/ and $op = $1 } @ARGV) {
     # Need to search for special "-o" options
-    my $op = $1;
     my @options = ();
     push @options, "DEBUG=$ENV{DEBUG}" if defined $ENV{DEBUG};
     for (my $i = 1; $i < @ARGV; $i++) {
         my $pre = $ARGV[$i-1];
         my $option = $ARGV[$i];
         if ($option =~ /^(--server-option|--push-option)=(.*)$/i) {
+            # Split up the annoying "=" notation, then scan again.
             splice @ARGV, $i, 1, $1, $2;
             next;
         }
@@ -116,7 +117,7 @@ if (@ARGV and $ARGV[0] =~ /^(clone|fetch|pull|ls-remote|push)$/) {
 my $myself = (stat $0)[1] or die "$0: Can't find my inode?\n";
 my $real_git = "/usr/bin/git";
 $ENV{GIT_CLIENT_TRIED} ||= "";
-foreach my $path (split /:/,$ENV{PATH}) {
+foreach my $path (split /:/, $ENV{PATH}) {
     my $try = "$path/git";
     if (my @stat = stat $try) {
         if ($stat[1] == $myself) {
