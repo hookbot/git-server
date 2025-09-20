@@ -24,6 +24,7 @@ GetOptions
     "tt"    => \(my $time_super),
     "s:i"   => \(my $size_of_strings), # Ignored
     "e:s"   => \(my $events),  # Ignored
+    "f|ff"  => \(my $follow_fork), # Ignored
     or die "Usage> $0 -o <output_log> CMD [ARGS]\n";
 
 my @run = @ARGV or die "$0: Missing command?\n";
