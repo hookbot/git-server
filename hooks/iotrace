@@ -10,7 +10,6 @@ use Getopt::Long qw(GetOptions);
 use IPC::Open3 qw(open3);
 use IO::Select;
 use IO::Handle;
-use Symbol 'gensym'; # vivify a separate handle for STDERR
 
 our $x_ify  = 0;
 our $xx_ify = 0;
@@ -68,7 +67,7 @@ sub e {
 }
 
 my ($in, $out, $err, $fh_log);
-$err = gensym; # open3 doesn't like undef for its STDERR for some reason
+$err = IO::Handle->new; # open3 can't vivify STDERR from undef for some reason
 if (defined $output_log_file) {
     open $fh_log, ">", $output_log_file or die "$output_log_file: open failure: $!\n";
 }
