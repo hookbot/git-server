@@ -5,27 +5,53 @@
 
 use strict;
 use warnings;
-use Test::More;
-plan tests => 7;
+use Test::More tests => 26;
+use File::Temp ();
 
-# make sure iotrace runs for a simple cases
-my $t1 = "hooks/iotrace";
-my $try = `$t1 2>&1`;
-$try =~ s/\n+/ /g;
-ok (!!$?, "Args required: $try");
+my $try = "";
+my $line = "";
+my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => '.trace' );
 
-$try = `$t1 /BoGuS-CommAnd 2>&1`;
-chomp $try;
-ok (!!$?, "Spawn missing FULL: $try");
+SKIP: for my $prog (qw[hooks/iotrace strace]) {
+    # Skip half the tests if no strace
+    skip "no strace", 13 if $prog eq "strace" and !-x "/usr/bin/strace";
 
-$try = `$t1 NoSuch-ComMand 2>&1`;
-chomp $try;
-ok (!!$?, "Spawn missing PATH: $try");
+    # run simple cases and test option: -o <output_log>
 
-$try = `$t1 true 2>&1`;
-ok (!$?, "$t1 runs true");
-like($try, qr/exited with 0/, "true case");
+    ($try = `$prog 2>&1`) =~ s/\n+/ /g;
+    ok (!!$?, "$prog: Args required: $try");
 
-$try = `$t1 false 2>&1`;
-ok (!!$?, "$t1 runs false");
-like($try, qr/exited with [1-9]/, "false case");
+    $try = `$prog /BoGuS-CommAnd 2>&1`;
+    chomp $try;
+    ok (!!$?, "$prog: Spawn missing FULL: $try");
+
+    $try = `$prog NoSuch-ComMand 2>&1`;
+    chomp $try;
+    ok (!!$?, "$prog: Spawn missing PATH: $try");
+
+    $try = `$prog true 2>&1`;
+    ok (!$?, "$prog: Runs true");
+    like($try, qr/exited with 0/, "$prog: true case to stderr");
+
+    $try = `$prog false 2>&1`;
+    ok (!!$?, "$prog: Runs false");
+    like($try, qr/exited with [1-9]/, "$prog: false case to stderr");
+
+    # test option: -o <file>
+    $try = `$prog -o $tmp true 2>&1`;
+    ok (!$?, "$prog: Runs true with -o");
+    $tmp->seek(0, 0); # SEEK_SET beginning
+    chomp ($line = join "", <$tmp>);
+    like($line, qr/exited with 0/, "$prog: true case with -o");
+    $tmp->seek(0, 0);
+    $tmp->truncate(0);
+    ok(!-s $tmp, "$prog: true case using -o log cleared");
+
+    $try = `$prog -o $tmp false 2>&1`;
+    ok (!!$?, "$prog: Runs false with -o");
+    chomp ($line = join "", <$tmp>);
+    like($line, qr/exited with [1-9]/, "$prog: false case with -o");
+    $tmp->seek(0, 0);
+    $tmp->truncate(0);
+    ok(!-s $tmp, "$prog: false case using -o log cleared");
+}
