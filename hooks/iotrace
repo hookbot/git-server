@@ -73,20 +73,24 @@ else {
     # XXX - Is it ok to spew all the trace lines out to STDERR if no -o option provided?
     open $fh_log, ">&STDERR";
 }
-
-my $pid = open3 $in, $out, $err, @run or die "$run[0]: fork exec failure: $!\n";
 $fh_log->autoflush(1);
 
 my $full = $run[0];
 if (eval { require File::Which; 1; } and $full =~ m{^([\w\-\.]+)$}) {
     $full = File::Which::which($1);
 }
+if (!$full or $full =~ m{^/} && !-x $full) {
+    die "$run[0]: No such file or directory\n";
+}
+
 print $fh_log t."execve(".e($full).", [".join(', ', map { e($_) } @run).'], '.(
     $verbose ? (
         '['.join(', ', map { e("$_=$ENV{$_}") } sort keys %ENV).']'
     ) :
     \%ENV.' /* '.(scalar keys %ENV).' vars */'
 ).") = 0\n";
+
+my $pid = open3 $in, $out, $err, @run or die "$run[0]: fork exec failure: $!\n";
 
 my $proxy = {
     fileno(*STDIN) => $in,
