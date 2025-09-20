@@ -11,14 +11,12 @@ use IPC::Open3 qw(open3);
 use IO::Select;
 use IO::Handle;
 
-our $x_ify  = 0;
-our $xx_ify = 0;
 Getopt::Long::Configure("require_order");
 GetOptions
     "o:s"   => \(my $output_log_file),
     "v"     => \(my $verbose),
-    "x"     => \$x_ify,
-    "xx"    => \$xx_ify,
+    "x"     => \(my $x_ify),
+    "xx"    => \(my $xx_ify),
     "t"     => \(my $time_baby),
     "tt"    => \(my $time_super),
     "s:i"   => \(my $size_of_strings), # Ignored
@@ -78,20 +76,17 @@ else {
 
 my $pid = open3 $in, $out, $err, @run or die "$run[0]: fork exec failure: $!\n";
 $fh_log->autoflush(1);
-{
-    local $x_ify = $x_ify || $xx_ify; # Hex Encode non-ASCII chars with -x or -xx
-    local $xx_ify = 0; # But don't encode ALL execve param chars (even with -xx)
-    my $full = $run[0];
-    if (eval { require File::Which; 1; } and $full =~ m{^([\w\-\.]+)$}) {
-        $full = File::Which::which($1);
-    }
-    print $fh_log t."execve(".e($full).", [".join(', ', map { e($_) } @run).'], '.(
-        $verbose ? (
-            '['.join(', ', map { e("$_=$ENV{$_}") } sort keys %ENV).']'
-        ) :
-        \%ENV.' /* '.(scalar keys %ENV).' vars */'
-    ).") = 0\n";
+
+my $full = $run[0];
+if (eval { require File::Which; 1; } and $full =~ m{^([\w\-\.]+)$}) {
+    $full = File::Which::which($1);
 }
+print $fh_log t."execve(".e($full).", [".join(', ', map { e($_) } @run).'], '.(
+    $verbose ? (
+        '['.join(', ', map { e("$_=$ENV{$_}") } sort keys %ENV).']'
+    ) :
+    \%ENV.' /* '.(scalar keys %ENV).' vars */'
+).") = 0\n";
 
 my $proxy = {
     fileno(*STDIN) => $in,
