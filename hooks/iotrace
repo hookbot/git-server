@@ -140,3 +140,4 @@ waitpid( $pid, 0 );
 my $child_exit_status = $? >> 8;
 print $fh_log t."+++ exited with $child_exit_status +++\n";
 close $fh_log;
+exit $child_exit_status;
