@@ -90,6 +90,7 @@ print $fh_log t."execve(".e($full).", [".join(', ', map { e($_) } @run).'], '.(
     \%ENV.' /* '.(scalar keys %ENV).' vars */'
 ).") = 0\n";
 
+$run[0] = $full if $full;
 my $pid = open3 $in, $out, $err, @run or die "$run[0]: fork exec failure: $!\n";
 
 my $proxy = {
