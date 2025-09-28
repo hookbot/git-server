@@ -5,8 +5,7 @@
 
 use strict;
 use warnings;
-#use Test::More tests => 1 + 38 * 3;
-use Test::More tests => 1 + 38 * 2;
+use Test::More tests => 1 + 38 * 3;
 use File::Temp ();
 use POSIX qw(WNOHANG);
 use IO::Handle;
@@ -45,7 +44,7 @@ sub tripped {
 }
 
 my $pid = 0;
-$SIG{ALRM} = sub { $pid and warn "TIMEOUT ALARM TRIGGERED! Aborting execution PID=[$pid]\n" and kill TERM => $pid and sleep 1 and kill KILL => $pid; };
+$SIG{ALRM} = sub { require Carp; $pid and Carp::cluck("TIMEOUT ALARM TRIGGERED! Aborting execution PID=[$pid]") and kill TERM => $pid and sleep 1 and kill KILL => $pid; };
 my $got_piped = 0;
 $SIG{PIPE} = sub { $got_piped = 1; };
 alarm 5;
@@ -69,8 +68,7 @@ my $test_prog = q{
 };
 my @run = ($^X, "-e", $test_prog);
 
-#SKIP: for my $prog (qw[none strace hooks/iotrace]) {
-SKIP: for my $prog (qw[none strace]) {
+SKIP: for my $prog (qw[none strace hooks/iotrace]) {
     # Skip half the tests if no strace
     skip "no strace", 38 if $prog eq "strace" and !-x "/usr/bin/strace";
 
