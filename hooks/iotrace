@@ -105,11 +105,13 @@ while (my @ready = $io->can_read(8000)) {
         my $pr = $proxy->{$fn};
         if (!$pr) {
             # Open3 $in (process's STDIN) should only be written to.
-            # So if it's suddenly readable, it means the other side closed it.
+            # So if it's suddenly READABLE, it means the other side explicitly closed it.
+            print $fh_log t."close(0) = 0\n";
             # Thus we need to do the same on our side:
             $io->remove($fh);
+            $io->remove(\*STDIN);
             close STDIN;
-            next;
+            last;
         }
         my $bytes = sysread($fh, (my $buffer), 16384);
         # Find original fileno (STDIN=0, STDOUT=1, STDERR=2):
