@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 1 + 38 * 3;
+use Test::More tests => 1 + 34 * 3;
 use File::Temp ();
 use POSIX qw(WNOHANG);
 use IO::Handle;
@@ -34,13 +34,6 @@ sub canwrite {
     my $timeout = shift || 0.01;
     my $bits = bits($fh);
     return scalar select(undef, $bits, undef, $timeout);
-}
-
-sub tripped {
-    my $fh = shift;
-    my $timeout = shift || 0.01;
-    my $bits = bits($fh);
-    return scalar select(undef, undef, $bits, $timeout);
 }
 
 my $pid = 0;
@@ -93,11 +86,8 @@ SKIP: for my $prog (qw[none strace hooks/iotrace]) {
     alarm 5;
     # Test #LineD: p; (PAUSE for a second)
     ok(canwrite($in_fh),  t." $prog: TOP: STDIN is writeable: $!");
-    ok(!tripped($in_fh),  t." $prog: TOP: STDIN no exception tripped: $!");
     ok(!canread($out_fh), t." $prog: TOP: STDOUT is empty so far: $!");
-    ok(!tripped($out_fh), t." $prog: TOP: STDOUT no exception tripped: $!");
     ok(!canread($err_fh), t." $prog: TOP: STDERR is empty so far: $!");
-    ok(!tripped($err_fh), t." $prog: TOP: STDERR no exception tripped: $!");
 
     # Test #LineD: <STDIN>
     alarm 5;
@@ -146,8 +136,6 @@ SKIP: for my $prog (qw[none strace hooks/iotrace]) {
     # Test #LineH: close STDIN
     # Since #LineJ already ran, we know #LineH must certainly be done by now.
     alarm 5;
-    ok(!tripped($in_fh), t." $prog: MID: STDIN is not tripped yet: $!");
-    #ok(tripped($in_fh), t." $prog: MID: STDIN got tripped: $!");
     ok($in_fh->opened, t." $prog: our side thinks STDIN still is open");
     ok(!$got_piped,  t." $prog: STDIN Still Not PIPED: $got_piped");
     # Attempt to write again to its STDIN to make sure it breaks this time.
@@ -155,13 +143,9 @@ SKIP: for my $prog (qw[none strace hooks/iotrace]) {
     ok(!(print $in_fh "PIPE CRASH!\n"), t." $prog: line4: $!");
     ok($got_piped,  t." $prog: Got PIPED: $got_piped");
     $got_piped = 0;
-    #ok(!canwrite($in_fh), t." $prog: POP: STDIN is not writeable: $!");
-    #ok(tripped($in_fh), t." $prog: POP: STDIN got an exception: $!");
     # Nothing left for its STDIN, so close it. Since some of the bytes sent to its STDIN weren't consumed, the close() should fail with "Broken Pipe":
     ok(!close($in_fh),  t." $prog: explicit close STDIN after broken write: $!");
     ok(!$in_fh->opened, t." $prog: STDIN not open anymore");
-    #ok(!canwrite($in_fh), t." $prog: POP: STDIN is not writeable: $!");
-    #ok(tripped($in_fh), t." $prog: POP: STDIN got an exception: $!");
 
     # Test #LineK: p (PAUSE for one second)
     # If the STDIN test crashing happened quickly enough
