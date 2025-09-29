@@ -135,12 +135,15 @@ while (my @ready = $io->can_read($child_died ? 0.5 : 8000)) {
 
             # And quit listening on the corresponding handle too:
             $io->remove($pr);
-            # And close its corresponding handle too:
-            close($pr);
 
-            # If it was STDIN (fd 0), then the invoker probably closed it before the target program. But just log the close acting like the target program called close itself (even if STDIN is being ignored).
-            # Or if it was an output handle (STDOUT fd 1 or STDERR fd 2) and the program hasn't died, then it must have been an explicit close() so it really needs to be logged:
-            print $fh_log t."close($real_fileno) = 0\n" if $real_fileno == 0 or !$child_died;
+            if ($real_fileno == 0 or !$child_died) {
+                # Only close corresponding handle for STDIN in order to signal target program its input stream has ended, or if explicitly closed while program is still running. If target program closes an output handle (STDOUT fd 1 or STDERR fd 2) implicitely upon exit, then we want to mimic the same behavior and thus NOT explicitly close it yet:
+                close($pr);
+
+                # If it was STDIN (fd 0), then the invoker probably closed it before the target program. But just log the close acting like the target program called close itself (even if STDIN is being ignored).
+                # Or if it was an output handle (STDOUT fd 1 or STDERR fd 2) and the program hasn't died, then it must have been an explicit close() so it really needs to be logged:
+                print $fh_log t."close($real_fileno) = 0\n";
+            }
         }
     }
     last if !$io->handles;
