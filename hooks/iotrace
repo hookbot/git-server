@@ -101,8 +101,8 @@ my $proxy = {
 };
 
 my $io = IO::Select->new(\*STDIN, $in, $out, $err);
-# Block waiting for I/O
-while (my @ready = $io->can_read(8000)) {
+# Block waiting for I/O but only a little patience if the @run prog died already.
+while (my @ready = $io->can_read($child_died ? 0.5 : 8000)) {
     foreach my $fh (@ready) {
         my $fn = fileno($fh);
         my $pr = $proxy->{$fn};
