@@ -136,7 +136,12 @@ while (my @ready = $io->can_read(8000)) {
 }
 
 waitpid( $pid, 0 );
+my $signal = $? & 127;
 my $child_exit_status = $? >> 8;
+if ($signal) {
+    my $sig_name = eval { require Config; %Config::Config and [split / /, $Config::Config{sig_name}]->[$signal] } || $signal;
+    print $fh_log t."--- GOT SIG$sig_name ($signal) ---\n";
+}
 print $fh_log t."+++ exited with $child_exit_status +++\n";
 close $fh_log;
 exit $child_exit_status;
