@@ -61,7 +61,8 @@ my $test_prog = q{
 };
 my @run = ($^X, "-e", $test_prog);
 
-SKIP: for my $prog (qw[none strace hooks/iotrace]) {
+SKIP: for my $try (qw[none strace hooks/iotrace]) {
+    my $prog = $try =~ /(\w+)$/ ? $1 : $try;
     # Skip half the tests if no strace
     skip "no strace", 38 if $prog eq "strace" and !-x "/usr/bin/strace";
 
@@ -69,7 +70,7 @@ SKIP: for my $prog (qw[none strace hooks/iotrace]) {
 
     my @run = ($^X, "-e", $test_prog);
     # Ensure behavior of $test_prog is the same with or without tracing it.
-    unshift @run, $prog, -e => "execve,clone,openat,close,read,write", -o => "$tmp" if $prog ne "none";
+    unshift @run, $try, -e => "execve,clone,openat,close,read,write", -o => "$tmp" if $prog ne "none";
 
     alarm 5;
     my $line;
