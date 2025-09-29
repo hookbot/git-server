@@ -88,6 +88,9 @@ print $fh_log t."execve(".e($full).", [".join(', ', map { e($_) } @run).'], '.(
     \%ENV.' /* '.(scalar keys %ENV).' vars */'
 ).") = 0\n";
 
+my $child_died = 0;
+$SIG{CHLD} = sub { $child_died = 1; };
+
 $run[0] = $full if $full;
 my $pid = open3 $in, $out, $err, @run or die "$run[0]: fork exec failure: $!\n";
 
@@ -135,6 +138,7 @@ while (my @ready = $io->can_read(8000)) {
     last if !$io->handles;
 }
 
+!$child_died and kill TERM => $pid and sleep 1 and kill TERM => $pid;
 waitpid( $pid, 0 );
 my $signal = $? & 127;
 my $child_exit_status = $? >> 8;
