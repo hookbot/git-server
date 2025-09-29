@@ -109,7 +109,7 @@ while (my @ready = $io->can_read($child_died ? 0.5 : 8000)) {
         if (!$pr) {
             # Open3 $in (process's STDIN) should only be written to.
             # So if it's suddenly READABLE, it means the other side explicitly closed it.
-            print $fh_log t."close(0) = 0\n";
+            print $fh_log t."close(0) = 0\n" if !$child_died;
             # Thus we need to do the same on our side:
             $io->remove($fh);
             $io->remove(\*STDIN);
@@ -128,11 +128,19 @@ while (my @ready = $io->can_read($child_died ? 0.5 : 8000)) {
         }
         else {
             # Getting ZERO bytes always means the file handle just closed.
-            print $fh_log t."close($real_fileno) = 0\n";
-            # Quit listening anymore and close the file handle for real:
-            $io->remove($fh); close($fh);
+            # Quit listening to this anymore:
+            $io->remove($fh);
+            # And then close the file handle for real:
+            close($fh);
+
+            # And quit listening on the corresponding handle too:
+            $io->remove($pr);
             # And close its corresponding handle too:
-            $io->remove($pr); close($pr);
+            close($pr);
+
+            # If it was STDIN (fd 0), then the invoker probably closed it before the target program. But just log the close acting like the target program called close itself (even if STDIN is being ignored).
+            # Or if it was an output handle (STDOUT fd 1 or STDERR fd 2) and the program hasn't died, then it must have been an explicit close() so it really needs to be logged:
+            print $fh_log t."close($real_fileno) = 0\n" if $real_fileno == 0 or !$child_died;
         }
     }
     last if !$io->handles;
