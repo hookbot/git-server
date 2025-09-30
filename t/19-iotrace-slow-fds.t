@@ -196,6 +196,8 @@ SKIP: for my $try (qw[none strace hooks/iotrace]) {
     # Nothing left for its STDERR, so close it.
     alarm 5;
     ok(close($err_fh), t." $prog: close stderr");
+    # Give up a little bit of time slice back to the kernel to allow enough time send me the SIGCHLD after the child's exit implicitly closed its handles.
+    select(undef, undef, undef, 0.01);
 
     # Test #LineN: exit 0
     # Once STDERR is implicitly closed, we know the prog should be done, and exit value should be 0
