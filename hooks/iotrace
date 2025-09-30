@@ -86,6 +86,7 @@ if ($err = IO::Handle->new) {
 
 my $fh_log;
 if (defined $output_log_file) {
+    $output_log_file .= ".$pid" if $follow_fork > 1;
     open $fh_log, ">", $output_log_file or die "$output_log_file: open failure: $!\n";
 }
 else {
