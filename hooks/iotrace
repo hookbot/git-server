@@ -18,12 +18,13 @@ GetOptions
     "v+"    => \(my $verbose = 0),
     "x+"    => \(my $heX_ify = 0),
     "t+"    => \(my $timing = 0),
-    "f+"    => \(my $follow_fork), # Ignored
+    "f+"    => \(my $follow_fork = 0),
     "s=i"   => \(my $size_of_strings), # Ignored
     "e=s"   => \(my $events),  # Ignored
     or die "Usage> $0 -o <output_log> CMD [ARGS]\n";
 
 my @run = @ARGV or die "$0: Missing command?\n";
+my $pid = 0;
 
 if ($timing > 1 and not eval { require Time::HiRes; 1 }) {
     # If requesting get high precision, but without HiRes, then just change "-tt" to "-t"
@@ -31,11 +32,16 @@ if ($timing > 1 and not eval { require Time::HiRes; 1 }) {
 }
 
 sub t {
-    return "" if !$timing;
-    my $now = $timing > 1 ? Time::HiRes::time() : time();
-    my @t = localtime $now;
-    return sprintf "%02d:%02d:%02d.%06d ", $t[2], $t[1], $t[0], 1000000*($now - int($now)) if $timing > 1;
-    return sprintf "%02d:%02d:%02d ", $t[2], $t[1], $t[0];
+    my $h = "";
+    if ($follow_fork == 1) { $h .= "$pid "; }
+    if ($timing) {
+        my $now = $timing > 1 ? Time::HiRes::time() : time();
+        my @t = localtime $now;
+        $h .= sprintf "%02d:%02d:%02d", $t[2], $t[1], $t[0];
+        $h .= sprintf ".%06d", 1000000*($now - int($now)) if $timing > 1;
+        $h .= " ";
+    }
+    return $h;
 }
 
 # Escape strings like strace does
@@ -62,8 +68,23 @@ sub e {
    return qq{"$chars"};
 }
 
-my ($in, $out, $err, $fh_log);
-$err = IO::Handle->new; # open3 can't vivify STDERR from undef for some reason
+my $full = $run[0];
+if (eval { require File::Which; 1; } and $full =~ m{^([\w\-\.]+)$}) {
+    $full = File::Which::which($1);
+}
+if (!$full or $full =~ m{^/} && !-x $full) {
+    die "$run[0]: No such file or directory\n";
+}
+
+my ($in, $out, $err);
+# open3 can't vivify STDERR from undef for some reason
+if ($err = IO::Handle->new) {
+    my @r = @run;
+    $r[0] = $full if $full;
+    $pid = open3 $in, $out, $err, @r or die "$r[0]: fork exec failure: $!\n";
+}
+
+my $fh_log;
 if (defined $output_log_file) {
     open $fh_log, ">", $output_log_file or die "$output_log_file: open failure: $!\n";
 }
@@ -72,14 +93,6 @@ else {
     open $fh_log, ">&STDERR";
 }
 $fh_log->autoflush(1);
-
-my $full = $run[0];
-if (eval { require File::Which; 1; } and $full =~ m{^([\w\-\.]+)$}) {
-    $full = File::Which::which($1);
-}
-if (!$full or $full =~ m{^/} && !-x $full) {
-    die "$run[0]: No such file or directory\n";
-}
 
 print $fh_log t."execve(".e($full).", [".join(', ', map { e($_) } @run).'], '.(
     $verbose ? (
@@ -90,9 +103,6 @@ print $fh_log t."execve(".e($full).", [".join(', ', map { e($_) } @run).'], '.(
 
 my $child_died = 0;
 $SIG{CHLD} = sub { $child_died = 1; };
-
-$run[0] = $full if $full;
-my $pid = open3 $in, $out, $err, @run or die "$run[0]: fork exec failure: $!\n";
 
 my $proxy = {
     fileno(*STDIN) => $in,
