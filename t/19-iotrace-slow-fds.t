@@ -11,6 +11,24 @@ use POSIX qw(WNOHANG);
 use IO::Handle;
 use IPC::Open3 qw(open3);
 
+# Test behavior when file descriptors are closed.
+my $test_prog = q{
+    $|=1;                                    #LineA
+    sub p{sleep 1}                           #LineB
+    sub r{$_=<STDIN>//"(undef)";chomp;$_}    #LineC
+    p;r;                                     #LineD
+    p;print "OUT-ONE:$_\n";                  #LineE
+    p;r;                                     #LineF
+    p;warn "ERR-TWO:$_\n";                   #LineG
+    p;close STDIN;                           #LineH
+    p;r;                                     #LineI
+    p;print "OUT-BORK:$_\n";                 #LineJ
+    p;close STDOUT;                          #LineK
+    p;warn "ERR-BORK:$_\n";                  #LineL
+    p;p;                                     #LineM
+    exit 0;                                  #LineN
+};
+
 eval { require Time::HiRes; };
 sub t { defined(\&Time::HiRes::time) ? sprintf("%10.6f",Time::HiRes::time()) : time() }
 
@@ -43,22 +61,6 @@ $SIG{PIPE} = sub { $got_piped = 1; };
 alarm 5;
 my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => '.trace' );
 ok("$tmp", t." tracefile[$tmp]");
-my $test_prog = q{
-    $|=1;                                    #LineA
-    sub p{sleep 1}                           #LineB
-    sub r{$_=<STDIN>//"(undef)";chomp;$_}    #LineC
-    p;r;                                     #LineD
-    p;print "OUT-ONE:$_\n";                  #LineE
-    p;r;                                     #LineF
-    p;warn "ERR-TWO:$_\n";                   #LineG
-    p;close STDIN;                           #LineH
-    p;r;                                     #LineI
-    p;print "OUT-BORK:$_\n";                 #LineJ
-    p;close STDOUT;                          #LineK
-    p;warn "ERR-BORK:$_\n";                  #LineL
-    p;p;                                     #LineM
-    exit 0;                                  #LineN
-};
 my @run = ($^X, "-e", $test_prog);
 
 SKIP: for my $try (qw[none hooks/iotrace strace]) {
