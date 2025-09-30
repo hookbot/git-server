@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 1 + 34 * 3;
+use Test::More tests => 1 + 35 * 3;
 use File::Temp ();
 use POSIX qw(WNOHANG);
 use IO::Handle;
@@ -199,7 +199,7 @@ SKIP: for my $try (qw[none hooks/iotrace strace]) {
     alarm 5;
     ok(close($err_fh), t." $prog: close stderr");
     # Give up a little bit of time slice back to the kernel to allow enough time send me the SIGCHLD after the child's exit implicitly closed its handles.
-    select(undef, undef, undef, 0.01);
+    is(select(undef, undef, undef, 0.01), 0, t." $prog: Waited for SIGCHLD");
 
     # Test #LineN: exit 0
     # Once STDERR is implicitly closed, we know the prog should be done, and exit value should be 0
