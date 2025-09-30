@@ -129,7 +129,7 @@ while (my @ready = $io->can_read($child_died ? 0.5 : 8000)) {
         }
         my $bytes = sysread($fh, (my $buffer), 16384);
         # Find original fileno (STDIN=0, STDOUT=1, STDERR=2):
-        my $real_fileno = $fn < 3 ? $fn : fileno($proxy->{$fn});
+        my $real_fileno = $fn < 3 ? $fn : fileno($pr);
         # Only STDIN (fileno = 0) is "read", otherwise "write"
         my $op = $real_fileno ? "write" : "read";
         print $fh_log t."$op($real_fileno, ".e($buffer).", $bytes) = $bytes\n" if $bytes or $op eq "read";
