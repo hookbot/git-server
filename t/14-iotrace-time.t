@@ -8,17 +8,18 @@ use warnings;
 use Test::More tests => 18;
 use File::Temp ();
 
-my $try = "";
+my $run = "";
 my $line = "";
 my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => '.trace' );
 
-SKIP: for my $prog (qw[hooks/iotrace strace]) {
+SKIP: for my $try (qw[hooks/iotrace strace]) {
+    my $prog = $try =~ /(\w+)$/ ? $1 : $try;
     # Skip half the tests if no strace
     skip "no strace", 9 if $prog eq "strace" and !-x "/usr/bin/strace";
 
     # run -t and -tt cases to test timestamps formats
 
-    $try = `$prog -o $tmp $^X -e '' 2>&1`;
+    $run = `$try -o $tmp $^X -e '' 2>&1`;
     ok(!!-s $tmp, "$prog: $tmp: Default time logged ".(-s $tmp)." bytes");
     $tmp->seek(0, 0); # SEEK_SET beginning
     chomp($line = <$tmp>);
@@ -27,7 +28,7 @@ SKIP: for my $prog (qw[hooks/iotrace strace]) {
     $tmp->truncate(0);
     ok(!-s $tmp, "$prog: Default time log cleared");
 
-    $try = `$prog -t -o $tmp $^X -e '' 2>&1`;
+    $run = `$try -t -o $tmp $^X -e '' 2>&1`;
     ok(!!-s $tmp, "$prog: $tmp: Baby time logged ".(-s $tmp)." bytes");
     $tmp->seek(0, 0); # SEEK_SET beginning
     chomp($line = <$tmp>);
@@ -36,7 +37,7 @@ SKIP: for my $prog (qw[hooks/iotrace strace]) {
     $tmp->truncate(0);
     ok(!-s $tmp, "$prog: Baby time log cleared");
 
-    $try = `$prog -tt -o $tmp $^X -e '' 2>&1`;
+    $run = `$try -tt -o $tmp $^X -e '' 2>&1`;
     ok(!!-s $tmp, "$prog: $tmp: HiRes time logged ".(-s $tmp)." bytes");
     $tmp->seek(0, 0); # SEEK_SET beginning
     chomp($line = <$tmp>);

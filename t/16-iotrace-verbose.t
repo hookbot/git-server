@@ -8,17 +8,18 @@ use warnings;
 use Test::More tests => 16;
 use File::Temp ();
 
-my $try = "";
+my $run = "";
 my $line = "";
 my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => '.trace' );
 
-SKIP: for my $prog (qw[hooks/iotrace strace]) {
+SKIP: for my $try (qw[hooks/iotrace strace]) {
+    my $prog = $try =~ /(\w+)$/ ? $1 : $try;
     # Skip half the tests if no strace
     skip "no strace", 8 if $prog eq "strace" and !-x "/usr/bin/strace";
 
     # run -v case to test verbose functionality
 
-    $try = `$prog -s 9000 -o $tmp $^X -e '' 2>&1`;
+    $run = `$try -s 9000 -o $tmp $^X -e '' 2>&1`;
     ok(!!-s $tmp, "$prog: $tmp: Without verbose logged ".(-s $tmp)." bytes");
     $tmp->seek(0, 0); # SEEK_SET beginning
     chomp($line = <$tmp>);
@@ -28,7 +29,7 @@ SKIP: for my $prog (qw[hooks/iotrace strace]) {
     $tmp->truncate(0);
     ok(!-s $tmp, "$prog: Without verbose log cleared");
 
-    $try = `$prog -v -s 9000 -o $tmp $^X -e '' 2>&1`;
+    $run = `$try -v -s 9000 -o $tmp $^X -e '' 2>&1`;
     ok(!!-s $tmp, "$prog: $tmp: With verbose logged ".(-s $tmp)." bytes");
     $tmp->seek(0, 0); # SEEK_SET beginning
     chomp($line = <$tmp>);
