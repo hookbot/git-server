@@ -14,7 +14,6 @@ my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => '.trace' );
 
 SKIP: for my $try (qw[hooks/iotrace strace]) {
     my $prog = $try =~ /(\w+)$/ ? $1 : $try;
-
     # Skip half the tests if no strace
     skip "no strace", 9 if $prog eq "strace" and !-x "/usr/bin/strace";
 
