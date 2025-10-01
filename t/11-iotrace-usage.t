@@ -5,17 +5,18 @@
 
 use strict;
 use warnings;
-use Test::More tests => 26;
+our (@filters, $test_points);
+use Test::More tests => 1 + (@filters = qw[hooks/iotrace strace]) * ($test_points = 13);
 use File::Temp ();
 
 my $run = "";
 my $line = "";
 my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => '.trace' );
+ok("$tmp", "tracefile[$tmp]");
 
-SKIP: for my $try (qw[hooks/iotrace strace]) {
-    my $prog = $try =~ /(\w+)$/ ? $1 : $try;
-    # Skip half the tests if no strace
-    skip "no strace", 13 if $prog eq "strace" and !-x "/usr/bin/strace";
+SKIP: for my $try (@filters) {
+    my $prog = $try =~ /(\w+)$/ && $1;
+    skip "no strace", $test_points if $prog eq "strace" and !-x "/usr/bin/strace"; # Skip strace tests if doesn't exist
 
     # run simple cases and test option: -o <output_log>
 

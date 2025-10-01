@@ -5,7 +5,8 @@
 
 use strict;
 use warnings;
-use Test::More tests => 1 + 35 * 3;
+our (@filters, $test_points);
+use Test::More tests => 1 + (@filters = qw[none hooks/iotrace strace]) * ($test_points = 35);
 use File::Temp ();
 use POSIX qw(WNOHANG);
 use IO::Handle;
@@ -61,14 +62,10 @@ $SIG{PIPE} = sub { $got_piped = 1; };
 alarm 5;
 my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => '.trace' );
 ok("$tmp", t." tracefile[$tmp]");
-my @run = ($^X, "-e", $test_prog);
 
-SKIP: for my $try (qw[none hooks/iotrace strace]) {
-    my $prog = $try =~ /(\w+)$/ ? $1 : $try;
-    # Skip half the tests if no strace
-    skip "no strace", 34 if $prog eq "strace" and !-x "/usr/bin/strace";
-
-    # run cases where STDIN is closed by the target first
+SKIP: for my $try (@filters) {
+    my $prog = $try =~ /(\w+)$/ && $1;
+    skip "no strace", $test_points if $prog eq "strace" and !-x "/usr/bin/strace"; # Skip strace tests if doesn't exist
 
     my @run = ($^X, "-e", $test_prog);
     # Ensure behavior of $test_prog is the same with or without tracing it.
