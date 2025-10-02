@@ -19,6 +19,7 @@ GetOptions
     "x+"    => \(my $heX_ify = 0),
     "t+"    => \(my $timing = 0),
     "f+"    => \(my $follow_fork = 0),
+    "q+"    => \(my $quiet = 0), # Ignored
     "s=i"   => \(my $size_of_strings), # Ignored
     "e=s"   => \(my $events),  # Ignored
     or die "Usage> $0 -o <output_log> CMD [ARGS]\n";
