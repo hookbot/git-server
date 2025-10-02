@@ -124,7 +124,7 @@ SKIP: for my $try (@filters) {
     ok(close($err_fh),  t." $prog: close STDERR fine: $!");
 
     # Test #LineG: p;
-    # If STDIN is really closed, then prog should exit is under 1 seconds...
+    # If STDIN is really closed, then prog should exit in under 1 seconds...
     alarm 5;
     my $died = waitpid(-1, WNOHANG);
     ok($died<=0, t." $prog: PID[$pid] still running: $died");

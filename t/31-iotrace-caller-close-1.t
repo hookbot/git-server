@@ -52,8 +52,6 @@ sub canwrite {
 
 my $pid = 0;
 $SIG{ALRM} = sub { require Carp; $pid and Carp::cluck("TIMEOUT ALARM TRIGGERED! Aborting execution PID=[$pid]") and kill TERM => $pid and sleep 1 and kill KILL => $pid; };
-my $got_piped = 0;
-$SIG{PIPE} = sub { $got_piped = 1; };
 alarm 5;
 my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => '.trace' );
 ok("$tmp", t." tracefile[$tmp]");
@@ -62,7 +60,7 @@ SKIP: for my $try (@filters) {
     my $prog = $try =~ /(\w+)$/ && $1;
     skip "no strace", $test_points if $prog eq "strace" and !-x "/usr/bin/strace"; # Skip strace tests if doesn't exist
 
-    # run cases where STDIN is closed by the target first
+    # run cases where STDOUT is closed by the caller first
 
     my @run = ($^X, "-e", $test_prog);
     # Ensure behavior of $test_prog is the same with or without tracing it.
@@ -74,7 +72,6 @@ SKIP: for my $try (@filters) {
     my $in_fh  = IO::Handle->new;
     my $out_fh = IO::Handle->new;
     my $err_fh = IO::Handle->new;
-    $got_piped = 0;
     $! = 0; # Reset errno
     $pid = open3($in_fh, $out_fh, $err_fh, @run) or die "open3: FAILED! $!\n";
     ok($pid, t." $prog: spawned [pid=$pid] $!");
@@ -128,7 +125,7 @@ SKIP: for my $try (@filters) {
     like($line, qr/THREE.*dos/, t." $prog: MID: STDERR done: $! $line");
 
     # Test #LineI: p;
-    # Prog should exit is under 1 seconds...
+    # Prog should exit in under 1 seconds...
     alarm 5;
     $? = $! = 0;
     my $died = waitpid(-1, WNOHANG);

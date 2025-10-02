@@ -61,7 +61,7 @@ SKIP: for my $try (@filters) {
     my $prog = $try =~ /(\w+)$/ && $1;
     skip "no strace", $test_points if $prog eq "strace" and !-x "/usr/bin/strace"; # Skip strace tests if doesn't exist
 
-    # run cases where STDIN is closed by the target first
+    # run cases where STDOUT is closed by the target first
 
     my @run = ($^X, "-e", $test_prog);
     # Ensure behavior of $test_prog is the same with or without tracing it.
