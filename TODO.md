@@ -21,6 +21,25 @@ Some features we need or want, plus some neat ideas that may not be too feasible
    * or for callback webhook.
    * In order to facilitate the InterProcessCommunication between the pre-write and post-write, information should be stored in $IPC/info.txt until the post-write completes.
 
+ - Make git-client incorporate all five config locations using fallback precedence, but especially honor the default "--global" ~/.gitconfig still.
+   * Use this order for precedence:
+     1. ~/src/github/repository/.git/config (or $GIT_DIR/config or $PWD/.git/config)
+     2. ~/src/github/.gitconfig (or wherever is the nearest descent file) <=== MAGIC UNSUPPORTED FILE WE NEED TO INJECT
+     3. ~/.gitconfig (or $GIT_CONFIG_GLOBAL)
+     4. ~/.config/git/config (or $XDG_CONFIG_HOME/git/config) [This seems to be ignored if ~/.gitconfig exists, so "fallback" config would be better]
+     5. /etc/gitconfig (or $GIT_CONFIG_SYSTEM)
+   * Some relevant strace lines:
+     90581 1759377181.625230 access("/etc/gitconfig", R_OK) = -1 ENOENT (No such file or directory)
+     90581 1759377181.625318 access("/tmp/myXDGglobal/git/config", R_OK) = -1 ENOENT (No such file or directory)
+     90581 1759377181.625387 access("/home/user/.gitconfig", R_OK) = 0
+     90581 1759377181.625470 openat(AT_FDCWD, "/home/user/.gitconfig", O_RDONLY) = 3
+     90581 1759377181.626384 openat(AT_FDCWD, ".git/config", O_RDONLY) = 3
+   * Most cases should be able to be handled by hacking $HOME and/or $XDG_CONFIG_HOME and/or $GIT_CONFIG_GLOBAL and/or $GIT_CONFIG_SYSTEM prior to calling the real git.
+   * This is especially easier if /etc/gitconfig is missing or empty.
+   * XXX - Should we consider creating a temp folder or temp file to manually merge configs if there are too many matching?
+   * XXX - If creating a temp config file, can we allow multiple override descent configs?
+   * XXX - Is it possible to merge duplicate settings across multiple config files all into one file and still be effectively equivilent?
+
  - Make a commandline configuration helper checker utility that verifies the git server configurations:
    * XXX - Can we overload the "git-server" command to use -t STDIN to detect commandline TTY?
    * Scripts and hooks installations
