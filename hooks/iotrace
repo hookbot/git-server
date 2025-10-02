@@ -52,10 +52,13 @@ sub e {
         $chars =~ s/([\s\S])/sprintf "\\x%02x", ord($1)/eg;
     }
     else {
-        $chars =~ s/\\/\\\\/g;
-        $chars =~ s/\"/\\\"/g;
-        $chars =~ s/\n/\\n/g;
+        # Both \\ and \" really need to be escaped
+        # But add other helpful chars to make it easier for Perl to read too.
+        $chars =~ s/([\\\"\'\$\@])/\\$1/g;
+        # Special backslash escape chars for easy legibility
+        $chars =~ s/\t/\\t/g;
         $chars =~ s/\r/\\r/g;
+        $chars =~ s/\n/\\n/g;
         if ($heX_ify) {
             # -x: Hex Encode only non-ascii chars
             $chars =~ s/([^\ -\~])/sprintf "\\x%02x", ord $1/eg;
