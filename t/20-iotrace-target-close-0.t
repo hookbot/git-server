@@ -6,7 +6,8 @@
 use strict;
 use warnings;
 our (@filters, $test_points);
-use Test::More tests => 1 + (@filters = qw[none hooks/iotrace strace]) * ($test_points = 24);
+use Test::More tests => 1 + (@filters = qw[none hooks/iotrace strace]) * ($test_points = 29);
+use Errno qw(EPIPE);
 use File::Temp ();
 use POSIX qw(WNOHANG);
 use IO::Handle;
@@ -86,6 +87,7 @@ SKIP: for my $try (@filters) {
 
     # Test #LineD: <STDIN>
     alarm 5;
+    $in_fh->autoflush(1);
     ok((print $in_fh "uno!\n"),t." $prog: line1");
 
     # Test #LineE: p (PAUSE for a second)
@@ -104,22 +106,30 @@ SKIP: for my $try (@filters) {
     # STDOUT should still be empty
     alarm 5;
     ok(!canread($out_fh), t." $prog: MID: STDOUT is still empty: $!");
-    # Quickly jam something into its STDIN while it's still open
-    ok((print $in_fh "uno!\n"),t." $prog: line1");
+    $! = 0;
+    ok(!$!, t." $prog: MID: STDIN No Errno: $!");
+    # Quickly jam something into its STDIN while it's still open, but this should get lost.
+    ok((print $in_fh "dos!\n"),t." $prog: line1");
     ok(!$got_piped, t." $prog: STDIN Not PIPED: $got_piped");
+    ok(!$!, t." $prog: MID: STDIN Still No Errno: $!");
     ok(!canread($in_fh),  t." $prog: STDIN still sleeping: $!");
 
     # STDIN should be closed within a second, which should wake up its file descriptor.
     alarm 5;
-    ok(canread($in_fh, 1),  t." $prog: STDIN woke up: $!");
+    ok(canread($in_fh, 1.3),  t." $prog: STDIN woke up: $!");
     ok(canwrite($in_fh),  t." $prog: MID: STDIN is writeable: $!");
-    # Haven't touched the woke STDIN yet, so not PIPE triggered yet.
+    # Haven't touched the woke STDIN yet, so not PIPED yet.
+    ok(!$!, t." $prog: MID: STDIN Still No EPIPE: $!");
     ok(!$got_piped, t." $prog: STDIN Still Not PIPED: $got_piped");
+    # The PIPE must be broken now that can_read, so writing should fail:
     ok(!(print $in_fh "PIPE CRASH!\n"), t." $prog: line2: $!");
+    is(0+$!, EPIPE, t." $prog: MID: STDIN Got EPIPE: $!");
     ok($got_piped,  t." $prog: Got PIPED: $got_piped");
     $got_piped = 0;
     ok(canwrite($in_fh),  t." $prog: STDIN is not writeable: $!");
+    $! = 0;
     ok(!close($in_fh),  t." $prog: explicit close STDIN should fail after broken write: $!");
+    is(0+$!, EPIPE, t." $prog: END: close STDIN got EPIPE: $!");
     ok(close($out_fh),  t." $prog: close STDOUT fine: $!");
     ok(close($err_fh),  t." $prog: close STDERR fine: $!");
 
