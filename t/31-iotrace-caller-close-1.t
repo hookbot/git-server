@@ -6,23 +6,25 @@
 use strict;
 use warnings;
 our (@filters, $test_points);
-use Test::More tests => 1 + (@filters = qw[none hooks/iotrace strace]) * ($test_points = 24);
+use Test::More tests => 1 + (@filters = qw[none hooks/iotrace strace]) * ($test_points = 31);
+use Errno qw(EPIPE);
 use File::Temp ();
 use POSIX qw(WNOHANG);
 use IO::Handle;
 use IPC::Open3 qw(open3);
 
-# Test caller close STDOUT (fd 1) behavior (Run 6 seconds)
+# Test caller close STDOUT (fd 1) behavior (Run 7 seconds)
 my $test_prog = q{
     $|=1;$SIG{PIPE}=sub{warn"PIPED!$!\n"};   #LineA
     sub p{sleep 1}                           #LineB
     sub r{$_=<STDIN>//"(undef)";chomp;$_}    #LineC
     p;r;                                     #LineD
     p;print "OUT-ONE:$_\n";                  #LineE
-    p;r;                                     #LineF
-    p;print "OUT-TWO:$_\n";                  #LineG
-    p;warn "ERR-THREE:$_\n";                 #LineH
-    p;exit 0;                                #LineI
+    p;print "OUT-TWO:$_\n";   $a=0+$!;$!=0;  #LineF
+    p;print "OUT-THREE:$_\n"; $b=0+$!;$!=0;  #LineG
+    p;close STDOUT;        my $c=0+$!;$!=0;  #LineH
+    p;warn  "ERR-FOUR:$_ <$a><$b><$c>\n";    #LineI
+    p;exit 0;                                #LineJ
 };
 
 eval { require Time::HiRes; };
@@ -87,55 +89,68 @@ SKIP: for my $try (@filters) {
     alarm 5;
     ok((print $in_fh "uno!\n"),t." $prog: line1");
 
-    # Test #LineE: p (PAUSE for a second)
+    # Test #LineE: p (PAUSE for a second); ONE
     # STDOUT should still be empty
     alarm 5;
-    ok(!canread($out_fh), t." $prog: PRE: STDOUT is still empty: $!");
-
-    # Test #LineE: ONE
-    alarm 5;
+    ok(!canread($out_fh),    t." $prog: PRE: STDOUT is still empty: $!");
     ok(canread($out_fh,2.8), t." $prog: PRE: STDOUT ready: $!");
     alarm 5;
     chomp($line = <$out_fh>);
     ok($line, t." $prog: back1: $line");
+
+    # Test #LineF: p (PAUSE); TWO
+    alarm 5;
+    # Message should be ignored and lost:
+    ok((print $in_fh "dos!\n"),t." $prog: line2: $!");
+    ok(!canread($out_fh),      t." $prog: MID: STDOUT is empty: $!");
+    ok(canread($out_fh,1.3),   t." $prog: MID: STDOUT woke: $!");
+
+    # STDOUT knocked on the door, trying to shove "TWO" to me, but slam the door closed without taking it.
     ok(close($out_fh), t." $prog: explicitly close STDOUT: $!");
 
-    # Test #LineF: p (PAUSE); <STDIN>;
+    # Test #LineG: p; THREE
+    # Hopefully gets PIPE slapped for attempting THREE to my close()'d STDOUT.
+    # If so, it should crash a message to its STDERR.
     alarm 5;
-    ok((print $in_fh "dos!\n"),t." $prog: line2");
-
-    # Test #LineG: p;OUT
-    alarm 5;
-    ok(!canread($err_fh), t." $prog: PRE: STDERR is still empty: $!");
-    alarm 5;
-    ok(canread($err_fh,2.1), t." $prog: PRE: STDERR woke: $!");
-    # Hopefully it got PIPE slapped attempted to send a packet to its close()'d STDOUT
-    chomp($line = <$err_fh>);
-    ok($line, t." $prog: back2: $line");
-    like($line, qr/PIPE/, t." $prog: MID: STDOUT pipe slapped: $! $line");
-    unlike($line, qr/dos/, t." $prog: MID: STDOUT no leaky pipe");
-
-    # Test #LineH: p;ERR THREE
-    alarm 5;
-    ok(!canread($err_fh), t." $prog: MID: STDERR is still empty: $!");
-    alarm 5;
-    ok(canread($err_fh,1.1), t." $prog: MID: STDERR woke: $!");
+    ok(!canread($err_fh),    t." $prog: MID: STDERR is still empty: $!");
+    ok(canread($err_fh,1.3), t." $prog: MID: STDERR woke: $!");
     chomp($line = <$err_fh>);
     ok($line, t." $prog: back3: $line");
-    like($line, qr/THREE.*dos/, t." $prog: MID: STDERR done: $! $line");
+    like($line, qr/PIPE/,    t." $prog: MID: STDOUT pipe slapped: $! $line");
+    unlike($line, qr/dos/,   t." $prog: MID: STDIN no leaky pipe");
 
-    # Test #LineI: p;
+    # Test #LineH: p; close STDOUT
+    # Test #LineI: p; FOUR
+    alarm 5;
+    ok(!canread($err_fh),    t." $prog: Waiting for Errno reports: $!");
+    ok(canread($err_fh,2.8), t." $prog: END: STDERR woke: $!");
+    chomp($line = <$err_fh>);
+    ok($line, t." $prog: back4: $line");
+
+    ok($line=~s/<(\d+)>//, t." $prog: TWO: [$line] Errno=$1");
+    $!=$1;
+    ok(!$!,                t." $prog: TWO: No error: $!");
+
+    ok($line=~s/<(\d+)>//, t." $prog: THREE: [$line] Errno=$1");
+    $!=$1;
+    is(0+$!, EPIPE,        t." $prog: THREE: Got EPIPE: $!");
+
+    ok($line=~s/<(\d+)>//, t." $prog: close: [$line] Errno=$1");
+    $!=$1;
+    is(0+$!, EPIPE,        t." $prog: close: Got EPIPE: $!");
+
+    # Test #LineJ: p;
     # Prog should exit in under 1 seconds...
     alarm 5;
     $? = $! = 0;
     my $died = waitpid(-1, WNOHANG);
     is($died, 0, t." $prog: PID[$pid] still running: $died $!");
     is($?, -1, t." $prog: did not exit: $?");
-    ok(canread($err_fh,1.1), t." $prog: END: STDERR woke: $!");
+    ok(canread($err_fh,1.3), t." $prog: END: implicit close STDERR: $!");
     # Give plenty of time to complete exit
     select undef,undef,undef, 0.1;
 
-    # Test #LineG: exit 0
+    # Test #LineJ: exit 0
     alarm 5;
     $? = $! = 0;
     $died = waitpid(-1, WNOHANG);
