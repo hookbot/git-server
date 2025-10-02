@@ -146,7 +146,7 @@ while (1) {
     if (-r "$scan/.gitconfig") {
         if (!$ENV{HOME} or system "diff -q $ENV{HOME}/.gitconfig $scan/.gitconfig >/dev/null") {
             if (!$ENV{GIT_CONFIG_GLOBAL}) {
-                warn "$scan/.gitconfig: Override\n";
+                warn "$scan/.gitconfig: Override\n" if $ENV{DEBUG};
                 $ENV{GIT_CONFIG_GLOBAL} = "$scan/.gitconfig";
             }
         }
