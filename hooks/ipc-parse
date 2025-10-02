@@ -16,14 +16,14 @@ sub crash {
 # Escape String with default encoding
 sub e {
     my $s = shift;
-    # Both \\ and \" need to be escaped
-    $s =~ s/\\/\\\\/g;
-    $s =~ s/\"/\\\"/g;
+    # Both \\ and \" really need to be escaped
+    # But add other helpful chars to make it easier for Perl to read too.
+    $s =~ s/([\\\"\'\$\@])/\\$1/g;
     # Special backslash escape chars for easy legibility
     $s =~ s/\t/\\t/g;
     $s =~ s/\r/\\r/g;
     $s =~ s/\n/\\n/g;
-    # Octal \000 format all NON-ASCII chars
+    # Octal \000 format all NON-ASCII chars that are left
     $s =~ s/([^\ -\~])/sprintf "\\%03o", ord $1/eg;
     # Add QUOTEs
     return qq{"$s"};
