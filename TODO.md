@@ -21,6 +21,22 @@ Some features we need or want, plus some neat ideas that may not be too feasible
    * or for callback webhook.
    * In order to facilitate the InterProcessCommunication between the pre-write and post-write, information should be stored in $IPC/info.txt until the post-write completes.
 
+ - Make a commandline configuration helper checker utility that verifies the git server configurations:
+   * XXX - Can we overload the "git-server" command to use -t STDIN to detect commandline TTY?
+   * Scripts and hooks installations
+   * Secured ~/.ssh/authorized_keys format, including "KEY" settings
+   * Files and Directories chmod permissions
+   * ADMIN and ACL Management
+   * List / Create / Remove repos
+   * SSHD Settings
+     1. "AcceptEnv XMODIFIERS" in case they want
+          to allow "--server-option" and/or "--push-option" and/or "-o" to have
+          $GIT_OPTION_COUNT and $GIT_OPTION_{NUM} to be available during pre-* hooks
+          or "git-deploy --max-delay <seconds>" for custom push notification timeout
+          or "git-client -O <name=val>"
+          or other DEBUG features
+     2. "AllowAgentForwarding yes" for proxy.url two-way auto-sync feature
+
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6.
 
  - Add Support for HTTP protocol git read and write operations using Basic password Authorization (instead of only pubkeys over SSH protocol).
