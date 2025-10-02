@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 our (@filters, $test_points);
-use Test::More tests => 1 + (@filters = qw[none hooks/iotrace strace]) * ($test_points = 23);
+use Test::More tests => 1 + (@filters = qw[none hooks/iotrace strace]) * ($test_points = 24);
 use File::Temp ();
 use POSIX qw(WNOHANG);
 use IO::Handle;
@@ -94,7 +94,8 @@ SKIP: for my $try (@filters) {
     ok(!canread($out_fh), t." $prog: PRE: STDOUT is still empty: $!");
 
     # Test #LineE: ONE
-    # Try blocking read even though buffer is empty
+    alarm 5;
+    ok(canread($out_fh,2.8), t." $prog: PRE: STDOUT ready: $!");
     alarm 5;
     chomp($line = <$out_fh>);
     ok($line, t." $prog: back1: $line");
