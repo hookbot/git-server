@@ -54,7 +54,7 @@ sub canwrite {
 my $pid = 0;
 $SIG{ALRM} = sub { require Carp; $pid and Carp::cluck("TIMEOUT ALARM TRIGGERED! Aborting execution PID=[$pid]") and kill TERM => $pid and sleep 1 and kill KILL => $pid; };
 alarm 5;
-my $tmp = File::Temp->new( UNLINK => 0, SUFFIX => '.trace' );
+my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => '.trace' );
 ok("$tmp", t." tracefile[$tmp]");
 
 SKIP: for my $try (@filters) {

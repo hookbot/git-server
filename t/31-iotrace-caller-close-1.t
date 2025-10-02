@@ -55,7 +55,7 @@ $SIG{ALRM} = sub { require Carp; $pid and Carp::cluck("TIMEOUT ALARM TRIGGERED! 
 my $got_piped = 0;
 $SIG{PIPE} = sub { $got_piped = 1; };
 alarm 5;
-my $tmp = File::Temp->new( UNLINK => 0, SUFFIX => '.trace' );
+my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => '.trace' );
 ok("$tmp", t." tracefile[$tmp]");
 
 SKIP: for my $try (@filters) {
