@@ -38,7 +38,7 @@ Some features we need or want, plus some neat ideas that may not be too feasible
    * This is especially easier if /etc/gitconfig is missing or empty.
    * XXX - Should we consider creating a temp folder or temp file to manually merge configs if there are too many matching?
    * XXX - If creating a temp config file, can we allow multiple override descent configs?
-   * XXX - Is it possible to merge duplicate settings across multiple config files all into one file and still be effectively equivilent?
+   * XXX - Is it possible to merge duplicate settings across multiple config files all into one file and still be effectively equivalent?
 
  - Make a commandline configuration helper checker utility that verifies the git server configurations:
    * XXX - Can we overload the "git-server" command to use -t STDIN to detect commandline TTY?
