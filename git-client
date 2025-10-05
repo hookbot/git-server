@@ -12,9 +12,13 @@ Wrapper around the real git provide additional functionality.
 
 =head2 GIT_CONFIG Override
 
-Allows for .gitconfig descent override.
-It will traverse up the parent directories until a .gitconfig
-is found, then it will use that instead of only looking at HOME.
+Allows for .gitconfig descent override files up until the $HOME directory.
+All descent .gitconfig files will be honored, although files closest
+to the git working directory will take precedence. All these descent
+.gitconfig files take precedence over --global config files,
+which take precedence over --system files in case of duplicate settings.
+And --local config files take precedence over all these descent files
+and all other --global and --system files.
 
 =head2 -O <OPTION>
 
@@ -53,9 +57,8 @@ Or as normal user, you could do this:
 =head1 SYNOPSIS
 
   cd ~/src/github/project
-  touch ../.gitconfig
-  git config --global user.email 'hookbot@github.com'
-  git config --global --list
+  git config --file ../.gitconfig user.email 'hookbot@github.com'
+  git config --list
 
 =head1 PURPOSE
 
@@ -137,20 +140,65 @@ foreach my $path (split /:/, $ENV{PATH}) {
 
 -x $real_git or die "$real_git: Unable to execute\n";
 
-my $last = ".";
-$ENV{HOME} ||= (getpwnam $<)[7];
-while (1) {
-    my $scan = abs_path( $last eq "." && !-d "$last/.git" ? $last : "$last/.." );
-    last if $scan eq $last or $scan eq $ENV{HOME};
-    $last = $scan;
-    if (-r "$scan/.gitconfig") {
-        if (!$ENV{HOME} or !-r "$ENV{HOME}/.gitconfig" or system "diff -q $ENV{HOME}/.gitconfig $scan/.gitconfig >/dev/null") {
-            if (!$ENV{GIT_CONFIG_GLOBAL}) {
-                warn "$scan/.gitconfig: Override\n" if $ENV{DEBUG};
-                $ENV{GIT_CONFIG_GLOBAL} = "$scan/.gitconfig";
+sub git {
+    return eval {
+        if (my $pid = open my $fh_out, "-|") {
+            # Parent: Read answer and wait for the child zombie to clear.
+            local $/ = undef;
+            return [scalar(<$fh_out>), waitpid($pid, 0), close($fh_out)]->[0];
+        }
+        # Child runs the git command
+        # Silence any error spewage
+        open STDERR, ">", "/dev/null";
+        # Secure exec @array method to avoid having to shell escape arguments containing spaces or other dangerous chars
+        exec $real_git, @_ or exit 1;
+    };
+}
+
+if (!exists $ENV{GIT_CLIENT_OVERRIDE}) {
+    $ENV{GIT_CLIENT_OVERRIDE} = "";
+    my $descent_config_files = [];
+    my $last = ".";
+    $ENV{HOME} ||= (getpwnam $<)[7];
+    while (1) {
+        my $scan = abs_path( $last eq "." && !-d "$last/.git" ? $last : "$last/.." );
+        last if $scan eq $last or $scan eq $ENV{HOME};
+        $last = $scan;
+        my $try = "$scan/.gitconfig";
+        if (-r $try) {
+            warn "DEBUG: $try: Override\n" if $ENV{DEBUG};
+            unshift @$descent_config_files, $try;
+        }
+    }
+    if (@$descent_config_files) {
+        $ENV{GIT_CLIENT_OVERRIDE} = join "\n", @$descent_config_files;
+        my $cmd_settings = [];
+        my $descent_names = {};
+        foreach my $config_file (@$descent_config_files) {
+            my $settings = git(qw[ config --list --file ], $config_file);
+            while ($settings =~ s/^([^=]+)=(.*?)\r?\n?$//) {
+                my $name = $1;
+                my $value = $2;
+                push @$cmd_settings, "$name=$value";
+                $descent_names->{$name} = $value;
             }
         }
-        last;
+        if (my $local_settings = git(qw[ config --list --local ])) {
+            while ($local_settings =~ s/^([^=]+)=(.*?)\r?\n?$//) {
+                my $name = $1;
+                my $value = $2;
+                if (defined $descent_names->{$name}) {
+                    # It seems better to double override than to completely leave out the duplicate descent setting
+                    push @$cmd_settings, "$name=$value";
+                }
+            }
+        }
+        while (my $setting = pop @$cmd_settings) {
+            unshift @ARGV, -c => $setting;
+        }
+    }
+    else {
+        # No effective .gitconfig files found in descent, so nothing to do
     }
 }
 
