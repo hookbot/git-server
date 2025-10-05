@@ -144,8 +144,7 @@ sub git {
     return eval {
         if (my $pid = open my $fh_out, "-|") {
             # Parent: Read answer and wait for the child zombie to clear.
-            local $/ = undef;
-            return [scalar(<$fh_out>), waitpid($pid, 0), close($fh_out)]->[0];
+            return [join("",<$fh_out>), waitpid($pid,0), close($fh_out)]->[0];
         }
         # Child runs the git command
         # Silence any error spewage
