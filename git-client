@@ -176,7 +176,7 @@ if (!exists $ENV{GIT_CLIENT_OVERRIDE}) {
         my $descent_names = {};
         foreach my $config_file (@$descent_config_files) {
             my $settings = git(qw[ config --list --file ], $config_file);
-            while ($settings =~ s/^([^=]+)=(.*?)\r?\n?$//) {
+            while ($settings =~ s/^([^=\r\n]+)=(.*?)\r?\n?$//m) {
                 my $name = $1;
                 my $value = $2;
                 push @$cmd_settings, "$name=$value";
@@ -184,7 +184,7 @@ if (!exists $ENV{GIT_CLIENT_OVERRIDE}) {
             }
         }
         if (my $local_settings = git(qw[ config --list --local ])) {
-            while ($local_settings =~ s/^([^=]+)=(.*?)\r?\n?$//) {
+            while ($local_settings =~ s/^([^=\r\n]+)=(.*?)\r?\n?$//m) {
                 my $name = $1;
                 my $value = $2;
                 if (defined $descent_names->{$name}) {
