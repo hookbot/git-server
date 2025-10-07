@@ -84,8 +84,21 @@ use Cwd qw(abs_path);
 
 our $VERSION = "0.034";
 
-my $op = "";
-if (grep { /^(clone|fetch|pull|ls-remote|push)$/ and $op = $1 } @ARGV) {
+# Locate the real "git" later in the $PATH (after myself)
+our $real_git = find_real_git();
+
+# Grab special options for XMODIFIERS transport
+pass_options();
+
+# Scan for .gitconfig files in descent directories
+scan_descent_override();
+
+exec $real_git, @ARGV;
+
+# Provide special options through "SendEnv XMODIFIERS" to make available in pre-hooks prior to running the real git command on the server
+sub pass_options {
+    my ($op) = grep { /^(clone|fetch|pull|ls-remote|push)$/ } @ARGV;
+    return if !$op;
     # Need to search for special "-o" options
     my @options = ();
     push @options, "DEBUG=$ENV{DEBUG}" if defined $ENV{DEBUG};
@@ -117,29 +130,34 @@ if (grep { /^(clone|fetch|pull|ls-remote|push)$/ and $op = $1 } @ARGV) {
     }
 }
 
-my $myself = (stat $0)[1] or die "$0: Can't find my inode?\n";
-my $real_git = "/usr/bin/git";
-$ENV{GIT_CLIENT_TRIED} ||= "";
-foreach my $path (split /:/, $ENV{PATH}) {
-    my $try = "$path/git";
-    if (my @stat = stat $try) {
-        if ($stat[1] == $myself) {
-            # Ignore myself
-        }
-        elsif ($ENV{GIT_CLIENT_TRIED} =~ /(?:^|:)\Q$try\E(?:$|:)/) {
-            # Already tried
-        }
-        else {
-            # First executable one in the path that isn't me is the winner
-            $real_git = $try;
-            $ENV{GIT_CLIENT_TRIED} = join ":", $real_git, split /:/, $ENV{GIT_CLIENT_TRIED};
-            last;
+sub find_real_git {
+    my $myself = (stat $0)[1] or die "$0: Can't find my inode?\n";
+    my $found_git = "";
+    $ENV{GIT_CLIENT_TRIED} ||= "";
+    foreach my $path (split /:/, $ENV{PATH}) {
+        my $try = "$path/git";
+        if (my @stat = stat $try) {
+            if ($stat[1] == $myself) {
+                # Ignore myself
+            }
+            elsif ($ENV{GIT_CLIENT_TRIED} =~ /(?:^|:)\Q$try\E(?:$|:)/) {
+                # Already tried
+            }
+            else {
+                # First executable one in the path that isn't me is the winner
+                $found_git = $try;
+                $ENV{GIT_CLIENT_TRIED} = join ":", $found_git, split /:/, $ENV{GIT_CLIENT_TRIED};
+                last;
+            }
         }
     }
+
+    $found_git ||= "/usr/bin/git";
+    -x $found_git or die "$found_git: Unable to execute\n";
+    return $found_git;
 }
 
--x $real_git or die "$real_git: Unable to execute\n";
-
+# Capture "git" command output
 sub git {
     return eval {
         if (my $pid = open my $fh_out, "-|") {
@@ -154,7 +172,9 @@ sub git {
     };
 }
 
-if (!exists $ENV{GIT_CLIENT_OVERRIDE}) {
+# Jam equivalent "-c" config settings into @ARGV for any descent .gitconfig files and set GET_CLIENT_OVERRIDE* env.
+sub scan_descent_override {
+    return if exists $ENV{GIT_CLIENT_OVERRIDE};
     $ENV{GIT_CLIENT_OVERRIDE} = "";
     my $descent_config_files = [];
     my $last = ".";
@@ -200,5 +220,3 @@ if (!exists $ENV{GIT_CLIENT_OVERRIDE}) {
         # No effective .gitconfig files found in descent, so nothing to do
     }
 }
-
-exec $real_git, @ARGV;
