@@ -87,6 +87,9 @@ our $VERSION = "0.034";
 # Locate the real "git" later in the $PATH (after myself)
 our $real_git = find_real_git();
 
+# By default, silence any error spewages for internal git usage.
+our $HANDLE_STDERR = sub { open STDERR, ">", "/dev/null" };
+
 # Grab special options for XMODIFIERS transport
 pass_options();
 
@@ -165,8 +168,7 @@ sub git {
             return [join("",<$fh_out>), waitpid($pid,0), close($fh_out)]->[0];
         }
         # Child runs the git command
-        # Silence any error spewage
-        open STDERR, ">", "/dev/null";
+        $HANDLE_STDERR->();
         # Secure exec @array method to avoid having to shell escape arguments containing spaces or other dangerous chars
         exec $real_git, @_ or exit 1;
     };
