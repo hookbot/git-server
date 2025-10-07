@@ -195,13 +195,16 @@ sub scan_descent_override {
         $ENV{GIT_CLIENT_OVERRIDE} = join "\n", @$descent_config_files;
         my $cmd_settings = [];
         my $descent_names = {};
+        my $descent_counter = 0;
         foreach my $config_file (@$descent_config_files) {
             my $settings = git(qw[ config --list --file ], $config_file);
+            $descent_counter++;
             while ($settings =~ s/^([^=\r\n]+)=(.*?)\r?\n?$//m) {
                 my $name = $1;
                 my $value = $2;
                 push @$cmd_settings, "$name=$value";
                 $descent_names->{$name} = $value;
+                $ENV{"GIT_CLIENT_OVERRIDE_$descent_counter"}++;
             }
         }
         if (my $local_settings = git(qw[ config --list --local ])) {
@@ -211,6 +214,7 @@ sub scan_descent_override {
                 if (defined $descent_names->{$name}) {
                     # It seems better to double override than to completely leave out the duplicate descent setting
                     push @$cmd_settings, "$name=$value";
+                    $ENV{GIT_CLIENT_OVERRIDE_0}++;
                 }
             }
         }
