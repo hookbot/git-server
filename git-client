@@ -96,6 +96,10 @@ pass_options();
 # Scan for .gitconfig files in descent directories
 scan_descent_override();
 
+# XXX - Can this be handled using a custom "git-config" program?
+# XXX - Maybe, but isn't it already painful enough getting the dev guy just to install this "git-client" utility?
+handle_config(@ARGV);
+
 exec $real_git, @ARGV;
 
 # Provide special options through "SendEnv XMODIFIERS" to make available in pre-hooks prior to running the real git command on the server
@@ -224,5 +228,154 @@ sub scan_descent_override {
     }
     else {
         # No effective .gitconfig files found in descent, so nothing to do
+    }
+}
+
+# Special "config" handler to honor new --descent option
+sub handle_config {
+    my @args = @_;
+    # Don't try to handle the "--help"-first case.
+    return if join(" ", @args) =~ /config --help\b/;
+    if (grep {$_ eq "config"} @ARGV and
+        # Smells like special "git config" command
+        eval { require Getopt::Long; 1; } and
+        Getopt::Long::Configure("pass_through") and
+        Getopt::Long::GetOptionsFromArray(
+            \@args,
+            "c=s"          => (my $c=[]),
+            "C=s"          => \(my $chdir=[]),
+        ) and
+        $args[0] eq "config" and
+        do {
+            # Handle naked "git config" case to make sure the usage can be updated before sending it
+            push @_,"--usage" and push @args,"--usage" if 1 == @args;
+            # Also handle new-fangled git > 2.40.x "git config <command_without_dashes>" syntax:
+            $args[1]=~/^([a-z][a-z\-]+)$/ && ($args[1]="--$1") or
+            # If smells like a normal set or update, then default it to replace-all to count the actions.
+            $args[1]=~/^(\w+)\./ && splice @args, 1, 0, "--replace-all" if @args>1;
+            1;
+        } and
+        Getopt::Long::GetOptionsFromArray(
+            \@args,
+
+            # Scope
+            "descent"      => \(my $descent),
+            "global"       => \(my $global),
+            "system"       => \(my $system),
+            "local"        => \(my $local),
+            "worktree"     => \(my $work),
+            "f|file=s"     => \(my $file),
+
+            # Action
+            "l|list"       => \(my $list),
+            "e|edit"       => \(my $edit),
+            "get|get-all|get-regexp=s{1,2}" => \(my $get),
+            "remove-section=s{1}" => \(my $action_1_arg),
+            "set|get-urlmatch|rename-section=s{2}" => \(my $action_2_arg),
+            "get-color|get-colorbool=s{1,2}" => \(my $action_1_2_arg),
+            "replace-all=s{2,3}" => \(my $action_2_3_arg),
+
+            # Other
+            "all"          => \(my $all),
+            "fixed-value"  => \(my $fixed),
+            "z|null"       => \(my $null),
+            "name-only"    => \(my $nameonly),
+            "show-origin"  => \(my $origin),
+            "show-scope"   => \(my $scope),
+            "h|help|usage" => \(my $help),
+        )
+    ) {
+        # Looks like this "config" command may need special attention
+        my $descent_config_files = [ split /\n/, $ENV{GIT_CLIENT_OVERRIDE} ];
+        if ($descent) {
+            # Swap "--descent" for "--file <DESCENT_CONFIG_FILE>"
+            # If more than one descent file, then just use the closest one
+            @_ = map { $_ =~ /^--des/ ? ("--file" => ($descent_config_files->[-1] // "/dev/null")) : ($_) } @_;
+        }
+        # error: only one action at a time:
+        map { ($_ eq "config" and ++$help) ? ($_,"--list","--edit") : ($_) } @_ if 1 < !!$list + !!$edit + !!$get + !!$action_1_arg + !!$action_2_arg + !!$action_1_2_arg + !!$action_2_3_arg;
+        # error: only one config file at a time:
+        map { ($_ eq "config" and ++$help) ? ($_,"--system","--global") : ($_) } @_ if 1 < !!$file + !!$descent + !!$global + !!$system + !!$local;
+        # If it's not an implemented action or unrecognized args, then just let the regular git handle it:
+        return @ARGV = @_ if !$help && !$list && !$get;
+        # Keep STDERR in case the usage spewage needs to be tweaked to mention the --descent option.
+        require File::Temp;
+        my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => '.err' );;
+        local $HANDLE_STDERR = sub { open STDERR, ">", "$tmp" };
+        my $out = git @_;
+        my $exit_status = $? >> 8;
+        $tmp->seek(0, 0);
+        my $err = join "", <$tmp>;
+        exit $exit_status if !length $out and !length $err;
+
+        if ($help or !length $out or $err =~ /usage: git config/) {
+            # Looks like the USAGE Spewage:
+            $err =~ s/^error: unknown option .usage.\s*//m;
+            $err =~ s/(Config file location\n)(( +)(\-.*global)(  +)\S.*global)/"$1"."$3--descent".(" "x(length("$4$5")-9))."use descent .gitconfig files\n$2"/e;
+            $err =~ s/\n?$/\n/;
+            warn $err;
+            print $out;
+            exit $exit_status;
+        }
+        # No more munging STDERR so just spit it out, if any
+        warn $err if $err;
+        # XXX - Do we also need to more-greacefully handle --show-scope or --show-origin with --get or --get-all or --get-regexp?
+        if (!$list) {
+            print $out;
+            exit $exit_status;
+        }
+
+        # Delim chars for --list output
+        my $top = $null ? "\x00" : "\n"; # Beginning char of the entry
+        my $end = $null ? "\x00" : "\t"; # Ending char for each field
+        if ($descent) {
+            # Special --descent --list means to list ALL descent config file settings (not just the closest one)
+            # But skip all other --system and --global and --local and commandline config settings
+            my $descent_left = [ @$descent_config_files ];
+            my $d = pop @$descent_left; # Already did the last one
+            while (my $config_file = pop @$descent_left) {
+                my @run = map { $_ eq $d ? $config_file : $_ } @_;
+                $out = git(@run) . $out;
+            }
+            $out = $top.$out;
+            if ($scope) {
+                my $this_scope = "descent";
+                $out =~ s/($top)\w+($end)/$top$this_scope$end/g;
+            }
+            # Remove the first $top char
+            $out =~ s/^$top//;
+            print $out;
+            exit $exit_status;
+        }
+
+        my $local_dir = git(qw[config --list --local --show-origin --null]) =~ /^([^\x00]*)\x00/ ? $1 : ".git/config";
+        $out = $top.$out;
+        my $descent_counter = 0;
+        my $descent_origins = [ map {"file:$_"} split /\n/, $ENV{GIT_CLIENT_OVERRIDE} ];
+        foreach my $this_origin (@$descent_origins, $local_dir) {
+            # Wrap around back to ZERO if hit the end
+            $descent_counter = 0 if ++$descent_counter > @$descent_origins;
+            my $s = "command";        # Old Scope
+            my $o = "command line:";  # Old Origin
+            my $this_scope = $descent_counter ? "descent" : "local";
+            for (1..$ENV{"GIT_CLIENT_OVERRIDE_$descent_counter"}) {
+                if ($scope && $origin) {
+                    $out =~ s/$top$s$end$o$end/$top$this_scope$end$this_origin$end/;
+                }
+                elsif ($scope) {
+                    $out =~ s/$top$s$end/$top$this_scope$end/;
+                }
+                elsif ($origin) {
+                    $out =~ s/$top$o$end/$top$this_origin$end/;
+                }
+                else {
+                    # Nothing "--show"ing in order to unmunge back to its true "descent" reference
+                }
+            }
+        }
+        # Remove the first $top char
+        $out =~ s/^$top//;
+        print $out;
+        exit $exit_status;
     }
 }
