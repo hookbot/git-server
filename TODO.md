@@ -56,6 +56,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
           or other DEBUG features
      2. "AllowAgentForwarding yes" for proxy.url two-way auto-sync feature
 
+ - Convert git-client to use Getopt::Long instead of manually parsing @ARGV.
+
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6.
 
  - Add Support for HTTP protocol git read and write operations using Basic password Authorization (instead of only pubkeys over SSH protocol).
