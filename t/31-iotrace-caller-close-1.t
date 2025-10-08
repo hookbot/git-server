@@ -16,7 +16,7 @@ use IPC::Open3 qw(open3);
 # Test caller close STDOUT (fd 1) behavior (Run 7 seconds)
 my $test_prog = q{
     $|=1;$SIG{PIPE}=sub{warn"PIPED!$!\n"};   #LineA
-    sub p{sleep 1}                           #LineB
+    sub p{sleep 1;$!=0}                      #LineB
     sub r{$_=<STDIN>//"(undef)";chomp;$_}    #LineC
     p;r;                                     #LineD
     p;print "OUT-ONE:$_\n";                  #LineE
