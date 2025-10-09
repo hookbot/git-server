@@ -13,7 +13,7 @@ use POSIX qw(WNOHANG);
 use IO::Handle;
 use IPC::Open3 qw(open3);
 
-# Test target close STDOUT (fd 1) behavior (Run 7 seconds)
+# Test target closing all handles prior to exiting (Run 8 seconds)
 my $test_prog = q{
     $|=1;                                    #LineA
     sub p{sleep 1}                           #LineB
@@ -168,7 +168,7 @@ SKIP: for my $try (@filters) {
     alarm 5;
     SKIP: {
         my $detect_stderr_closed = canread($err_fh,1.2);
-        skip t." $prog: END: STDERR $!: FLAW in 'strace' prevents close()ing its STDERR even when its process does!", 1 if $prog eq "strace" and !$detect_stderr_closed;
+        skip t." $prog: END: STDERR ready: ERRNO[$!]: Known FLAW in 'strace' prevents close()ing its STDERR when its process does!", 1 if $prog eq "strace" and !$detect_stderr_closed;
         ok($detect_stderr_closed,t." $prog: END: STDERR ready: $!");
     }
     alarm 5;
@@ -179,30 +179,36 @@ SKIP: for my $try (@filters) {
     # Test #LineJ: p;p; (Double PAUSE 2 seconds)
     # Prog should keep running for about 2 more seconds...
     alarm 5;
+    # Brief delay in case 'strace' is done and needs another kernel tick to finish exiting.
+    select undef,undef,undef, 0.1;
     $? = $! = 0;
     my $died = waitpid(-1, WNOHANG);
-    is($died, 0, t." $prog: PID[$pid] still running any pid: $died $!");
-    is($?, -1, t." $prog: did not exit immediately: $?");
+    SKIP: {
+        skip t." $prog: still running: Known FLAW in 'strace' fails to honor STDERR closing in its process! PID[$pid] WAITPID[$died] CHILD_ERROR[$?] ERRNO[$!]", 6 if $prog eq "strace" and $died > 0 and !$?;
 
-    # Should still be running even after a brief pause
-    alarm 5;
-    select undef,undef,undef, 0.3;
-    alarm 5;
-    $? = $! = 0;
-    $died = waitpid($pid, WNOHANG);
-    is($died, 0, t." $prog: PID[$pid] still running target pid: $died $!");
-    is($?, -1, t." $prog: did not exit after brief pause: $?");
+        is($died, 0, t." $prog: PID[$pid] still running any pid: $died $!");
+        is($?, -1, t." $prog: did not exit immediately: $?");
 
-    # Give plenty of time to complete exit
-    alarm 5;
-    select undef,undef,undef, 1.9;
+        # Should still be running even after a brief pause
+        alarm 5;
+        select undef,undef,undef, 0.3;
+        alarm 5;
+        $? = $! = 0;
+        $died = waitpid($pid, WNOHANG);
+        is($died, 0, t." $prog: PID[$pid] still running target pid: $died $!");
+        is($?, -1, t." $prog: did not exit after brief pause: $?");
 
-    # Test #LineJ: exit
-    alarm 5;
-    $? = $! = 0;
-    $died = waitpid(-1, WNOHANG);
-    is($died, $pid, t." $prog: PID[$pid] DONE[$died]");
-    is($?, 0, t." $prog: normal exit: $?");
+        # Give plenty of time to complete exit
+        alarm 5;
+        select undef,undef,undef, 1.9;
+
+        # Test #LineJ: exit
+        alarm 5;
+        $? = $! = 0;
+        $died = waitpid(-1, WNOHANG);
+        is($died, $pid, t." $prog: PID[$pid] DONE[$died]");
+        is($?, 0, t." $prog: normal exit: $?");
+    }
 
     # Patiently wait for target process to complete w/ Wait-YES-HANG instead of Wait-NO-HANG
     alarm 5;
