@@ -40,6 +40,7 @@ t/19-iotrace-slow-fds.t
 t/20-iotrace-target-close-0.t
 t/21-iotrace-target-close-1.t
 t/22-iotrace-target-close-2.t
+t/24-iotrace-closeall.t
 t/30-iotrace-caller-close-0.t
 t/31-iotrace-caller-close-1.t
 t/32-iotrace-caller-close-2.t
