@@ -109,7 +109,7 @@ SKIP: for my $try (@filters) {
     $! = 0;
     ok(!$!, t." $prog: MID: STDIN No Errno: $!");
     # Quickly jam something into its STDIN while it's still open, but this should get lost.
-    ok((print $in_fh "dos!\n"),t." $prog: line1");
+    ok((print $in_fh "dos!\n"),t." $prog: line2");
     ok(!$got_piped, t." $prog: STDIN Not PIPED: $got_piped");
     ok(!$!, t." $prog: MID: STDIN Still No Errno: $!");
     ok(!canread($in_fh),  t." $prog: STDIN still sleeping: $!");
@@ -122,11 +122,11 @@ SKIP: for my $try (@filters) {
     ok(!$!, t." $prog: MID: STDIN Still No EPIPE: $!");
     ok(!$got_piped, t." $prog: STDIN Still Not PIPED: $got_piped");
     # The PIPE must be broken now that can_read, so writing should fail:
-    ok(!(print $in_fh "PIPE CRASH!\n"), t." $prog: line2: $!");
+    ok(!(print $in_fh "PIPE CRASH!\n"), t." $prog: line3: $!");
     is(0+$!, EPIPE, t." $prog: MID: STDIN Got EPIPE: $!");
     ok($got_piped,  t." $prog: Got PIPED: $got_piped");
     $got_piped = 0;
-    ok(canwrite($in_fh),  t." $prog: STDIN is not writeable: $!");
+    ok(canwrite($in_fh),  t." $prog: END: STDIN is writeable: $!");
     $! = 0;
     ok(!close($in_fh),  t." $prog: explicit close STDIN should fail after broken write: $!");
     is(0+$!, EPIPE, t." $prog: END: close STDIN got EPIPE: $!");
