@@ -26,17 +26,21 @@ GetOptions
 
 my @run = @ARGV or die "$0: Missing command?\n";
 my $pid = 0;
+my $has_hires = eval { require Time::HiRes; 1 };
+my $death_handle_patience = $has_hires ? 5.2 : 6;
 
-if ($timing > 1 and not eval { require Time::HiRes; 1 }) {
+if ($timing > 1 and not $has_hires) {
     # If requesting get high precision, but without HiRes, then just change "-tt" to "-t"
     $timing = 1;
 }
+
+sub now { $has_hires ? Time::HiRes::time() : time }
 
 sub t {
     my $h = "";
     if ($follow_fork == 1) { $h .= "$pid "; }
     if ($timing) {
-        my $now = $timing > 1 ? Time::HiRes::time() : time();
+        my $now = $timing > 1 ? now : time;
         my @t = localtime $now;
         $h .= sprintf "%02d:%02d:%02d", $t[2], $t[1], $t[0];
         $h .= sprintf ".%06d", 1000000*($now - int($now)) if $timing > 1;
@@ -107,7 +111,7 @@ print $fh_log t."execve(".e($full).", [".join(', ', map { e($_) } @run).'], '.(
 ).") = 0\n";
 
 my $child_died = 0;
-$SIG{CHLD} = sub { $child_died = 1; };
+$SIG{CHLD} = sub { $child_died = now; };
 
 # Map each handle to its corresponding handle
 my $proxy = {
@@ -123,7 +127,8 @@ my $proxy = {
 my $io = IO::Select->new(values %$proxy);
 my $writers = IO::Select->new($in, \*STDOUT, \*STDERR);
 # Block waiting for I/O but only a little patience if the @run prog died already.
-while (my @ready = $io->can_read($child_died ? 0.5 : 8000)) {
+while ($io->handles) {
+    my @ready = $io->can_read($child_died ? 0.1 : 8000);
     foreach my $fh (@ready) {
         my $fn = fileno($fh) // next;
         my $pr = $proxy->{$fn} or die "Fileno $fn: Impossible Implementation Crash! $!\n";;
@@ -171,10 +176,26 @@ while (my @ready = $io->can_read($child_died ? 0.5 : 8000)) {
             }
         }
     }
-    last if !$io->handles;
+    # If process terminated, then just wait a little bit for the handles to close.
+    last if $child_died and $child_died + $death_handle_patience > now;
 }
 
-!$child_died and kill TERM => $pid and sleep 1 and kill TERM => $pid;
+if ($child_died) {
+    # If process completed, then avoid doing any more I/O. Just close its handles.
+    foreach my $fh ($io->handles) {
+        close $fh;
+    }
+}
+else {
+    # If process still running, then all handles must have already been closed. So just wait a little bit for termination.
+    my $patient = $death_handle_patience + now;
+    select undef,undef,undef,0.1 while !$child_died and $patient > now;
+
+    # If STILL running, then offer a little bit more help to terminate
+    !$child_died and kill TERM => $pid and sleep 1 and kill KILL => $pid;
+}
+
+# Block waiting for process to exit
 waitpid( $pid, 0 );
 my $signal = $? & 127;
 my $child_exit_status = $? >> 8;
