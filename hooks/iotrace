@@ -177,7 +177,7 @@ while ($io->handles) {
         }
     }
     # If process terminated, then just wait a little bit for the handles to close.
-    last if $child_died and $child_died + $death_handle_patience > now;
+    last if $child_died and $child_died + $death_handle_patience < now;
 }
 
 if ($child_died) {
