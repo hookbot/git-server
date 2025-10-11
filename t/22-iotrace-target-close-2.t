@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 our (@filters, $test_points);
-use Test::More tests => 1 + (@filters = qw[none hooks/iotrace strace]) * ($test_points = 22);
+use Test::More tests => 1 + (@filters = qw[none hooks/iotrace strace]) * ($test_points = 23);
 use File::Temp ();
 use POSIX qw(WNOHANG);
 use IO::Handle;
@@ -64,7 +64,7 @@ SKIP: for my $try (@filters) {
 
     my @run = ($^X, "-e", $test_prog);
     # Ensure behavior of $test_prog is the same with or without tracing it.
-    unshift @run, $try, -qqqq => (), -e => "execve,clone,openat,close,read,write", -o => "$tmp" if $prog ne "none";
+    unshift @run, $try, -qqqq => -tt => -e => "execve,clone,openat,close,read,write", -o => "$tmp" if $prog ne "none";
 
     alarm 5;
     my $line;
@@ -143,4 +143,11 @@ SKIP: for my $try (@filters) {
     $died = waitpid(-1, WNOHANG);
     is($died, $pid, t." $prog: PID[$pid] DONE[$died]");
     is($?, 0, t." $prog: normal exit: $?");
+
+    $tmp->seek(0,0);
+    my $explicit_close = "";
+    while (<$tmp>) {
+        $explicit_close .= " [$1]" if /(.*\bclose\(1\).*)/;
+    }
+    ok(!$explicit_close, t." $prog: END: STDOUT implicitly closed:$explicit_close");
 }
