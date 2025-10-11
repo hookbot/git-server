@@ -124,6 +124,7 @@ my $proxy = {
     fileno(*STDERR) => $err,
 };
 
+my $implicitly_closed = {};
 my $io = IO::Select->new(values %$proxy);
 my $writers = IO::Select->new($in, \*STDOUT, \*STDERR);
 # Block waiting for I/O but only a little patience if the @run prog died already.
@@ -166,14 +167,29 @@ while ($io->handles) {
             # And quit listening on the corresponding handle too:
             $io->remove($pr);
 
-            if ($real_fileno == 0 or !$child_died) {
-                # Only close corresponding handle for STDIN in order to signal target program its input stream has ended, or if explicitly closed while program is still running. If target program closes an output handle (STDOUT fd 1 or STDERR fd 2) implicitely upon exit, then we want to mimic the same behavior and thus NOT explicitly close it yet:
+            if ($real_fileno == 0 # Immediately close corresponding handle for STDIN immediately in order to signal target program its input stream has ended.
+                or $child_died && $has_hires && $child_died + 0.8 < now) { # Or if it exited long enough ago, then this must be an explicit output handle close from a backgrounded process, and it's safe to log even if it was implicitly closed by the grandchild or descendent process.
                 close($pr);
 
-                # If it was STDIN (fd 0), then the invoker probably closed it before the target program. But just log the close acting like the target program called close itself (even if STDIN is being ignored).
-                # Or if it was an output handle (STDOUT fd 1 or STDERR fd 2) and the program hasn't died, then it must have been an explicit close() so it really needs to be logged:
+                # If it was STDIN (fd 0), then the invoker probably closed it before the target program. But just log the close acting like the target program called close itself (even if STDIN is being ignored by the target program).
                 print $fh_log t."close($real_fileno) = 0\n";
             }
+            else {
+                # If an output handle (STDOUT fd 1 or STDERR fd 2) is closed, then it might have just been an implicit close due to the process ending.
+                # It's difficult to know for sure yet if it was explicit or implicit.
+                # So don't log it yet. Just flag it for now.
+                # The goal is to mimic the same behavior as the target process with an implicit close.
+                # So hopefully myself will end soon and all the handles will be closed anyways.
+                $implicitly_closed->{$real_fileno} = $pr;
+            }
+        }
+    }
+    if ($child_died and !@ready) {
+        # Process exited but at least one handle still open that hit the timeout without saying anything?
+        foreach my $fileno (keys %$implicitly_closed) {
+            # If we made it this far, then WHOOPSIE! Bad guess! It must have been an explicit close, not an implicit close from exiting. So explicitly close it now and log it.
+            close(delete $implicitly_closed->{$fileno});
+            print $fh_log t."close($fileno) = 0\n";
         }
     }
     # If process terminated, then just wait a little bit for the handles to close.
