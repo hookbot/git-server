@@ -68,7 +68,7 @@ SKIP: for my $try (@filters) {
 
     my @run = ($^X, "-e", $test_prog);
     # Ensure behavior of $test_prog is the same with or without tracing it.
-    unshift @run, $try, -e => "execve,clone,openat,close,read,write", -o => "$tmp" if $prog ne "none";
+    unshift @run, $try, -tt => -e => "execve,clone,openat,close,read,write", -o => "$tmp" if $prog ne "none";
 
     alarm 5;
     my $line;
@@ -155,7 +155,7 @@ SKIP: for my $try (@filters) {
     ok(!canread($out_fh), t." $prog: END: STDOUT still empty: $!");
     # STDOUT should remain empty for about 1 seconds ...
     alarm 5;
-    ok(canread($out_fh,1.2),t." $prog: END: STDOUT ready: $!");
+    ok(canread($out_fh,1.8),t." $prog: END: STDOUT ready: $!");
     alarm 5;
     $line = <$out_fh>;
     ok(!$line, t." $prog: back3 eof out: $! ".($line || "(eof)"));

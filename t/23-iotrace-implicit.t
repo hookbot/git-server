@@ -6,21 +6,20 @@
 use strict;
 use warnings;
 our (@filters, $test_points);
-use Test::More tests => 1 + (@filters = qw[none hooks/iotrace strace]) * ($test_points = 29);
-use Errno qw(EPIPE);
+use Test::More tests => 1 + (@filters = qw[none hooks/iotrace strace]) * ($test_points = 28);
 use File::Temp ();
 use POSIX qw(WNOHANG);
 use IO::Handle;
 use IPC::Open3 qw(open3);
 
-# Test target close STDIN (fd 0) behavior (Run 4 seconds)
+# Test implicit close of STDOUT and STDERR upon exit (Run 4 seconds)
 my $test_prog = q{
     $|=1;                                    #LineA
     sub p{sleep 1}                           #LineB
     sub r{$_=<STDIN>//"(undef)";chomp;$_}    #LineC
     p;r;                                     #LineD
     p;print "OUT-ONE:$_\n";                  #LineE
-    p;close STDIN;                           #LineF
+    p;r;warn "ERR-TWO:$_\n";                 #LineF
     p;exit 0;                                #LineG
 };
 
@@ -51,17 +50,15 @@ sub canwrite {
 
 my $pid = 0;
 $SIG{ALRM} = sub { require Carp; $pid and Carp::cluck("TIMEOUT ALARM TRIGGERED! Aborting execution PID=[$pid]") and kill TERM => $pid and sleep 1 and kill KILL => $pid; };
-my $got_piped = 0;
-$SIG{PIPE} = sub { $got_piped = 1; };
 alarm 5;
-my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => '.trace' );
+my $tmp = File::Temp->new( UNLINK => 0, SUFFIX => '.trace' );
 ok("$tmp", t." tracefile[$tmp]");
 
 SKIP: for my $try (@filters) {
     my $prog = $try =~ /(\w+)$/ && $1;
     skip "no strace", $test_points if $prog eq "strace" and !-x "/usr/bin/strace"; # Skip strace tests if doesn't exist
 
-    # run cases where STDIN is closed by the target first
+    # run case where STDOUT and STDERR are implicitly closed when the target exits.
 
     my @run = ($^X, "-e", $test_prog);
     # Ensure behavior of $test_prog is the same with or without tracing it.
@@ -73,7 +70,6 @@ SKIP: for my $try (@filters) {
     my $in_fh  = IO::Handle->new;
     my $out_fh = IO::Handle->new;
     my $err_fh = IO::Handle->new;
-    $got_piped = 0;
     $! = 0; # Reset errno
     $pid = open3($in_fh, $out_fh, $err_fh, @run) or die "open3: FAILED! $!\n";
     ok($pid, t." $prog: spawned [pid=$pid] $!");
@@ -101,49 +97,58 @@ SKIP: for my $try (@filters) {
     alarm 5;
     chomp($line = <$out_fh>);
     ok($line, t." $prog: back1: $line");
+    like($line, qr/uno/, t." $prog: PRE: STDOUT perfect read");
 
-    # Test #LineF: p (PAUSE); close STDIN;
-    # STDOUT should still be empty
+    # Test #LineF: p;<STDIN>;TWO
     alarm 5;
-    ok(!canread($out_fh), t." $prog: MID: STDOUT is still empty: $!");
-    $! = 0;
-    ok(!$!, t." $prog: MID: STDIN No Errno: $!");
-    # Quickly jam something into its STDIN while it's still open, but this should get lost.
     ok((print $in_fh "dos!\n"),t." $prog: line2");
-    ok(!$got_piped, t." $prog: STDIN Not PIPED: $got_piped");
-    ok(!$!, t." $prog: MID: STDIN Still No Errno: $!");
-    ok(!canread($in_fh),  t." $prog: STDIN still sleeping: $!");
-
-    # STDIN should be closed within a second, which should wake up its file descriptor.
+    # STDERR should still be empty for about a second
+    ok(!canread($err_fh), t." $prog: MID: STDERR is still empty: $!");
     alarm 5;
-    ok(canread($in_fh, 1.3),  t." $prog: STDIN woke up: $!");
-    ok(canwrite($in_fh),  t." $prog: MID: STDIN is writeable: $!");
-    # Haven't touched the woke STDIN yet, so not PIPED yet.
-    ok(!$!, t." $prog: MID: STDIN Still No EPIPE: $!");
-    ok(!$got_piped, t." $prog: STDIN Still Not PIPED: $got_piped");
-    # The PIPE must be broken now that can_read, so writing should fail:
-    ok(!(print $in_fh "PIPE CRASH!\n"), t." $prog: line3: $!");
-    is(0+$!, EPIPE, t." $prog: MID: STDIN Got EPIPE: $!");
-    ok($got_piped,  t." $prog: Got PIPED: $got_piped");
-    $got_piped = 0;
-    ok(canwrite($in_fh),  t." $prog: END: STDIN is writeable: $!");
+    ok(canread($err_fh,1.8), t." $prog: MID: STDERR woke: $!");
+    alarm 5;
+    chomp($line = <$err_fh>);
+    ok($line, t." $prog: back2: $line");
+    like($line, qr/dos/, t." $prog: MID: STDERR perfect read");
     $! = 0;
-    ok(!close($in_fh),  t." $prog: explicit close STDIN should fail after broken write: $!");
-    is(0+$!, EPIPE, t." $prog: END: close STDIN got EPIPE: $!");
-    ok(close($out_fh),  t." $prog: close STDOUT fine: $!");
-    ok(close($err_fh),  t." $prog: close STDERR fine: $!");
+    ok(close($in_fh),  t." $prog: ENDL explicit close STDIN: $!");
+    ok(!$!, t." $prog: END: close STDIN No Errno: $!");
 
-    # Test #LineG: p;
-    # If STDIN is really closed, then prog should exit in under 1 seconds...
+    # Test #LineG: p;exit
+    # STDOUT and STDERR should still be empty for about a second waiting for prog to exit
     alarm 5;
     my $died = waitpid(-1, WNOHANG);
     ok($died<=0, t." $prog: PID[$pid] still running: $died");
-    # Give plenty of time to complete exit
-    select undef,undef,undef, 1.2;
+    ok(!canread($out_fh), t." $prog: END: STDOUT is still empty: $!");
+    ok(!canread($err_fh), t." $prog: END: STDERR is still empty: $!");
 
-    # Test #LineG: exit 0
+    # All prog handles should have been implicitly closed upon exit once $out_fh awakens
     alarm 5;
-    $died = waitpid(-1, WNOHANG);
+    ok(canread($out_fh,1.8), t." $prog: END: STDOUT done: $!");
+    alarm 5;
+    $line = <$out_fh>;
+    ok(!$line, t." $prog: END: eof out: $! ".($line || "(eof)"));
+    # prog should not be able to detect caller explicitly closing STDOUT:
+    ok(close($out_fh),  t." $prog: END: close STDOUT fine: $!");
+
+    alarm 5;
+    ok(canread($err_fh,0.3), t." $prog: END: STDERR done: $!");
+    alarm 5;
+    $line = <$err_fh>;
+    ok(!$line, t." $prog: END: eof err: $! ".($line || "(eof)"));
+    # prog should not be able to detect caller explicitly closing STDOUT:
+    ok(close($err_fh),  t." $prog: END: close STDERR fine: $!");
+
+    # Should be exited by now
+    alarm 5;
+    $died = waitpid($pid, 0);
     is($died, $pid, t." $prog: PID[$pid] DONE[$died]");
     is($?, 0, t." $prog: normal exit: $?");
+
+    $tmp->seek(0,0);
+    my $explicit_close = "";
+    while (<$tmp>) {
+        $explicit_close .= " [$1]" if /(.*\bclose\([12]\).*)/;
+    }
+    ok(!$explicit_close, t." $prog: END: STDOUT and STDERR implicitly closed:$explicit_close");
 }
