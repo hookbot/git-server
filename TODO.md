@@ -45,6 +45,18 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Integrate or convert to be compatible with Git::Hooks::* plugins.
 
+ - Augment Git::Hooks (maybe Git::Hooks::Server) to provide extra functionality
+   * Add Drivers to implement missing capabilities required
+     1. GITHOOKS_PRE_READ    / PRE_READ
+     2. GITHOOKS_PRE_WRITE   / PRE_WRITE
+     3. GITHOOKS_POST_READ   / POST_READ
+     4. GITHOOKS_POST_WRITE  / POST_WRITE
+   * Use same general compatible [githooks] syntax
+     1. git config --list | grep 'githooks\.plugin'
+     2. git config --add githooks.plugin WebHook
+     3. git config --add githooks."webhook".callbackurl https://website.com/post.cgi
+   * Use the same general githooks.pl format like: run_hook($0, @ARGV);
+
  - Monkey the core.hooksPath setting on the git server to point to these hooks provided.
 
  - [webhook] features for callback:
