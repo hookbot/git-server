@@ -26,11 +26,16 @@ GetOptions
 
 my @run = @ARGV or die "$0: Missing command?\n";
 my $pid = 0;
-my $has_hires = eval { require Time::HiRes; 1 };
-my $death_handle_patience = $has_hires ? 5.2 : 6;
+our $has_hires = eval { require Time::HiRes; 1 };
+our $patience_idle = 8000; # Seconds to wait for I/O while process is still running
+our $patience_kill_mute = $has_hires ? 5.2 : 6; # Seconds to wait for "mute" process to terminate. If all its handles are closed, then force SIGTERM and SIGKILL if still running after waiting this long.
+our $heartbeat_grind_mute = 0.2; # Interval Seconds between SIGCHLD check to test if "mute" child died yet.
+our $implicit_close_before_chld = 0.08; # Maximum Seconds to wait for SIGCHLD after all handles have been closed in order to consider it an implicit close instead of explicit close.
+our $implicit_chld_before_close = $has_hires ? 0.25 : 1; # Maximum Seconds after receiving SIGCHLD to consider a close to be implicit. Any longer is considered an explicit close.
+our $patience_zombie_breather = $has_hires ? 5.6 : 7; # Maximum Seconds of uninterrupted silence after receiving SIGCHLD to wait for the process to close all handles. Any longer, then all open pipes are implicitly slapped closed to sufficate the zombie process. Then it is reaped to log the correct exit status, and the descent process should receive a SIGPIPE if ever attempting to write to its output handle in the future.
 
 if ($timing > 1 and not $has_hires) {
-    # If requesting get high precision, but without HiRes, then just change "-tt" to "-t"
+    # If requesting to log high precision, but without HiRes, then just change "-tt" to "-t" to show integer time
     $timing = 1;
 }
 
@@ -89,6 +94,7 @@ my ($in, $out, $err);
 if ($err = IO::Handle->new) {
     my @r = @run;
     $r[0] = $full if $full;
+    # Launch target program
     $pid = open3 $in, $out, $err, @r or die "$r[0]: fork exec failure: $!\n";
 }
 
@@ -127,9 +133,13 @@ my $proxy = {
 my $implicitly_closed = {};
 my $io = IO::Select->new(values %$proxy);
 my $writers = IO::Select->new($in, \*STDOUT, \*STDERR);
-# Block waiting for I/O but only a little patience if the @run prog died already.
-while ($io->handles) {
-    my @ready = $io->can_read($child_died ? 0.1 : 8000);
+# Loop while still open handles or during brief implicit close detection
+while ($io->handles or keys %$implicitly_closed) {
+    my $maximum_timeout =
+        keys %$implicitly_closed ? $implicit_close_before_chld :
+        $child_died ? $patience_zombie_breather :
+        $patience_idle;
+    my @ready = $io->count ? $io->can_read($maximum_timeout) : do {select undef,undef,undef, $maximum_timeout; ()};
     foreach my $fh (@ready) {
         my $fn = fileno($fh) // next;
         my $pr = $proxy->{$fn} or die "Fileno $fn: Impossible Implementation Crash! $!\n";;
@@ -168,44 +178,49 @@ while ($io->handles) {
             $io->remove($pr);
 
             if ($real_fileno == 0 # Immediately close corresponding handle for STDIN immediately in order to signal target program its input stream has ended.
-                or $child_died && $has_hires && $child_died + 0.8 < now) { # Or if it exited long enough ago, then this must be an explicit output handle close from a backgrounded process, and it's safe to log even if it was implicitly closed by the grandchild or descendent process.
+                or $child_died && now > $child_died + $implicit_chld_before_close) { # Or if it exited long enough ago, then this must have been an explicit output handle close from a backgrounded process, and it's safe to log, (even if it was implicitly closed by the grandchild or descendent process).
                 close($pr);
 
                 # If it was STDIN (fd 0), then the invoker probably closed it before the target program. But just log the close acting like the target program called close itself (even if STDIN is being ignored by the target program).
                 print $fh_log t."close($real_fileno) = 0\n";
             }
             else {
-                # If an output handle (STDOUT fd 1 or STDERR fd 2) is closed, then it might have just been an implicit close due to the process ending.
-                # It's difficult to know for sure yet if it was explicit or implicit.
-                # So don't log it yet. Just flag it for now.
-                # The goal is to mimic the same behavior as the target process with an implicit close.
-                # So hopefully myself will end soon and all the handles will be closed anyways.
+                # An output handle (STDOUT fd 1 or STDERR fd 2) was just closed, but it might have just been an implicit close since the process is still running or exited too recently.
+                # So don't log it yet. Just flag it for now. Then keep a close eye on the $child_died timer to determine which way it was.
+                # The goal is to mimic the same behavior as the target process whether to do an implicit or explicit close.
                 $implicitly_closed->{$real_fileno} = $pr;
             }
         }
     }
-    if ($child_died and !@ready) {
-        # Process exited but at least one handle still open that hit the timeout without saying anything?
+    if (!@ready and keys %$implicitly_closed) {
+        # Implicit detection timeout exceeded. No more waiting allowed.
+        # All $implicitly_closed file handles must be imminently closed!
+        if (!$io->count and $child_died) {
+            # Must exit immediately in order to implicitly close any $implicitly_closed handles
+            last;
+        }
+        # Otherwise, must explicitly close them all now and log it, then continue the select loop.
         foreach my $fileno (keys %$implicitly_closed) {
-            # If we made it this far, then WHOOPSIE! Bad guess! It must have been an explicit close, not an implicit close from exiting. So explicitly close it now and log it.
             close(delete $implicitly_closed->{$fileno});
             print $fh_log t."close($fileno) = 0\n";
         }
     }
-    # If process terminated, then just wait a little bit for the handles to close.
-    last if $child_died and $child_died + $death_handle_patience < now;
-}
-
-if ($child_died) {
-    # If process completed, then avoid doing any more I/O. Just close its handles.
-    foreach my $fh ($io->handles) {
-        close $fh;
+    if ($child_died) {
+        if (now > $child_died + $patience_zombie_breather) {
+            # Ran out of patience. Just leave to implicitly close all handles.
+            last;
+        }
+        else {
+            # Zombie handle said something, so restart the timer, and start the waiting all over again..
+            $child_died = now;
+        }
     }
 }
-else {
+
+if (!$child_died) {
     # If process still running, then all handles must have already been closed. So just wait a little bit for termination.
-    my $patient = $death_handle_patience + now;
-    select undef,undef,undef,0.1 while !$child_died and $patient > now;
+    my $patient = $patience_kill_mute + now;
+    select undef,undef,undef,$heartbeat_grind_mute while !$child_died and $patient > now;
 
     # If STILL running, then offer a little bit more help to terminate
     !$child_died and kill TERM => $pid and sleep 1 and kill KILL => $pid;
