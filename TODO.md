@@ -16,7 +16,7 @@ Some features we need or want, plus some neat ideas that may not be too feasible
    * There will be a multiple of 3 args, each triple being branch, old hash, new hash, (depending on how many branches the client updates).
    * In order to facilitate the InterProcessCommunication to post-read, information should be stored in $IPC/info.txt until the post-read completes.
 
- - Provide branch, old hash, new hash, and common parent "fork" commit hash to pre-write hook and post-write hook args. (Requires man-in-the-middle sniffer)
+ - Provide branch, old hash, new hash, and common parent "fork" commit hash to pre-write hook and post-write hook args.
    * This fork hash can be used for debugging
    * or for callback webhook.
    * In order to facilitate the InterProcessCommunication between the pre-write and post-write, information should be stored in $IPC/info.txt until the post-write completes.
@@ -44,6 +44,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6.
 
  - Add Support for HTTP protocol git read and write operations using Basic password Authorization (instead of only pubkeys over SSH protocol).
+
+ - Set REMOTE_ADDR env to make it easier for any hooks to determine client IP regardless of protocol.
 
  - Integrate or convert to be compatible with Git::Hooks::* plugins.
 
