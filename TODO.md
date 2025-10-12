@@ -46,7 +46,9 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Add Support for HTTP protocol git read and write operations using Basic password Authorization (instead of only pubkeys over SSH protocol).
 
- - Set REMOTE_ADDR env to make it easier for any hooks to determine client IP regardless of protocol.
+ - Set REMOTE_ADDR env (from SSH_CONNECTION) to make it easier for any hooks to determine Client IP regardless of protocol.
+
+ - Set REMOTE_USER env (from KEY) to make it easier for any hooks to Client User regardless of protocol.
 
  - Integrate or convert to be compatible with Git::Hooks::* plugins.
 
