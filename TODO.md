@@ -36,6 +36,7 @@ Some features we need or want, plus some neat ideas that may not be too feasible
           or "git-client -O <name=val>"
           or other DEBUG features
      2. "AllowAgentForwarding yes" for proxy.url two-way auto-sync feature
+     3. "ExposeAuthInfo yes" to allow hooks to obtain public key info, if desired
 
  - Pull out the iotrace utility into its own perl module IO::Trace.
 
