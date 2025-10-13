@@ -63,6 +63,9 @@ Some features we need or want, plus some neat ideas that may not be too feasible
      2. git config --add githooks.plugin WebHook
      3. git config --add githooks."webhook".callbackurl https://website.com/post.cgi
    * Use the same general githooks.pl format like: run_hook($0, @ARGV);
+   * Provide a seemless way to transport information between hooks.
+     1. For example, the ability to export ENV variables from a PRE* hook to a POST* hook.
+     2. Allow data in $git->stash to persist among all hooks where the $git object is the first argument passed to each custom block hook.
 
  - Monkey the core.hooksPath setting on the git server to point to these hooks provided.
 
