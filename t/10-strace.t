@@ -5,10 +5,16 @@
 
 use strict;
 use warnings;
-use Test::More;
-# strace is Linux-specific but can help with some more granular git hooks if iotrace is not available
-plan skip_all => "strace can work on Linux but not found here [$^O]" unless -x "/usr/bin/strace";
+use Test::More tests => 5;
 
-plan tests => 1;
-my $try = `strace --help`;
-ok (!$?, "strace installed");
+# make sure strace is available
+use_ok('File::Which');
+SKIP: {
+    my $tracer = which("strace") or skip "strace can work on Linux but not found here [$^O]", 4;
+    ok($tracer, "strace found: $tracer");
+    my $try = `strace --help 2>&1`;
+    ok (!$?, "strace installed");
+    ok (!$!, "strace no Errno: $!");
+    $try =~ s/\s+/ /g;
+    ok ($try, "strace runs: $try");
+}
