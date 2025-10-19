@@ -29,5 +29,4 @@ hooks/proxy
 t/00-git.t
 t/01-compile-modules.t
 t/02-compile-scripts.t
-t/09-iotrace.t
-t/10-strace.t
+t/06-tracer.t
