@@ -9,6 +9,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
+ - Make git-client handle "git config { --show-scope | show-origin } { --get | --get-* } <name>" to label "descent" entries better instead of saying "command" for everything.
+
  - Investigate converting get_fork_hash common fork sniffer scan to use "git merge-base --fork-point <ref> <commit>" instead of grinding through the logs.
 
  - Provide branch, old hash, and new hash (for every branch updated by the git client) to post-read hook args (Requires man-in-the-middle sniffer)

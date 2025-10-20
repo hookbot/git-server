@@ -322,7 +322,7 @@ sub handle_config {
         }
         # No more munging STDERR so just spit it out, if any
         warn $err if $err;
-        # XXX - Do we also need to more-greacefully handle --show-scope or --show-origin with --get or --get-all or --get-regexp?
+        # XXX - Do we also need to more-gracefully handle --show-scope or --show-origin with --get or --get-all or --get-regexp?
         if (!$list) {
             print $out;
             exit $exit_status;
