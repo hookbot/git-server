@@ -6,7 +6,7 @@ use File::Which;
 
 my @run = ("git-shell", @ARGV);
 if (my $ipc = $ENV{IPC} and
-    my $tracer = which("strace") || which("iostrace")) {
+    my $tracer = which("iotrace") || which("strace")) {
     # Using strace -f imposes the danger of split brain trace logs.
     exec $tracer => -v => -s => 32768 => -tt => -e => "execve,clone,openat,close,read,write" => -o => "$ipc/log.trace" => @run;
     # If strace or iotrace fail to launch, then continue on to @run anyways
