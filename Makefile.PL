@@ -8,6 +8,7 @@ WriteMakefile
     ABSTRACT_FROM  => 'lib/Git/Server.pm',
     PREREQ_PM     => {
         'Cwd'          => 0,
+        'Getopt::Long' => 0,
         'File::Which'  => 0,
         'IO::Trace'    => 0,
     },
