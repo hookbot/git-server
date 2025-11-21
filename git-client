@@ -178,7 +178,7 @@ sub git {
     };
 }
 
-# Jam equivalent "-c" config settings into @ARGV for any descent .gitconfig files and set GET_CLIENT_OVERRIDE* env.
+# Jam equivalent "-c" config settings into @ARGV for any descent .gitconfig files and set GIT_CLIENT_OVERRIDE* env.
 sub scan_descent_override {
     return if exists $ENV{GIT_CLIENT_OVERRIDE};
     $ENV{GIT_CLIENT_OVERRIDE} = "";
