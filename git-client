@@ -82,7 +82,7 @@ This library is free software; you can redistribute it and/or modify it under th
 use strict;
 use Cwd qw(abs_path);
 
-our $VERSION = "0.036";
+our $VERSION = "0.037";
 
 # Locate the real "git" later in the $PATH (after myself)
 our $real_git = find_real_git();
