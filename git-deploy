@@ -104,9 +104,8 @@ By default, max-delay is 7200 seconds (or 2 hours).
 
 As super user:
 
-  [root@deploy-host ~]# wget -N -P /usr/local/bin https://raw.githubusercontent.com/hookbot/git-server/master/git-deploy
-  [root@deploy-host ~]# chmod 755 /usr/local/bin/git-deploy
-  [root@deploy-host ~]# ln -s -v /usr/local/bin/git-deploy /usr/bin/.
+  [root@deploy-host ~]# wget -N -P /usr/bin https://raw.githubusercontent.com/hookbot/git-server/master/git-deploy
+  [root@deploy-host ~]# chmod 755 /usr/bin/git-deploy
   [root@deploy-host ~]#
 
 As deploy user:
