@@ -22,10 +22,16 @@ if (!-d $working) {
     chdir $working or die localtime().": [$KEY\@$ip] git-server: Failed local working directory for proxy!\n";
     0 == system qw(git remote add there), $proxy or system "rm","-rf",$working or die localtime().": [$KEY\@$ip] git-server: Failed to remote add $proxy\n";
     # Make sure known_hosts contains remote server pub keys for SSH style repos
-    if ($proxy =~ m{^(?:|ssh://)(?:|\w+\@)([a-z0-9\-\.]+)/}i) {
+    if ($proxy =~ m{^ssh://(?:|[^/:]+\@)\[([a-z0-9\-\.\:]+)\]:(\d+)/}i or
+        $proxy =~ m{^ssh://(?:|[^/:]+\@)\[?([a-z0-9\-\.]+)\]?:\[?(\d+)\]?/}i or
+        $proxy =~ m{^ssh://(?:|[^/:]+\@)\[?([a-z0-9\-\.\:]+)\]?/}i or
+        $proxy =~ m{^(?:|[^/:]+\@)\[([a-z0-9\-\.]+):(\d+)\]:}i or
+        $proxy =~ m{^(?:|[^/:]+\@)\[([a-z0-9\-\.\:]+)\]():}i or
+        $proxy =~ m{^(?:|[^/:]+\@)([a-z0-9\-\.]+)():}i) {
         my $remotehost = $1;
-        warn localtime().": [$KEY\@$ip] git-server: DEBUG: Detected remote proxy SSH server [$remotehost]\n" if $ENV{DEBUG};
-        `grep '^$remotehost' ~/.ssh/known_hosts` or system "ssh-keyscan $remotehost | grep -v '^#' >> ~/.ssh/known_hosts";
+        my $remoteport = $2 || 22;
+        warn localtime().": [$KEY\@$ip] git-server: DEBUG: Detected remote proxy SSH server [$remotehost] port [$remoteport]\n" if $ENV{DEBUG};
+        my $try = `ssh -o BatchMode=yes -o StrictHostKeyChecking=no -T -p $remoteport $remotehost hostname 2>&1`;
     }
     if (0 != system "git fetch there" or !`git ls-remote there`) {
         system "rm","-rf",$working;
