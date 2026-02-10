@@ -11,6 +11,10 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Investigate converting get_fork_hash common fork sniffer scan to use "git merge-base --fork-point <ref> <commit>" instead of grinding through the logs.
 
+ - Right now, the git server can "choke" if there are many git-deploy clients linked to a single repo.
+   * Investigate optimization to stagger git-deploy clients with random delays or even abort, if there is already a sufficient git-deploy running locally. If git-deploy crons on all servers are configured to run at the same time, i.e., every 10 minutes, then everything gets sluggish on the server at that time while everything catches up, and thus client operations will also hang for a while.
+   * Investigate optimization to make push-notify release ONLY relevant deploy clients, i.e., those with activity within past few minutes or those pinned to the specific branch that was pushed. It's difficult to tell which branch the client is pinned to from the server side, especially prior to the pull occurring. So the git-deploy client would probably need to inform the server via ENV which specific branch to be notified about changes on.
+
  - Provide branch, old hash, and new hash (for every branch updated by the git client) to post-read hook args (Requires man-in-the-middle sniffer)
    * If nothing is updated to the client, then there will be no arguments to post-read.
    * There will be a multiple of 3 args, each triple being branch, old hash, new hash, (depending on how many branches the client updates).
