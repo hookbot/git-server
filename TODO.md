@@ -9,6 +9,9 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
+ - Fix hot-potatoe-grind bug where git-deploy on the same repo coming from the same IP (but running in different local directories) will infinite pummel the client and server, back and forth between the two directories.
+   * For example, running this on a single machine: "git deploy -C /usr/src/prod master & ; git deploy -C /usr/src/beta dev &"
+
  - Investigate converting get_fork_hash common fork sniffer scan to use "git merge-base --fork-point <ref> <commit>" instead of grinding through the logs.
 
  - Right now, the git server can "choke" if there are many git-deploy clients linked to a single repo.
