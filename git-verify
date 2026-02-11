@@ -1,0 +1,60 @@
+#!/usr/bin/env perl
+
+=pod
+
+=head1 NAME
+
+git-verify - Verify server configuration settings.
+
+=head1 SYNOPSIS
+
+  git-verify [ gituser@git-server-host-name.com ] [ /path/to/server/repo.git ]
+
+Default is to check the current server where the command is run.
+
+=head1 DESCRIPTION
+
+Command-line utility to verify git server configuration for capabilities that could be used by git-server.
+
+=head1 TODO
+
+  - Overload "git-server" command to run git-verify under certain conditions
+    * If no SSH_CONNECTION env
+    * If -t STDIN detect commandline TTY (if "ADMIN")
+    * If SSH_ORIGINAL_COMMAND "verify" or "git-verify" (but only allow safe read-only operations appropriate for REMOTE_USER powers)
+
+  - Test functionality and capabilities:
+    * Scripts and hooks installations
+    * Secured ~/.ssh/authorized_keys format, including "KEY" or "REMOTE_USER" settings
+    * Files and Directories chmod permissions
+    * ADMIN and ACL Management (if "ADMIN")
+    * List / Create / Remove repos
+    * SSHD Settings
+      1. "AcceptEnv XMODIFIERS" in case they want
+          to allow "--server-option" and/or "--push-option" and/or "-o" to have
+          $GIT_OPTION_COUNT and $GIT_OPTION_{NUM} to be available during pre-* hooks
+          or "git-deploy --max-delay <seconds>" for custom push notification timeout
+          or "git-client -O <name=val>"
+          or other DEBUG features
+      2. "AllowAgentForwarding yes" for proxy.url two-way auto-sync feature
+      3. "ExposeAuthInfo yes" to allow hooks to obtain public key info, if desired
+      4. Enable "any-user"@server feature, if desired.
+
+=head1 AUTHOR
+
+Rob Brown <bbb@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2025-2026 by Rob Brown <bbb@cpan.org>
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut
+
+use strict;
+use warnings;
+
+our $VERSION = "0.037";
+
+die "Not implemented";
