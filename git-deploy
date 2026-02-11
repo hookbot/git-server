@@ -29,11 +29,11 @@ instantly after a push is triggered.
 If a <branch> is specified, then it will update to that branch.
 By default, the current branch is used.
 
-  Example: git deploy --branch master
+  Example: git deploy --branch main
 
   --OR--
 
-  Example: git deploy master
+  Example: git deploy main
 
 =head2 --chdir <dir>
 
@@ -110,7 +110,7 @@ As super user:
 
 As deploy user:
 
-  [puller@deploy-host projectz]$ git deploy --branch=master
+  [puller@deploy-host projectz]$ git deploy --branch=main
   [puller@deploy-host projectz]$ echo '0 * * * * git deploy --chdir ~/projectz </dev/null >/dev/null 2>/dev/null' | crontab -
   [puller@deploy-host projectz]$
 

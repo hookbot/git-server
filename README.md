@@ -23,12 +23,13 @@ Put something like the following in its ~git/.ssh/authorized\_keys:
 Then the first authorized user to touch the repo should have full access:
 
     [user1@dev ~]$ git config --global user.name 'Mr Developer User1'
+    [user1@dev ~]$ git config --global user.email user1@dev.com
     [user1@dev ~]$ git clone ssh://git@git-host/projectx
     [user1@dev ~]$ cd projectx
     [user1@dev projectx]$ echo 'Hello world' >> README
     [user1@dev projectx]$ git add README
     [user1@dev projectx]$ git commit -m 'First commit' README
-    [user1@dev projectx]$ git push --set-upstream origin master
+    [user1@dev projectx]$ git push --set-upstream origin main
     [user1@dev projectx]$
 
 See INSTALL.md to setup granular read and write access and/or
@@ -53,3 +54,9 @@ Report feature requests or bugs here:
 https://github.com/hookbot/git-server/issues
 
 Pull requests welcome.
+
+# COPYRIGHT AND LICENSE
+
+Copyright 2015-2026 by Rob Brown <bbb@cpan.org>
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

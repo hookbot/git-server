@@ -408,11 +408,11 @@ Writing objects: 100% (4/4), 387 bytes | 0 bytes/s, done.
 Total 4 (delta 1), reused 0 (delta 0)
 remote: Tue Jun 23 07:54:45 2015: Sending push notification to 222.222.222.222-push_notification_key1 ...
 To git@git-host:projectz
-   f60b258..d759447  master -> master
+   f60b258..d759447  main -> main
 [alice@dev ProjX]$
 ```
 
-Hopefully, that other "git pull" process on deploy-host that was blocked will
+That first "git deploy" puller blocked process on deploy-host should
 immediately finish and deploy this fresh push. Then you know everything is
 configured perfectly for the "deploy" user and for the "writers" user.
 And you can append a cron to keep the deployment daemon running.
@@ -422,7 +422,7 @@ And you can append a cron to keep the deployment daemon running.
 A cron can ensure the latest version is always immediately deployed.
 
 ```
-[puller@deploy-host ProjX]$ (crontab -l 2>/dev/null ; echo ; echo "0 * * * * git deploy --chdir ~/ProjX >/dev/null 2>/dev/null") | crontab -
+[puller@deploy-host ProjX]$ (crontab -l 2>/dev/null ; echo ; echo "# Update once an hour" ; echo "0 * * * * git deploy --chdir ~/ProjX >/dev/null 2>/dev/null") | crontab -
 [puller@deploy-host ProjX]$
 ```
 
