@@ -46,10 +46,12 @@ Some features we need or want, plus some neat ideas that may not be too feasible
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6.
 
  - Add Support for HTTP protocol git read and write operations using Basic password Authorization (instead of only pubkeys over SSH protocol).
-
- - Set REMOTE_ADDR env (from SSH_CONNECTION) to make it easier for any hooks to determine Client IP regardless of protocol.
-
- - Set REMOTE_USER env (from KEY) to make it easier for any hooks to Client User regardless of protocol.
+   * Set REMOTE_ADDR env (from SSH_CONNECTION) to make it easier for any hooks to determine Client IP regardless of protocol.
+   * Set REMOTE_USER env (from KEY) to make it easier for any hooks to Client User regardless of protocol.
+   * Quit cheating by using deprecated old SSH_CLIENT setting, but utilize newer REMOTE_* and SERVER_* ENV settings for consistency.
+   * Deprecate use of KEY to avoid confusion between Public"KEY" and the user indentification KEYword used in the authorizeds_KEYs file.
+   * Convert all ssh ACL hooks to use REMOTE_USER instead of KEY and REMOTE_ADDR instead of SSH_CLIENT or SSH_CONNECTION directly.
+   * Design a way to support "git-deploy" feature via HTTP (through REMOTE_USER or DeployToken or URI flag or Special HTTP Header or PAT [Personal Access Token] or maybe some other mechanism). Allow client to specify max-delay seconds (default 90) in case nothing new is ready since last pull.
 
  - Integrate or convert to be compatible with Git::Hooks::* plugins.
 
