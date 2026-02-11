@@ -43,8 +43,6 @@ Some features we need or want, plus some neat ideas that may not be too feasible
      3. "ExposeAuthInfo yes" to allow hooks to obtain public key info, if desired
      4. Enable "any-user"@server feature, if desired.
 
- - Pull out the iotrace utility into its own perl module IO::Trace.
-
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6.
 
  - Add Support for HTTP protocol git read and write operations using Basic password Authorization (instead of only pubkeys over SSH protocol).
