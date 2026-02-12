@@ -91,8 +91,10 @@ $ENV{REMOTE_USER} ||= $ENV{KEY} || "UNKNOWN";
 $ENV{SSH_CONNECTION} ||= "";
 ($ENV{REMOTE_ADDR}, $ENV{REMOTE_PORT}, $ENV{SERVER_ADDR}, $ENV{SERVER_PORT}) = split / /, $ENV{SSH_CONNECTION};
 if (!$ENV{REMOTE_PORT} || !$ENV{SERVER_ADDR} || !$ENV{SERVER_PORT}
+    || $cmd =~ m{(^|/)(git-|)verify$}
     || !$ENV{REMOTE_ADDR} || $ENV{REMOTE_ADDR} !~ /^([\da-f\.:]+)$/) {
-    die "Only SSH allowed\n";
+    (my $v = $0) =~ s{-[^/]+$}{-verify};
+    exec $v or die "Verification failed\n";
 }
 $ENV{REMOTE_ADDR} = $1; # Taint cleaner
 delete $ENV{$_} foreach (qw[KEY SSH_CLIENT SSH_CONNECTION]); # No cheating
