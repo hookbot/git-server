@@ -18,7 +18,7 @@ If you do not already have a git server or git repo ready, then make one:
 
 Put something like the following in its ~git/.ssh/authorized\_keys:
 
-    command="git-server KEY=user1" ssh-ed25519 AAAA_OAX+blah_pub__ user1@dev
+    command="git-server REMOTE_USER=user1" ssh-ed25519 AAAA_OAX+blah_pub__ user1@dev
 
 Then the first authorized user to touch the repo should have full access:
 

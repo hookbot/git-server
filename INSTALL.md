@@ -92,7 +92,7 @@ hosted by this server.
 Put something like the following on a single line in ~git/.ssh/authorized_keys:
 
 ```
-command="~/git-server/git-server KEY=user1" ssh-ed25519 AAAA_OAX+blah_pub__ user1@workstation
+command="~/git-server/git-server REMOTE_USER=user1" ssh-ed25519 AAAA_OAX+blah_pub__ user1@workstation
 ```
 
 You can add unlimited client users and SSH public keys.
@@ -178,7 +178,7 @@ Last login: [...]
 
 ### acl.readers
 
-Comma-delimited list of KEY settings from ~/.ssh/authorized_keys
+Comma-delimited list of REMOTE_USER settings from ~/.ssh/authorized_keys
 for all users you wish to allow read access to the repository.
 
 For example, these users can run: `git pull`
@@ -310,7 +310,7 @@ or lost forever and may diminish proof of work.
 Default is no restrictions, meaning anyone can rewrite history using --force.
 
 ```
-git config restrictedbranch.'*'.forcers NOBODY          # Block everyone from using 'git push --force' to rewrite git history on any branch (since KEY=NOBODY doesn't exist).
+git config restrictedbranch.'*'.forcers NOBODY          # Block everyone from using 'git push --force' to rewrite git history on any branch (since REMOTE_USER=NOBODY doesn't exist).
 git config restrictedbranch.'main'.forcers NOBODY       # Prevent anyone from using 'git push --force' to rewrite the 'main' branch git history.
 git config restrictedbranch.'/permanent/'.forcers admin # Block all **writers** except for the 'admin' user from rewriting git history for any branch or tag matching the RegExp.
 git config restrictedbranch.'release/*'.forcers NOBODY  # Block everyone from losing or reverting any commits already pushed into any of the branches beginning with 'release/'.
@@ -366,7 +366,7 @@ ensure this name is in the acl.deploy comma-delimited list.
 
 ```
 [admin@gitsrvhost ~]$ sudo su - git
-[git@gitsrvhost ~]$ echo 'command="~/git-server/git-server KEY=push_notification_key1" ssh-ed25519 AAAAC1NTE5/FiREggu4HKIZPpJSe puller@deploy-host' >> ~/.ssh/authorized_keys
+[git@gitsrvhost ~]$ echo 'command="~/git-server/git-server REMOTE_USER=push_notification_key1" ssh-ed25519 AAAAC1NTE5/FiREggu4HKIZPpJSe puller@deploy-host' >> ~/.ssh/authorized_keys
 [git@gitsrvhost ~]$ cd ~/ProjX
 [git@gitsrvhost ProjX]$ git config acl.deploy
 srv7
@@ -432,7 +432,7 @@ same IP from the gitsrvhost point of view (such as machines
 behind a NAT), then that will infinite grind the gitsrvhost.
 To avoid this problem, make sure each machine coming from
 this same IP that is in the acl.deploy list has a distinct
-deployment SSH pubkey and KEY setting in authorized_keys.
+deployment SSH pubkey and REMOTE_USER setting in authorized_keys.
 
 
 DEBUG
