@@ -97,7 +97,7 @@ if (!$ENV{REMOTE_PORT} || !$ENV{SERVER_ADDR} || !$ENV{SERVER_PORT}
     exec $v or die "Verification failed\n";
 }
 $ENV{REMOTE_ADDR} = $1; # Taint cleaner
-delete $ENV{$_} foreach (qw[KEY SSH_CLIENT SSH_CONNECTION]); # No cheating
+#delete $ENV{$_} foreach (qw[KEY SSH_CLIENT SSH_CONNECTION]); # No cheating
 my $who = "$ENV{REMOTE_USER}\@$ENV{REMOTE_ADDR}";
 die localtime().": [$who] git-server: You don't have shell access!\n" unless $cmd;
 
