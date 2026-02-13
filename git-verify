@@ -101,7 +101,12 @@ if (eval { require File::Which;1 }) {
 #2. Scan repos
 if (my $user = $ENV{REMOTE_USER}) {
     if ($ENV{SSH_AUTH_SOCK}) {
-        print "REMOTE_USER: $user: AgentForwarding is enabled: OK\n";
+        if (my @pubkeys = `ssh-add -l 2>/dev/null`) {
+            print "REMOTE_USER: $user: AgentForwarding is enabled: OK\n";
+        }
+        else {
+            print "REMOTE_USER: $user: AgentForwarding is mostly enabled, but no pubkeys forwarded: FINE\n";
+        }
     }
     else {
         print "REMOTE_USER: $user: AgentForwarding is not configured: FINE\n";
