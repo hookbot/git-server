@@ -101,6 +101,11 @@ if (eval { require File::Which;1 }) {
 #2. Scan repos
 print "Scanning remote repos with access by user: $ENV{REMOTE_USER}\n" if $ENV{REMOTE_USER};
 my @repo_dirs = @ARGV;
+if (!@repo_dirs) {
+    local $_ = $ENV{SSH_ORIGINAL_COMMAND} || "";
+    s{^\S+\s+(.+)}{$1};
+    @repo_dirs = split;
+}
 if (!@repo_dirs and $ENV{HOME} ||= [getpwuid $<]->[7] and opendir my $fh, $ENV{HOME}) {
     my @nodes = readdir $fh;
     closedir $fh;
