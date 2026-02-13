@@ -99,7 +99,15 @@ if (eval { require File::Which;1 }) {
 }
 
 #2. Scan repos
-print "Scanning remote repos with access by user: $ENV{REMOTE_USER}\n" if $ENV{REMOTE_USER};
+if (my $user = $ENV{REMOTE_USER}) {
+    if ($ENV{SSH_AUTH_SOCK}) {
+        print "REMOTE_USER: $user: AgentForwarding is enabled: OK\n";
+    }
+    else {
+        print "REMOTE_USER: $user: AgentForwarding is not configured: FINE\n";
+    }
+    print "REMOTE_USER: $user: Scanning remote repos with access: OK\n";
+}
 my @repo_dirs = @ARGV;
 if (!@repo_dirs) {
     local $_ = $ENV{SSH_ORIGINAL_COMMAND} || "";
