@@ -145,7 +145,7 @@ if (@repo_dirs) {
         my $conf = run_output_include_err "git","-C",$dir,"config","--list","--local";
         my $info = { dir => $dir, config => $conf };
         my $include = $ENV{REMOTE_ADDR} ? 0 : 1;
-        foreach my $setting (qw[acl.readers acl.writers acl.deploy core.bare]) {
+        foreach my $setting (qw[acl.readers acl.writers acl.deploy core.bare proxy.url]) {
             my $name = $setting =~ /^(\w+)\.(\w+)$/ ? $2 : next;
             my $section = $1;
             if ($conf =~ /^\Q$setting\E=(.*)/m) {
@@ -153,7 +153,7 @@ if (@repo_dirs) {
                 $include = 1 if !$include and $ENV{REMOTE_USER} and $1 =~ /(^|,)\Q$ENV{REMOTE_USER}\E($|,)/;
             }
             else {
-                $info->{$name} = "(missing)";
+                $info->{$name} = "";
             }
         }
         push @repo_info, $info if $include;
@@ -163,7 +163,17 @@ print "Found ".scalar(@repo_info)." repos\n";
 if (@repo_info) {
     foreach my $repo (@repo_info) {
         if ($repo->{bare} eq "true") {
-            print "$repo->{dir}: Found Bare Repo: OK\n";
+            if (my $proxy = $repo->{url}) {
+                if (-d "$repo->{dir}.workingdir") {
+                    print "$repo->{dir}: Found Bare Repo proxy linked [$proxy]: OK\n";
+                }
+                else {
+                    print "$repo->{dir}: Found Bare Repo with broken proxy [$proxy]: POOR\n";
+                }
+            }
+            else {
+                print "$repo->{dir}: Found Bare Repo: OK\n";
+            }
         }
         elsif ($repo->{bare} eq "false") {
             if ($repo->{config} =~ m{^remote.*url=(.+)}m) {
