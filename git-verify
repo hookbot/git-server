@@ -59,6 +59,13 @@ if (@ARGV) {
     $ARGV[0] =~ m{/} or exec "ssh", shift, "git-verify", map { m{/} ? $_ : "./$_" } @ARGV or die "$0: remote verification failed.\n";
 }
 
+my @repo_dirs = @ARGV;
+if (!@repo_dirs) {
+    local $_ = $ENV{SSH_ORIGINAL_COMMAND} || "";
+    s{^\S+\s+(.+)}{$1};
+    @repo_dirs = split;
+}
+
 sub run_how_cmd {
     my $stderr = shift;
     my @cmd = @_;
@@ -98,8 +105,14 @@ if (eval { require File::Which;1 }) {
     }
 }
 
-#2. Scan repos
+#2. Verify SSH Method
 if (my $user = $ENV{REMOTE_USER}) {
+    if ($ENV{SSH_USER_AUTH}) {
+        print "REMOTE_USER: $user: ExposeAuthInfo is enabled: OK\n";
+    }
+    else {
+        print "REMOTE_USER: $user: ExposeAuthInfo is off: FINE\n";
+    }
     if ($ENV{SSH_AUTH_SOCK}) {
         if (my @pubkeys = `ssh-add -l 2>/dev/null`) {
             print "REMOTE_USER: $user: AgentForwarding is enabled: OK\n";
@@ -113,12 +126,11 @@ if (my $user = $ENV{REMOTE_USER}) {
     }
     print "REMOTE_USER: $user: Scanning remote repos with access: OK\n";
 }
-my @repo_dirs = @ARGV;
-if (!@repo_dirs) {
-    local $_ = $ENV{SSH_ORIGINAL_COMMAND} || "";
-    s{^\S+\s+(.+)}{$1};
-    @repo_dirs = split;
+elsif (!@repo_dirs) {
+    print "Commandline scanning $ENV{HOME} for repos: OK\n";
 }
+
+#3. Scan repos
 if (!@repo_dirs and $ENV{HOME} ||= [getpwuid $<]->[7] and opendir my $fh, $ENV{HOME}) {
     my @nodes = readdir $fh;
     closedir $fh;
