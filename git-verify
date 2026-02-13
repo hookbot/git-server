@@ -72,3 +72,52 @@ if (eval { require File::Which;1 }) {
         print "git-server program missing: BAD\n";
     }
 }
+
+#2. Scan repos
+my @repo_dirs = @ARGV;
+if (!@repo_dirs and $ENV{HOME} ||= [getpwuid $<]->[7] and opendir my $fh, $ENV{HOME}) {
+    my @nodes = readdir $fh;
+    closedir $fh;
+    foreach my $node (@nodes) {
+        push @repo_dirs, "$ENV{HOME}/$node" if -f "$ENV{HOME}/$node/config" && -d "$ENV{HOME}/$node/refs" && -d "$ENV{HOME}/$node/objects" or -f "$ENV{HOME}/$node/.git/config";
+    }
+}
+my @repo_info;
+if (@repo_dirs) {
+    foreach my $dir (@repo_dirs) {
+        my $conf = `git -C $dir config --list --local`;
+        my $info = { dir => $dir, config => $conf };
+        my $include = $ENV{REMOTE_ADDR} ? 0 : 1;
+        foreach my $setting (qw[acl.readers acl.writers acl.deploy core.bare]) {
+            my $name = $setting =~ /^(\w+)\.(\w+)$/ ? $2 : next;
+            my $section = $1;
+            if ($conf =~ /^\Q$setting\E=(.*)/m) {
+                $info->{$name} = $1;
+                $include = 1 if !$include and $ENV{REMOTE_USER} and $1 =~ /(^|,)\Q$ENV{REMOTE_USER}\E($|,)/;
+            }
+            else {
+                $info->{$name} = "(missing)";
+            }
+        }
+        push @repo_info, $info if $include;
+    }
+}
+print "Found ".scalar(@repo_info)." repos\n";
+if (@repo_info) {
+    foreach my $repo (@repo_info) {
+        if ($repo->{bare} eq "true") {
+            print "$repo->{dir}: Found Bare Repo: OK\n";
+        }
+        elsif ($repo->{bare} eq "false") {
+            if ($repo->{config} =~ m{^remote.*url=(.+)}m) {
+                print "$repo->{dir}: Found Working Dir [$1]: FAIR\n";
+            }
+            else {
+                print "$repo->{dir}: Found Non-Bare Hokey Checkout Missing Remote: POOR\n";
+            }
+        }
+        else {
+            print "$repo->{dir}: Unrecognized Git Repo: BORKED!\n";
+        }
+    }
+}
