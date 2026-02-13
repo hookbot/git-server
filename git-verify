@@ -85,6 +85,7 @@ if (!@repo_dirs and $ENV{HOME} ||= [getpwuid $<]->[7] and opendir my $fh, $ENV{H
 my @repo_info;
 if (@repo_dirs) {
     foreach my $dir (@repo_dirs) {
+        next if $dir =~ /\.workingdir$/;
         my $conf = `git -C $dir config --list --local`;
         my $info = { dir => $dir, config => $conf };
         my $include = $ENV{REMOTE_ADDR} ? 0 : 1;
