@@ -124,7 +124,12 @@ if (my $user = $ENV{REMOTE_USER}) {
     else {
         print "REMOTE_USER: $user: AgentForwarding is not configured: FINE\n";
     }
-    print "REMOTE_USER: $user: Scanning remote repos with access: OK\n";
+    if (my $count = @repo_dirs) {
+        print "REMOTE_USER: $user: Filtering $count specified repos for access: OK\n";
+    }
+    else {
+        print "REMOTE_USER: $user: Scanning remote repos with access: OK\n";
+    }
 }
 elsif (!@repo_dirs) {
     print "Commandline scanning $ENV{HOME} for repos: OK\n";
