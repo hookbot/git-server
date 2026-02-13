@@ -78,7 +78,8 @@ our $VERSION = "0.037";
 $SIG{PIPE} = sub { exit 1; };
 my $cmd = $ENV{SSH_ORIGINAL_COMMAND} ||= # Standard Method from ~/.ssh/authorized_keys: command="git-server REMOTE_USER=user1" # i.e., "git-upload-pack 'project'"
     @ARGV == 2 && $ARGV[0] eq "-c" && shift && shift || ""; # Advanced Method from /etc/passwd SHELL
-foreach my $pair (@ARGV) {
+
+while (my $pair = shift) {
     if ($pair =~ /^(\w+)=(.*)$/) {
         $ENV{$1} = $2;
     }
