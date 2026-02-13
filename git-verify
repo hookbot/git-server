@@ -59,6 +59,31 @@ if (@ARGV) {
     $ARGV[0] =~ m{/} or exec "ssh", shift, "git-verify", map { m{/} ? $_ : "./$_" } @ARGV or die "$0: remote verification failed.\n";
 }
 
+sub run_how_cmd {
+    my $stderr = shift;
+    my @cmd = @_;
+    if (my $pid = open my $fh_out, "-|") {
+        # Parent process waiting for kid to say something
+        my $output = join "", <$fh_out>;
+        waitpid $pid, 0;
+        my $exit_status = $?;
+        close $fh_out;
+        $? = $exit_status;
+        return $output;
+    }
+    # Child process
+    open STDERR, $stderr;
+    exec @cmd or die "$cmd[0]: Failed to spawn? $!\n";
+}
+
+sub run_output_ignore_err {
+    return run_how_cmd ">/dev/null", @_;
+}
+
+sub run_output_include_err {
+    return run_how_cmd ">&STDOUT", @_;
+}
+
 #1. Check git-server install
 if (eval { require File::Which;1 }) {
     my $bin = File::Which::which("git-server");
@@ -86,7 +111,7 @@ my @repo_info;
 if (@repo_dirs) {
     foreach my $dir (@repo_dirs) {
         next if $dir =~ /\.workingdir$/;
-        my $conf = `git -C $dir config --list --local`;
+        my $conf = run_output_include_err "git","-C",$dir,"config","--list","--local";
         my $info = { dir => $dir, config => $conf };
         my $include = $ENV{REMOTE_ADDR} ? 0 : 1;
         foreach my $setting (qw[acl.readers acl.writers acl.deploy core.bare]) {
