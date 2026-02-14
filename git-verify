@@ -232,13 +232,13 @@ if (@repo_dirs) {
         next if $seen{$nice}++;
         my $conf = run_output_include_err "git","-C",$gitdir,"config","--list","--local";
         my $info = { nice => $nice, dir => $gitdir, config => $conf };
-        my $include = $ENV{REMOTE_ADDR} ? 0 : 1;
+        my $include = $ENV{REMOTE_USER} ? 0 : 1;
         foreach my $setting (qw[acl.readers acl.writers acl.deploy core.bare proxy.url]) {
             my $name = $setting =~ /^(\w+)\.(\w+)$/ ? $2 : next;
             my $section = $1;
             if ($conf =~ /^\Q$setting\E=(.*)/m) {
                 $info->{$name} = $1;
-                $include = 1 if !$include and $ENV{REMOTE_USER} and $1 =~ /(^|,)\Q$ENV{REMOTE_USER}\E($|,)/;
+                $include = 1 if !$include and $section eq "acl" and $1 =~ /(^|,)\Q$ENV{REMOTE_USER}\E($|,)/;
             }
             else {
                 $info->{$name} = "";
