@@ -94,7 +94,8 @@ if (@ARGV and local $_ = $ARGV[0] || die "Bad arg\n" and !/^--/) {
         } or $resolvable = 1; # If IPv6 resolvers are unavailable, then assume it's valid, and just blindly run ssh
         if ($resolvable) {
             length?$ARGV[0]=$_:shift;
-            exec "ssh","-p",$remoteport,"$userprefix$remotehost",abs_path($0),(
+            $ENV{XMODIFIERS}="v=1";
+            exec qw(ssh -o SendEnv=XMODIFIERS -p),$remoteport,"$userprefix$remotehost",abs_path($0),(
                 !(grep {/[^\w\-.\/]/} @ARGV) ? @ARGV :   # Unable to find any potentionally stank chars so it's safe to pass @ARGV as is.
                 "--escaperepos",map{unpack"H*",$_}@ARGV  # Otherwise, encode every character for all repos just to be extra safe.
             ) or die "$0: remote verification failed.\n";
@@ -156,22 +157,28 @@ if (eval { require File::Which;1 }) {
 
 #2. Verify SSH Method
 if (my $user = $ENV{REMOTE_USER}) {
+    if ($ENV{SSH_AUTH_SOCK}) {
+        if (my @pubkeys = `ssh-add -l 2>/dev/null`) {
+            print "REMOTE_USER: $user: AllowAgentForwarding is enabled: OK\n";
+        }
+        else {
+            print "REMOTE_USER: $user: AllowAgentForwarding is mostly enabled, but no pubkeys forwarded: FINE\n";
+        }
+    }
+    else {
+        print "REMOTE_USER: $user: AllowAgentForwarding is not enaqbled: FINE\n";
+    }
+    if ($ENV{XMODIFIERS} eq "v=1") {
+        print "REMOTE_USER: $user: AcceptEnv is sufficient: OK\n";
+    }
+    else {
+        print "REMOTE_USER: $user: Missing [AcceptEnv XMODIFIERS] on sshd configuration: CRIPPLED SERVER!\n";
+    }
     if ($ENV{SSH_USER_AUTH}) {
         print "REMOTE_USER: $user: ExposeAuthInfo is enabled: OK\n";
     }
     else {
         print "REMOTE_USER: $user: ExposeAuthInfo is off: FINE\n";
-    }
-    if ($ENV{SSH_AUTH_SOCK}) {
-        if (my @pubkeys = `ssh-add -l 2>/dev/null`) {
-            print "REMOTE_USER: $user: AgentForwarding is enabled: OK\n";
-        }
-        else {
-            print "REMOTE_USER: $user: AgentForwarding is mostly enabled, but no pubkeys forwarded: FINE\n";
-        }
-    }
-    else {
-        print "REMOTE_USER: $user: AgentForwarding is not configured: FINE\n";
     }
     if (my $count = @repo_dirs) {
         print "REMOTE_USER: $user: Filtering $count specified repos for access: OK\n";
