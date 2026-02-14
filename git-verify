@@ -95,7 +95,10 @@ if (@ARGV) {
         } or $resolvable = 1; # If IPv6 resolvers are unavailable, then assume it's valid, and just blindly run ssh
         if ($resolvable) {
             length?$ARGV[0]=$_:shift;
-            exec "ssh","-p",$remoteport,"$userprefix$remotehost","git-verify", map { m{/} ? $_ : "./$_" } @ARGV or die "$0: remote verification failed.\n";
+            exec "ssh","-p",$remoteport,"$userprefix$remotehost",abs_path($0),(
+                !(grep {/[^\w\-.\/]/} @ARGV) ? @ARGV :   # Unable to find any potentionally stank chars so it's safe to pass @ARGV as is.
+                "--escaperepos",map{unpack"H*",$_}@ARGV  # Otherwise, encode every character for all repos just to be extra safe.
+            ) or die "$0: remote verification failed.\n";
         }
     };
 }
@@ -105,6 +108,12 @@ if (!@repo_dirs) {
     local $_ = $ENV{SSH_ORIGINAL_COMMAND} || "";
     s{^\S+\s+(.+)}{$1};
     @repo_dirs = split;
+}
+if (@repo_dirs and $repo_dirs[0] eq "--escaperepos") {
+    shift @repo_dirs;
+    foreach (@repo_dirs) {
+        $_ = pack "H*",$_;
+    }
 }
 
 sub run_how_cmd {
