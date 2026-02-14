@@ -66,6 +66,7 @@ This library is free software; you can redistribute it and/or modify it under th
 
 use strict;
 use warnings;
+use Cwd qw(abs_path);
 
 our $VERSION = "0.037";
 
@@ -176,7 +177,8 @@ elsif (!@repo_dirs) {
 }
 
 #3. Scan repos
-if (!@repo_dirs and $ENV{HOME} ||= [getpwuid $<]->[7] and opendir my $fh, $ENV{HOME}) {
+-d ($ENV{HOME} ||= [getpwuid $<]->[7]) or die "HOME broken";
+if (!@repo_dirs and opendir my $fh, $ENV{HOME}) {
     my @nodes = readdir $fh;
     closedir $fh;
     foreach my $node (@nodes) {
@@ -185,10 +187,28 @@ if (!@repo_dirs and $ENV{HOME} ||= [getpwuid $<]->[7] and opendir my $fh, $ENV{H
 }
 my @repo_info;
 if (@repo_dirs) {
-    foreach my $dir (@repo_dirs) {
-        next if $dir =~ /\.workingdir$/;
-        my $conf = run_output_include_err "git","-C",$dir,"config","--list","--local";
-        my $info = { dir => $dir, config => $conf };
+    foreach my $repo (@repo_dirs) {
+        $repo =~ s{/+$}{}; # Remove trailing slashes.
+        next if $repo =~ /\.workingdir$/;
+        my $gitdir = undef;
+        if (-d $repo) {
+            $gitdir = $repo;
+        }
+        else {
+            $repo =~ s/\.git$//;
+            my @check = ("$repo.git/.git", "$repo.git", "$repo/.git", $repo);
+            if (0 != index $repo, $ENV{HOME}) { # Not starting with $HOME
+                push @check, map { "$ENV{HOME}/$_" } @check; # Try with prepended $HOME too
+            }
+            foreach (@check) {
+                $gitdir = $_ and next if -d;
+            }
+        }
+        next if !$gitdir;
+        $gitdir = abs_path $gitdir; # Collapse duplicate slashes. Get rid of any "/./" silly sandwiches. Also removes trailing slashes (although should already be gone by now).
+        (my $nice = $gitdir) =~ s{(?:/|\.git)+}{};
+        my $conf = run_output_include_err "git","-C",$gitdir,"config","--list","--local";
+        my $info = { nice => $nice, dir => $gitdir, config => $conf };
         my $include = $ENV{REMOTE_ADDR} ? 0 : 1;
         foreach my $setting (qw[acl.readers acl.writers acl.deploy core.bare proxy.url]) {
             my $name = $setting =~ /^(\w+)\.(\w+)$/ ? $2 : next;
@@ -206,30 +226,30 @@ if (@repo_dirs) {
 }
 print "Found ".scalar(@repo_info)." repos\n";
 if (@repo_info) {
-    foreach my $repo (@repo_info) {
-        if ($repo->{bare} eq "true") {
-            if (my $proxy = $repo->{url}) {
-                if (-d "$repo->{dir}.workingdir") {
-                    print "$repo->{dir}: Found Bare Repo proxy linked [$proxy]: OK\n";
+    foreach my $info (@repo_info) {
+        if ($info->{bare} eq "true") {
+            if (my $proxy = $info->{url}) {
+                if (-d "$info->{dir}.workingdir") {
+                    print "$info->{nice}: Found Bare Repo proxy linked [$proxy]: OK\n";
                 }
                 else {
-                    print "$repo->{dir}: Found Bare Repo with broken proxy [$proxy]: POOR\n";
+                    print "$info->{nice}: Found Bare Repo with broken proxy [$proxy]: POOR\n";
                 }
             }
             else {
-                print "$repo->{dir}: Found Bare Repo: OK\n";
+                print "$info->{nice}: Found Bare Repo: OK\n";
             }
         }
-        elsif ($repo->{bare} eq "false") {
-            if ($repo->{config} =~ m{^remote.*url=(.+)}m) {
-                print "$repo->{dir}: Found Working Dir [$1]: FAIR\n";
+        elsif ($info->{bare} eq "false") {
+            if ($info->{config} =~ m{^remote.*url=(.+)}m) {
+                print "$info->{nice}: Found Working Dir [$1]: FAIR\n";
             }
             else {
-                print "$repo->{dir}: Found Non-Bare Hokey Checkout Missing Remote: POOR\n";
+                print "$info->{nice}: Found Non-Bare Hokey Checkout Missing Remote: POOR\n";
             }
         }
         else {
-            print "$repo->{dir}: Unrecognized Git Repo: BORKED!\n";
+            print "$info->{nice}: Unrecognized Git Repo: BORKED!\n";
         }
     }
 }
