@@ -70,8 +70,7 @@ use Cwd qw(abs_path);
 
 our $VERSION = "0.037";
 
-if (@ARGV) {
-    local $_ = $ARGV[0] or die "Bad arg\n";
+if (@ARGV and local $_ = $ARGV[0] || die "Bad arg\n" and !/^--/) {
     s{^ssh://(|[^/:]+\@)\[([a-z0-9\-\.\:]+)\]:(\d+)(?:$|/)}{}i ||
     s{^ssh://(|[^/:]+\@)\[?([a-z0-9\-\.]+)\]?:\[?(\d+)\]?(?:$|/)}{}i ||
     s{^ssh://(|[^/:]+\@)\[?([a-z0-9\-\.\:]+)\]?(?:$|/)}{}i ||
