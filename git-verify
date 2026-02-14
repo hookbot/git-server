@@ -97,7 +97,13 @@ if (@ARGV and local $_ = $ARGV[0] || die "Bad arg\n" and !/^--/) {
         if ($resolvable) {
             length?$ARGV[0]=$_:shift;
             $ENV{XMODIFIERS}="v=1";
-            exec qw(ssh -o SendEnv=XMODIFIERS -p),$remoteport,"$userprefix$remotehost",abs_path($0),(
+            exec qw[ssh
+                -o PubKeyAuthentication=yes
+                -o KbdInteractiveAuthentication=no
+                -o PasswordAuthentication=no
+                -o SendEnv=XMODIFIERS
+                -p], $remoteport,
+                "$userprefix$remotehost",abs_path($0),(
                 !(grep {/[^\w\-.\/]/} @ARGV) ? @ARGV :   # Unable to find any potentionally stank chars so it's safe to pass @ARGV as is.
                 "--escaperepos",map{unpack"H*",$_}@ARGV  # Otherwise, encode every character for all repos just to be extra safe.
             ) or die "$0: remote verification failed.\n";
