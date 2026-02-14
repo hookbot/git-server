@@ -36,21 +36,23 @@ for any directory that smells like a git repo.
 =head1 TODO
 
     * Only allow safe read-only operations appropriate for REMOTE_USER powers
-    * Scripts and hooks installations
-    * Secured ~/.ssh/authorized_keys format, including "KEY" or "REMOTE_USER" settings
+    * Validate scripts installation: git-server git-client git-deploy git-verify
+    * Validate core.hooksPath
+    * Validate ./hooks symlink for each repo if hooksPath not set
     * Files and Directories chmod permissions
+    * Secured ~/.ssh/authorized_keys format, including "REMOTE_USER" settings
+    * Make sure ~/.ssh/authorized_keys has at least one ADMIN user
     * ADMIN and ACL Management (if "ADMIN")
-    * List / Create / Remove repos
-    * SSHD Settings
-      1. "AcceptEnv XMODIFIERS" in case they want
-          to allow "--server-option" and/or "--push-option" and/or "-o" to have
-          $GIT_OPTION_COUNT and $GIT_OPTION_{NUM} to be available during pre-* hooks
-          or "git-deploy --max-delay <seconds>" for custom push notification timeout
-          or "git-client -O <name=val>"
-          or other DEBUG features
-      2. "AllowAgentForwarding yes" for proxy.url two-way auto-sync feature
-      3. "ExposeAuthInfo yes" to allow hooks to obtain public key info, if desired
-      4. Enable "any-user"@server feature, if desired.
+    * Create / Remove repos (if "ADMIN")
+    * Validate or Configure "any-user"@server feature (if "ADMIN")
+
+=head1 SUPPORTED
+
+    * Validate git-server installation.
+    * Verify AllowAgentForwarding setting for two-way sync feature.
+    * Verify AcceptEnv setting.
+    * Check ExposeAuthInfo functionality to be able to determine key info, if desired.
+    * List accessible repos specified or scanned.
 
 =head1 AUTHOR
 
@@ -172,6 +174,9 @@ if (my $user = $ENV{REMOTE_USER}) {
         print "REMOTE_USER: $user: AcceptEnv is sufficient: OK\n";
     }
     else {
+        # "AcceptEnv XMODIFIERS" is required to support several git-deploy features
+        # and to support "-o" (or "-O") GIT_OPTION_* settings in "pre-" hooks
+        # and to allow enabling DEBUG if needed.
         print "REMOTE_USER: $user: Missing [AcceptEnv XMODIFIERS] on sshd configuration: CRIPPLED SERVER!\n";
     }
     if ($ENV{SSH_USER_AUTH}) {
