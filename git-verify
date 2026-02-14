@@ -108,8 +108,7 @@ if (@ARGV and local $_ = $ARGV[0] || die "Bad arg\n" and !/^--/) {
 my @repo_dirs = @ARGV;
 if (!@repo_dirs) {
     local $_ = $ENV{SSH_ORIGINAL_COMMAND} || "";
-    s{^\S+\s+(.+)}{$1};
-    @repo_dirs = split;
+    @repo_dirs = split and $repo_dirs[0] =~ m{(^|/)git-verify$} and shift @repo_dirs;
 }
 if (@repo_dirs and $repo_dirs[0] eq "--escaperepos") {
     shift @repo_dirs;
