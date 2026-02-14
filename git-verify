@@ -170,7 +170,7 @@ if (my $user = $ENV{REMOTE_USER}) {
     else {
         print "REMOTE_USER: $user: AllowAgentForwarding is not enaqbled: FINE\n";
     }
-    if ($ENV{XMODIFIERS} eq "v=1") {
+    if ($ENV{XMODIFIERS} && $ENV{XMODIFIERS} eq "v=1") {
         print "REMOTE_USER: $user: AcceptEnv is sufficient: OK\n";
     }
     else {
