@@ -187,6 +187,7 @@ if (!@repo_dirs and opendir my $fh, $ENV{HOME}) {
 }
 my @repo_info;
 if (@repo_dirs) {
+    my %seen;
     foreach my $repo (@repo_dirs) {
         $repo =~ s{/+$}{}; # Remove trailing slashes.
         next if $repo =~ /\.workingdir$/;
@@ -207,6 +208,7 @@ if (@repo_dirs) {
         next if !$gitdir;
         $gitdir = abs_path $gitdir; # Collapse duplicate slashes. Get rid of any "/./" silly sandwiches. Also removes trailing slashes (although should already be gone by now).
         (my $nice = $gitdir) =~ s{(?:/|\.git)+$}{};
+        next if $seen{$nice}++;
         my $conf = run_output_include_err "git","-C",$gitdir,"config","--list","--local";
         my $info = { nice => $nice, dir => $gitdir, config => $conf };
         my $include = $ENV{REMOTE_ADDR} ? 0 : 1;
