@@ -206,7 +206,7 @@ if (@repo_dirs) {
         }
         next if !$gitdir;
         $gitdir = abs_path $gitdir; # Collapse duplicate slashes. Get rid of any "/./" silly sandwiches. Also removes trailing slashes (although should already be gone by now).
-        (my $nice = $gitdir) =~ s{(?:/|\.git)+}{};
+        (my $nice = $gitdir) =~ s{(?:/|\.git)+$}{};
         my $conf = run_output_include_err "git","-C",$gitdir,"config","--list","--local";
         my $info = { nice => $nice, dir => $gitdir, config => $conf };
         my $include = $ENV{REMOTE_ADDR} ? 0 : 1;
