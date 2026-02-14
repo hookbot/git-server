@@ -8,15 +8,30 @@ git-verify - Verify server configuration settings.
 
 =head1 SYNOPSIS
 
-  git-verify [ gituser@remote-git-server-host-name.com ] [ /path/to/server/repo.git ... ]
+  git-verify [ <REMOTE> ] [ /path/to/server/repo.git ... ]
 
 =head1 DESCRIPTION
 
 Command-line utility to verify git server configuration for capabilities that could be used by git-server.
 
-If no remote server is provided, then checks the current server where the command is run.
+<REMOTE> can be any valid SCP-style Git URL, such as:
 
-If no repos are specified, then the home directory is scanned for them.
+  gituser@remote-git-server-host-name.com:my-repo.git
+
+Or it can be a full ssh:// Git URL, such as:
+
+  ssh://gituser@remote-git-server-host-name.com/my-repo.git
+
+Or if you don't care about any specific repo, then <REMOTE> can use simple ssh-style format, such as:
+
+  gituser@remote-git-server-host-name.com
+
+If no user@ is provided, then ssh will use your current username.
+
+If NO <REMOTE> is provided, then checks the current server where the command is run.
+
+If no repo directories are specified, then the HOME directory is scanned
+for any directory that smells like a git repo.
 
 =head1 TODO
 
@@ -55,8 +70,33 @@ use warnings;
 our $VERSION = "0.037";
 
 if (@ARGV) {
-    $ARGV[0] or die "Bad arg\n";
-    $ARGV[0] =~ m{/} or exec "ssh", shift, "git-verify", map { m{/} ? $_ : "./$_" } @ARGV or die "$0: remote verification failed.\n";
+    local $_ = $ARGV[0] or die "Bad arg\n";
+    s{^ssh://(|[^/:]+\@)\[([a-z0-9\-\.\:]+)\]:(\d+)(?:$|/)}{}i ||
+    s{^ssh://(|[^/:]+\@)\[?([a-z0-9\-\.]+)\]?:\[?(\d+)\]?(?:$|/)}{}i ||
+    s{^ssh://(|[^/:]+\@)\[?([a-z0-9\-\.\:]+)\]?(?:$|/)}{}i ||
+    s{^(|[^/:]+\@)\[([a-z0-9\-\.]+):(\d+)\](?:$|:)}{}i ||
+    s{^(|[^/:]+\@)\[([a-z0-9\-\.\:]+)\]()(?:$|:)}{}i ||
+    s{^(|[^/:]+\@)([a-z0-9\-\.]+)()(?:$|:)}{}i and do {
+        my $userprefix = $1;
+        my $remotehost = $2;
+        my $remoteport = $3 || 22;
+        my $resolvable = undef;
+        $resolvable = gethostbyname($remotehost) or eval {
+            require Socket;
+            my ($err, @res) = Socket::getaddrinfo($remotehost,22,{socktype=>Socket::SOCK_STREAM(),family=>Socket::AF_UNSPEC(),flags=>((eval{Socket::AI_ALL()}||0)|(eval{Socket::AI_V4MAPPED()}||0))});
+            $resolvable = @res;
+            1;
+        } or eval {
+            require File::Which; # Try "dig" as last-ditch effort:
+            my $dig = File::Which::which("dig") or die "no dig";
+            $resolvable = `$dig +short $remotehost A $remotehost AAAA 2>/dev/null`;
+            1;
+        } or $resolvable = 1; # If IPv6 resolvers are unavailable, then assume it's valid, and just blindly run ssh
+        if ($resolvable) {
+            length?$ARGV[0]=$_:shift;
+            exec "ssh","-p",$remoteport,"$userprefix$remotehost","git-verify", map { m{/} ? $_ : "./$_" } @ARGV or die "$0: remote verification failed.\n";
+        }
+    };
 }
 
 my @repo_dirs = @ARGV;
