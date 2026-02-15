@@ -149,16 +149,20 @@ sub run_output_include_err {
 }
 
 #1. Check git-server install
+my $bin;
 if (eval { require File::Which;1 }) {
-    my $bin = File::Which::which("git-server");
+    my $prog = "git-server";
+    $bin = File::Which::which($prog);
     if ($bin) {
-        print "git-server found in PATH [$bin]: OK\n";
+        print "$prog found in PATH [$bin]: OK\n";
+        $bin = $prog;
     }
     elsif (($bin = $0) =~ s/-verify.*/-server/ and -x $bin) {
         print "git-server outside of PATH [$bin]: FAIR\n";
     }
     else {
         print "git-server program missing: BAD\n";
+        $bin = $prog;
     }
 }
 
@@ -173,7 +177,7 @@ if (my $user = $ENV{REMOTE_USER}) {
         }
     }
     else {
-        print "REMOTE_USER: $user: AllowAgentForwarding is not enaqbled: FINE\n";
+        print "REMOTE_USER: $user: AllowAgentForwarding is not enabled: FINE\n";
     }
     if ($ENV{XMODIFIERS} && $ENV{XMODIFIERS} eq "v=1") {
         print "REMOTE_USER: $user: AcceptEnv is sufficient: OK\n";
@@ -188,7 +192,7 @@ if (my $user = $ENV{REMOTE_USER}) {
         print "REMOTE_USER: $user: ExposeAuthInfo is enabled: OK\n";
     }
     else {
-        print "REMOTE_USER: $user: ExposeAuthInfo is off: FINE\n";
+        print "REMOTE_USER: $user: ExposeAuthInfo is disabled but authentication working: FINE\n";
     }
     if (my $count = @repo_dirs) {
         print "REMOTE_USER: $user: Filtering $count specified repos for access: OK\n";
@@ -197,8 +201,77 @@ if (my $user = $ENV{REMOTE_USER}) {
         print "REMOTE_USER: $user: Scanning remote repos with access: OK\n";
     }
 }
-elsif (!@repo_dirs) {
-    print "Commandline scanning $ENV{HOME} for repos: OK\n";
+elsif (local $_ = $ENV{SSH_CONNECTION}) {
+    if ($ENV{SSH_ORIGINAL_COMMAND} and my $serv = $ENV{SERVER_ADDR}) {
+        print "REMOTE_USER: Half-burnt configuration in [ForceCommand] or [SHELL] or [command=] setting in $serv:$ENV{HOME}/.ssh/authorized_keys: POOR\n";
+    }
+    else {
+        ($ENV{REMOTE_ADDR}, $ENV{REMOTE_PORT}, $ENV{SERVER_ADDR}, $ENV{SERVER_PORT}) = split;
+    }
+    my $how;
+    if ($ENV{SSH_USER_AUTH} and open my $auth, "<", $ENV{SSH_USER_AUTH}) {
+        $how = $1 if <$auth> =~ /^publickey (.+)/;
+        close $auth;
+    }
+    my $keyfile = "$ENV{HOME}/.ssh/authorized_keys";
+    if (!$how) {
+        print "REMOTE_USER: ExposeAuthInfo is disabled: POOR! Enable it for hints on how to better configure $keyfile\n";
+    }
+    elsif (open my $keys, "<", $keyfile) {
+        my $label = "";
+        my $line = 0;
+        my @matches = ();
+        while (<$keys>) {
+            $line++;
+            my $pos = index($_, $how);
+            if ($pos >= 0) {
+                $label = $1 if substr($_,$pos+length($how)) =~ /^\s*(\S[^\r\n]*)/;
+                next if /^\s*\#/; # Ignore comments
+                push @matches, [$line, $pos, $label, $_];
+            }
+        }
+        close $keys;
+        $label ||= "$ENV{USER}\@$ENV{REMOTE_ADDR}";
+        if (@matches) {
+            foreach my $k (@matches) {
+                my $o = substr($k->[3],0,$k->[2]);
+                if ($o =~ /(?:^|,)command="[^\"]*git-server\b[^\"]*"/i and
+                    $o =~ /(?:^|,)command="[^\"]*git-server[^\"]* (KEY|REMOTE_USER)=(\w+)\b[^\"]*"/i ||
+                    $o =~ /(?:^|,)environment="(KEY|REMOTE_USER)=(\w+)\b[^\"]*"/i) {
+                    my $var = $1;
+                    my $user = $2;
+                    if ($var eq "REMOTE_USER") {
+                        print qq{REMOTE_USER: $user: Entry appears fine yet still malfunctioned somehow! $keyfile:$k->[0]:$k->[3]};
+                    }
+                    else {
+                        print "REMOTE_USER: $user: Line $k->[0] should use REMOTE_USER=$user instead of $var=$user: BAD\n";
+                    }
+                }
+                elsif ($k->[2] > 0) {
+                    print qq{REMOTE_USER: Confusing preliminary directives [$o] fail to define REMOTE_USER at Line $k->[0] of $keyfile: BAD\n};
+                }
+                else {
+                    print "REMOTE_USER: Instead of missing options, try something like this in $keyfile Line $k->[0]:\n";
+                    print qq{command="$bin REMOTE_USER=user" $k->[3]\n};
+                }
+            }
+        }
+        else {
+            print "REMOTE_USER: [$ENV{SERVER_ADDR}:$keyfile] Unrecognized format allowed key but still not found. Try something like this:\n";
+            print qq{command="$bin REMOTE_USER=user" $how $label\n\n};
+        }
+    }
+    else {
+        print "REMOTE_USER: BROKEN! Unable to read [$keyfile] [$!]\n";
+    }
+}
+else {
+    if (my $count = @repo_dirs) {
+        print "Commandline filtering $count specified repos: OK\n";
+    }
+    else {
+        print "Commandline scanning $ENV{HOME} for repos: OK\n";
+    }
 }
 
 #3. Scan repos
