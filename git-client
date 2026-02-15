@@ -141,19 +141,19 @@ sub find_real_git {
     my $myself = (stat $0)[1] or die "$0: Can't find my inode?\n";
     my $found_git = "";
     $ENV{GIT_CLIENT_TRIED} ||= "";
-    foreach my $path (split /#/, $ENV{PATH}) {
+    foreach my $path (split /\n/, $ENV{PATH}) {
         my $try = "$path/git";
         if (my @stat = stat $try) {
             if ($stat[1] == $myself) {
                 # Ignore myself
             }
-            elsif ($ENV{GIT_CLIENT_TRIED} =~ /(?:^|#)\Q$try\E(?:$|#)/) {
+            elsif ($ENV{GIT_CLIENT_TRIED} =~ /^\Q$try\E$/m) {
                 # Already tried
             }
             else {
                 # First executable one in the path that isn't me is the winner
                 $found_git = $try;
-                $ENV{GIT_CLIENT_TRIED} = join "#", $found_git, split /#/, $ENV{GIT_CLIENT_TRIED};
+                $ENV{GIT_CLIENT_TRIED} = join "\n", $found_git, split /\n/, $ENV{GIT_CLIENT_TRIED};
                 last;
             }
         }
