@@ -130,7 +130,7 @@ use strict;
 use warnings;
 use FindBin qw($Bin);
 
-our $VERSION = "0.037";
+our $VERSION = "0.038";
 
 my $who = ($ENV{REMOTE_USER} || die "Auth required\n")."\@$ENV{REMOTE_ADDR}";
 $ENV{GIT_CONNECTED_EPOCH} ||= time;
