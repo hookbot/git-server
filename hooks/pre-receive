@@ -109,7 +109,7 @@ while (my $push_info = <STDIN>) {
         }
         else {
             if ($type eq "tag") {
-                die localtime().": [$who] git-server: Missing [restrictedbranch.forcers] permission! Unable to remove restricted $type [$branch]. Do not run 'git push --delete origin $branch'. Remaining at $old\n";
+                die localtime().": [$who] git-server: Missing [restrictedbranch.forcers] permission! Unable to remove restricted tag [$branch]. Do not run 'git push --delete origin $branch'. Remaining at $old\n";
             }
             else {
                 die localtime().": [$who] git-server: Missing [restrictedbranch.forcers] permission! Unable to prune git history on restricted $type [$branch]. Do not run 'git push --delete origin $branch'. Remaining at $old\n";
@@ -119,7 +119,7 @@ while (my $push_info = <STDIN>) {
     elsif ($type eq "tag") {
         ipclog("  FORCE:1");
         if ($can_change_history) {
-            warn localtime().": [$who] git-server: FORCE moving existing $type [$branch] from $old to $new\n";
+            warn localtime().": [$who] git-server: FORCE moving existing tag [$branch] from $old to $new\n";
         }
         else {
             die localtime().": [$who] git-server: Missing [restrictedbranch.forcers] permission! You cannot move restricted tag [$branch]. Do not run 'git push --force origin $branch'\n";
