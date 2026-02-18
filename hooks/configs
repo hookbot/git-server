@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+# Program: hooks/configs
+# Purpose:
+# This is only a helper utility, not a real hook.
+# Act the same as "git config --list" except:
+#  - Duplicate config names are collapses onto a single line.
+#  - Multiple values are delimited by comma.
+#  - Newline within a value will be replaced with \n to prevent wrapping.
+#  - Literal \ backslash will be escaped as \\.
+
+use strict;
+use warnings;
+my $conf = "";
+local $/ = "\0"; # --null means each line is: $NAME\n$VAL\0
+foreach (`git config --list --null`) {
+    my ($n, $v) = /([^\n]+)\n([^\0]*)/;
+    # Make sure each value remains on a single line for easy parsing
+    $v =~ s/\\/\\\\/g; $v =~ s/\n/\\n/g;
+    $conf =~ s/^\Q$n\E=(.*)/$n=$1,$v/m or $conf .= "$n=$v\n";
+}
+print $conf;

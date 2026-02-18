@@ -6,7 +6,7 @@ use warnings;
 my $who = "$ENV{REMOTE_USER}\@$ENV{REMOTE_ADDR}";
 my $base = $ENV{GIT_DIR} or die "GIT hook ENV malfunction!\n";
 my $log = {};
-my $conf = `git config --list`;
+my $conf = $0 =~ m{(.*)/} ? `$1/configs` : `git config --list`;
 while ($conf =~ s/^log.(\w+)=(.*)$//m) {
     $log->{$1} = $2;
 }

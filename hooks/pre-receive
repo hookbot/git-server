@@ -22,7 +22,7 @@ while (my $push_info = <STDIN>) {
     ipclog("  TYPE:$type");
     ipclog("  OLD:$old");
     ipclog("  NEW:$new");
-    my $conf = `git config --list`;
+    my $conf = $0 =~ m{(.*)/} ? `$1/configs` : `git config --list`;
     if ($conf =~ s/^acl.restrictemail=(.+)//m) {
         my $restrictemail = $1;
         my $sniffers = [];
