@@ -146,8 +146,8 @@ while (my $push_info = <STDIN>) {
                 }
                 if (!keys %$matching) {
                     my (undef,undef,undef,$mday,$mon,$year) = gmtime;
-                    my $suggest = sprintf "%s-BAK_%04d-%02d-%02d", $branch, $year+1900, $mon+1, $mday;
-                    die localtime().": [$who] git-server: Refusing to lose $type $branch history upto $old without a backup branch or tag to hold it. Try 'git tag $suggest $old ; git push origin $suggest' to create a branch on the old tip. If you really wish to lose these changes, then run 'git push --delete origin $suggest' after the branch $branch is rudely '--force' pushed.\n";
+                    my $suggest = sprintf "%04d-%02d-%02d-%s-BAK-%s", $year+1900, $mon+1, $mday, $branch, substr($old,0,6);
+                    die localtime().": [$who] git-server: Refusing to lose $type $branch history upto $old without a backup ref to hold it.\n\n  Hint: Create a tag on the old $type tip:\n    export ANCHOR=$suggest ; git tag \$ANCHOR $old ; git push origin \$ANCHOR ;\n    git push --force\n\n  Hint: And then if you really wish to purge these changes forever, run this:\n    git tag -d \$ANCHOR ; git push --delete origin \$ANCHOR\n";
                 }
             }
             else {
