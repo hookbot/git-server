@@ -132,7 +132,7 @@ sub pass_options {
     push @options, "client=".abs_path($0)."\@v$VERSION";
     push @options, $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
     $ENV{XMODIFIERS} = join "\n", @options;
-    $ENV{GIT_SSH_COMMAND} //= "ssh";
+    $ENV{GIT_SSH_COMMAND} ||= "ssh";
     $ENV{GIT_SSH_COMMAND} = "$ENV{GIT_SSH_COMMAND} -o SendEnv=XMODIFIERS";
 }
 
@@ -233,33 +233,31 @@ sub scan_descent_override {
 # Special "config" handler to honor new --descent option
 sub handle_config {
     my @args = @_;
+    local @ARGV = @args;
     # Don't try to handle the "--help"-first case.
-    return if join(" ", @args) =~ /config --help\b/;
-    if (grep {$_ eq "config"} @args and
+    return if join(" ", @ARGV) =~ /config --help\b/;
+    if (grep {$_ eq "config"} @ARGV and
         # Smells like special "git config" command
         eval { require Getopt::Long; 1; } and
         Getopt::Long::Configure("pass_through") and
         Getopt::Long::Configure("no_ignore_case") and
         Getopt::Long::Configure("require_order") and
-        Getopt::Long::GetOptionsFromArray(
-            \@args,
+        Getopt::Long::GetOptions(
             "c=s"          => (my $c=[]),
             "C=s"          => (my $chdir=[]), # XXX - Do we need to honor chdir (-C) option to locate the right descent config files?
         ) and
-        $args[0] eq "config" and
+        $ARGV[0] eq "config" and
         do {
             # Handle naked "git config" case to make sure the usage can be updated before sending it
-            push @_,"--usage" and push @args,"--usage" if 1 == @args;
+            push @_,"--usage" and push @ARGV,"--usage" if 1 == @ARGV;
             # Also handle new-fangled git > 2.40.x "git config <command_without_dashes>" syntax:
-            $args[1]=~/^([a-z][a-z\-]+)$/ && ($args[1]="--$1") or
+            $ARGV[1]=~/^([a-z][a-z\-]+)$/ && ($ARGV[1]="--$1") or
             # If smells like a normal set or update, then default it to replace-all to count the actions.
-            $args[1]=~/^(\w+)\./ && splice @args, 1, 0, "--replace-all" if @args>1;
+            $ARGV[1]=~/^(\w+)\./ && splice @ARGV, 1, 0, "--replace-all" if @ARGV>1;
             1;
         } and
         Getopt::Long::Configure("no_require_order") and
-        Getopt::Long::GetOptionsFromArray(
-            \@args,
-
+        Getopt::Long::GetOptions(
             # Scope
             "descent"      => \(my $descent),
             "global"       => \(my $global),
@@ -292,7 +290,7 @@ sub handle_config {
         if ($descent) {
             # Swap "--descent" for "--file <DESCENT_CONFIG_FILE>"
             # If more than one descent file, then just use the closest one
-            @_ = map { $_ =~ /^--des/ ? ("--file" => ($descent_config_files->[-1] // "/dev/null")) : ($_) } @_;
+            @_ = map { $_ =~ /^--des/ ? ("--file" => ($descent_config_files->[-1] || "/dev/null")) : ($_) } @_;
         }
         # error: only one action at a time:
         map { ($_ eq "config" and ++$help) ? ($_,"--list","--edit") : ($_) } @_ if 1 < !!$list + !!$edit + !!$get + !!$action_1_arg + !!$action_2_arg + !!$action_1_2_arg + !!$action_2_3_arg;
@@ -306,7 +304,7 @@ sub handle_config {
         local $HANDLE_STDERR = sub { open STDERR, ">", "$tmp" };
         my $out = git @_;
         my $exit_status = $? >> 8;
-        $tmp->seek(0, 0);
+        eval { $tmp->seek(0, 0);1 } or open $tmp, "<", "$tmp";
         my $err = join "", <$tmp>;
         exit $exit_status if !length $out and !length $err;
 
