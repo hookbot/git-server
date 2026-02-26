@@ -147,7 +147,7 @@ my $background = undef;
 my $maxpatience = undef;
 Getopt::Long::Configure("no_ignore_case");
 GetOptions
-    "O|o:s" => \$opts,
+    "O|o:s@" => $opts,
     "build:s" => \$build,
     "umask:s" => \$umask,
     "branch:s" => \$force_branch,
