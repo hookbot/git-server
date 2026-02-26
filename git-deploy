@@ -218,6 +218,7 @@ sub pull_push_notification {
     # Generate XMODIFIERS based on checkout_branch and $maxpatience and $opts:
     $ENV{XMODIFIERS} = join "\n", @$opts,
         "pull_branch=".checkout_branch(),
+        "client=".abs_path($invoked[0])."\@v$VERSION",
         ($maxpatience ? ("deploy_patience=$maxpatience") : ()),
         ($initial_ENV{XMODIFIERS} ? ($initial_ENV{XMODIFIERS}) : ()),
         ;
