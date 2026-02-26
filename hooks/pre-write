@@ -17,6 +17,7 @@ while ($conf =~ s/^acl.(\w+)=(.*)$//m) {
 }
 
 $SIG{PIPE} = sub { exit 1; };
+$ENV{GIT_SERVER_VERSION} ||= "UNKNOWN";
 
 $conf !~ /^proxy/m or 0 == system "hooks/proxy", $Script or die localtime().": [$who] git-server: proxy operation failure: $?\n";
 # Verify IP
@@ -25,7 +26,7 @@ if (my $banned = system "hooks/restrictip") {
 }
 # Cannot pass without writers access:
 my $allowed = $acl->{writers}->{$ENV{REMOTE_USER}};
-warn localtime().": [$who] git-server: RUNNING PUSH ...\n" if $allowed;
+warn localtime().": [$who] git-server v$ENV{GIT_SERVER_VERSION}: PUSH Running...\n" if $allowed;
 
 if (my $pid = open my $fh, "|-", "$base/hooks/logger", "") {
     if ($allowed) {
