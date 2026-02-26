@@ -219,7 +219,7 @@ if ($xmods) {
     $ENV{GIT_OPTION_COUNT} = scalar @options;
     for (my $i = 0; $i < @options; $i++) {
         $ENV{"GIT_OPTION_$i"} = $options[$i];
-        warn localtime().": [$who] git-server: Transported GIT_OPTION_$i=[$options[$i]]\n";
+        warn localtime().": [$who] git-server: Transported GIT_OPTION_$i=[$options[$i]]\n" if $ENV{DEBUG};
     }
 }
 
