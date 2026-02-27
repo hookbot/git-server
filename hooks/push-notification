@@ -22,6 +22,7 @@ if (my $xmods = $ENV{XMODIFIERS}) {
     }
     $deploy_branch = $1 if $xmods =~ /\bpull_branch=(\S+)/;
 }
+my $msg = $deploy_branch ? " [git-deploy --branch $deploy_branch]" : "";
 my $lock_file = "$lock_dir/$ENV{REMOTE_ADDR}-$ENV{REMOTE_USER}.lock";
 sysopen my $fh, $lock_file, O_CREAT | O_RDWR;
 my $released_worker = 0;
@@ -81,7 +82,7 @@ my $should_wait =
 
 # Update Last Pull Timestamp
 open my $pull, ">", $last_pulled or die "$last_pulled: open: $!";
-print $pull localtime().": [$ENV{REMOTE_ADDR} $ENV{REMOTE_PORT} => $ENV{SERVER_ADDR} $ENV{SERVER_PORT}] Pull initiated\n";
+print $pull localtime().": [$ENV{REMOTE_ADDR} $ENV{REMOTE_PORT} => $ENV{SERVER_ADDR} $ENV{SERVER_PORT}] Pull initiated$msg\n";
 close $pull;
 
 if (my $sleeper = fork()) {
