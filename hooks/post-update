@@ -1,3 +1,4 @@
 #!/bin/sh
 
-exec hooks/push-notify
+# push-notify moved to post-update
+true
