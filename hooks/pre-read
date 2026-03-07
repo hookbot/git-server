@@ -19,14 +19,9 @@ while ($conf =~ s/^acl.(\w+)=(.*)$//m) {
 $SIG{PIPE} = sub { exit 1; };
 $ENV{GIT_SERVER_VERSION} ||= "UNKNOWN";
 
-my $deploy_branch = "";
-if (my $xmods = $ENV{XMODIFIERS}) {
-    if ($xmods =~ /\bpull_branch=(\S+)/) {
-        $deploy_branch = $1;
-        $deploy_branch =~ s{/+}{_}g;
-    }
-}
+my $deploy_branch = ($ENV{XMODIFIERS}||"") =~ /\bpull_branch=(\S+)\nclient.*git-deploy/ ? $1 : "";
 my $msg = $deploy_branch ? " [git-deploy --branch $deploy_branch]" : "";
+$0 = "pre-read - $who:$base$msg";
 
 $conf !~ /^proxy/m or 0 == system "hooks/proxy", $Script or die localtime().": [$who] git-server: proxy operation failure: $?\n";
 # Verify IP
