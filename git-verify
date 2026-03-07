@@ -179,7 +179,7 @@ if (my $user = $ENV{REMOTE_USER}) {
     else {
         print "REMOTE_USER: $user: AllowAgentForwarding is not enabled: FINE\n";
     }
-    if ($ENV{XMODIFIERS} && $ENV{XMODIFIERS} =~ /git-verify-version/) {
+    if ($ENV{XMODIFIERS} && $ENV{XMODIFIERS} =~ /(v|client)=/) {
         print "REMOTE_USER: $user: AcceptEnv is sufficient: OK\n";
     }
     else {
