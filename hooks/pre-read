@@ -37,17 +37,10 @@ if ($acl->{deploy}->{$ENV{REMOTE_USER}}) {
 }
 # If you can write or deploy, then you can also read
 my $allowed = $acl->{readers}->{$ENV{REMOTE_USER}} || $acl->{writers}->{$ENV{REMOTE_USER}} || $acl->{deploy}->{$ENV{REMOTE_USER}};
-warn localtime().": [$who] git-server v$ENV{GIT_SERVER_VERSION}: PULL$msg Running ...\n" if $allowed;
-
-if (my $pid = open my $fh, "|-", "$base/hooks/logger", "") {
-    if ($allowed) {
-        print $fh localtime().": [$who]: pulled$msg\n";
-    }
-    else {
-        print $fh localtime().": [$who]: Missing [acl.readers] or [acl.deploy] permission. Blocked clone or pull attempt!\n";
-    }
-    close $fh;
-    die localtime().": [$who] git-server: SERVER ERROR! log.logfile failed! $?\n" if $?;
+if ($allowed) {
+    warn localtime().": [$who] git-server v$ENV{GIT_SERVER_VERSION}: PULL$msg Running ...\n";
 }
-
-die localtime().": [$who] git-server: You have been banned from clone or pull!\n" unless $allowed;
+else {
+    warn localtime().": [$who] git-server: You have been banned from clone or pull!\n";
+    exit 4; # Missing [acl.readers] and [acl.deploy]
+}

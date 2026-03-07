@@ -201,4 +201,45 @@ if ($ENV{IPC}) {
     }
 }
 
+my $op = $ref->{operation} || $ENV{SSH_ORIGINAL_COMMAND} || "UNKNOWN OPERATION";
+my $allowed = !$ENV{GIT_PRE_EXIT_STATUS};
+if (my $crashed = $ref->{error_code}) {
+    # Operation didn't complete properly
+    if ($allowed) {
+        if ($op eq "push") {
+            # Probably restricted email or file or branch
+            logger "allowed [acl.writers] but this $op got restricted! [code=$crashed]";
+        }
+        else {
+            logger "$op allowed but crashed! [code=$crashed]";
+        }
+    }
+    elsif ($crashed == 3) { # restrictip : Bad Source IP
+        logger "$op IP Blocked!";
+    }
+    elsif ($crashed == 4) { # Cannot read
+        logger "$op Denied! Missing [acl.readers] and [acl.deploy] permission. Blocked clone or pull attempt!";
+    }
+    elsif ($crashed == 5) { # Cannot write
+        logger "$op Denied! Missing [acl.writers]";
+    }
+    else {
+        # Probably an ACL block
+        logger "$op not attempted : ACL pre-failure! [code=$ENV{GIT_PRE_EXIT_STATUS}]";
+    }
+}
+else {
+    # Operation completed successfully.
+    my @refs = map { " $_->{type}:$_->{ref}" } @{ $ref->{refs} };
+    my $duration = $ref->{git_execute_duration} ? " (in $ref->{git_execute_duration} seconds)" : "";
+    if ($op eq "pull") {
+        my $msg = ($ENV{XMODIFIERS}||"") =~ /\bpull_branch=(\S+)\nclient.*(git-\w+)/ ?
+            $2 eq "git-deploy" ? " [git deploy --branch $1]" : " [git checkout $1; git pull]" : "";
+        logger "pulled$duration$msg@refs\n";
+    }
+    else {
+        logger "pushed$duration@refs";
+    }
+}
+
 exit;

@@ -65,4 +65,5 @@ foreach my $cidr (split /,/, $restrictip) {
     warn localtime().": [$who] git-server: DEBUG: REMOTE_ADDR[$ENV{REMOTE_ADDR}] not part of CIDR[$cidr]\n" if $ENV{DEBUG};
 }
 
-die localtime().": [$who] git-server: Your IP has been blocked.\n";
+warn localtime().": [$who] git-server: Your IP has been blocked.\n";
+exit 3; # Bad Source IP
