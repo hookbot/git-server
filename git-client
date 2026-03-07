@@ -105,7 +105,7 @@ exec $real_git, @ARGV;
 # Provide special options through "SendEnv XMODIFIERS" to make available in pre-hooks prior to running the real git command on the server
 sub pass_options {
     my ($op) = grep { /^(clone|fetch|pull|ls-remote|push)$/ } @ARGV;
-    return if !$op;
+    return if !$op or ($ENV{XMODIFIERS}||"") =~ /\bclient=/;
     # Need to search for special "-o" options
     my @options = ();
     push @options, "DEBUG=$ENV{DEBUG}" if defined $ENV{DEBUG};
