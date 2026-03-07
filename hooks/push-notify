@@ -44,20 +44,22 @@ foreach my $lock_file (glob "$lock_dir/*.lock") {
             defined (my $sleeper = <$fh>)) {
             chomp $worker;
             chomp $sleeper;
+            my $lockid = $lock_file =~ m{.*/(.+).lock$} ? $1 : "UNKNOWNCLIENT";
             if (defined (my $deploy_branch = <$fh>)) {
                 chomp $deploy_branch;
                 next if !$deployable->{$deploy_branch};
             }
-            if (kill 0, $worker and
-                kill 9, $sleeper) {
-                if ($lock_file =~ m{.*/(.+).lock$}) {
-                    warn localtime().": [$who] git-server: Sending push notification to $1 ...\n";
-                }
-                else {
-                    die localtime().": [$who] git-server: Released impossible sleeper (pid=$sleeper) ...\n";
-                }
+            if (kill 0, $worker and kill 9, $sleeper) {
+                warn localtime().": [$who] git-server: Sending push notification to $lockid ...\n";
+            }
+            elsif (!kill 0, $worker and !kill 0, $sleeper and -M $lock_file > 2) {
+                warn localtime().": [$who] git-server: Clearing stale push notification on $lockid from ".(-M $lock_file)." days ago ...\n";
+                unlink $lock_file;
             }
         }
         close $fh;
+    }
+    else {
+        warn localtime().": [$who] git-server: $lock_file is not readable! [$!]\n";
     }
 }
