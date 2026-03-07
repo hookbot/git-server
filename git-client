@@ -129,7 +129,7 @@ sub pass_options {
             }
         }
     }
-    push @options, "pull_branch=$1" if $op eq "pull" and git(qw[branch -a]) =~ m{^\* ([\w/\-]+)\s*$}m;
+    push @options, "pull_branch=$1" if $op eq "pull" and git(qw[branch -a]) =~ m{^\* ([\w/\-.@]+)\s*$}m;
     push @options, "client=".abs_path($0)."\@v$VERSION";
     push @options, $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
     $ENV{XMODIFIERS} = join "\n", @options;

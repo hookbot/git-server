@@ -198,11 +198,11 @@ sub rebuild {
 
 sub current_branch {
     my $scan = run_output_ignore_err qw(git branch -a);
-    return $1 if $scan =~ m{^\* ([\w/\-]+)}m;
+    return $1 if $scan =~ m{^\* ([\w/\-.@]+)}m;
     if ($scan =~ m{^\* .*detached at (\w+)}m) {
         $scan = run_output_ignore_err("git", "branch", "-a", "--contains", $1).$scan;
     }
-    return $1 if $scan =~ m{^\s+([\w/]+)}m;
+    return $1 if $scan =~ m{^\s+([\w/\-.@]+)}m;
     die localtime().": [$$] Unable to determine which branch to deploy.\n$scan\n";
 }
 

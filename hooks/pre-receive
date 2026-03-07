@@ -14,7 +14,7 @@ $SIG{__DIE__} = sub {
     exit 1;
 };
 while (my $push_info = <STDIN>) {
-    my ($old,$new,$ref) = $push_info =~ m{^(\w+) (\w+) ([\w/\.\-]+)} or die localtime().": [$who] git-server: Invalid pre-receive STDIN!\n";
+    my ($old,$new,$ref) = $push_info =~ m{^(\w+) (\w+) ([\w/\-.@]+)} or die localtime().": [$who] git-server: Invalid pre-receive STDIN!\n";
     die localtime().": [$who] git-server: Invalid pre-receive ref!\n" unless $ref;
     my $branch = ($ref =~ m{^refs/(?:heads|tags)/(.+)} || $ref =~ m{.*/([^/]+)}) ? $1 : $ref;
     my $type = ($ref =~ m{^refs/tags/}) ? "tag" : "branch";
