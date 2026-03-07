@@ -4,6 +4,31 @@ use strict;
 use warnings;
 
 my $who = ($ENV{REMOTE_USER} || die "Auth required\n")."\@$ENV{REMOTE_ADDR}";
+my $dir = $ENV{GIT_DIR} or die "GIT hook ENV malfunction!\n";
+
+# Usage: logger($message);
+# Purpose:
+#   Since post-action happens after the git operation,
+#   the client will not be able to see this message
+#   unless DEBUG is enabled. So always log the message
+#   to log.logfile first before spewing to STDERR.
+sub logger {
+    my $msg = shift || $@ || "";
+    $msg =~ s/\s*$/\n/; # Force exactly one trailing newline
+    $msg =~ s/\s*\n/\n/g; # Remove trailing space
+    $msg =~ s/^\n//gm; # Remove blank lines
+    $msg ||= "WARNING\n";
+    if (my $pid = open my $fh, "|-", "$dir/hooks/logger", "") {
+        while ($msg =~ s/^(.+)\n//) {
+            my $line = $1 or last;
+            print $fh localtime().": [$who]: $line\n";
+            warn localtime().": [$who] git-server: DEBUG: $line\n";
+        }
+        close $fh;
+        warn localtime().": [$who] git-server: SERVER ERROR! log.logfile failed! $?\n" if $?;
+    }
+    return 1;
+}
 
 if (!$ENV{DEBUG}) {
     pipe(my $rd_wait, my $wr_wake);
@@ -39,7 +64,8 @@ if (!$ENV{DEBUG}) {
     }
 }
 
-if ($ENV{IPC} and my $dir = $ENV{GIT_DIR}) {
+my $ref = {};
+if ($ENV{IPC}) {
     my $info = do {
         my $data = "";
         if (my $pid = open my $fh, "-|") {
@@ -54,7 +80,6 @@ if ($ENV{IPC} and my $dir = $ENV{GIT_DIR}) {
         $data;
     };
     $info =~ s/\s*$//;
-    my $ref = {};
     if ($info =~ /^\s*\{/) {
         # Must be JSON
         $ref = eval {
@@ -79,6 +104,11 @@ if ($ENV{IPC} and my $dir = $ENV{GIT_DIR}) {
         system "hooks/push-notify", @$branches if @$branches;
     }
 
+    my $ended = $ref->{git_server_completed} = eval { require Time::HiRes; Time::HiRes::time() } || time();
+    if (my $started = $ref->{git_client_connected}) {
+        $ref->{git_execute_duration} = sprintf "%.3f", $ended-$started;
+    }
+
     # Check for any webhook directives
     my $webhook = {};
     while ($config =~ s/^webhook\.(.*)\.(\w+)=(.*)/\n/m) {
@@ -100,24 +130,28 @@ if ($ENV{IPC} and my $dir = $ENV{GIT_DIR}) {
         my $body = "";
         my $content_type = "";
         if ($cfg->{transport} =~ /^json$/i) {
-            die localtime().": [$who] git-server: Unable to read JSON input:\n$info\n" unless $info =~ /^\s*\{/;
             $content_type = "application/json";
             if (eval { require JSON }) {
                 $body = JSON->new->canonical->encode($ref)."\n";
             }
-            else {
-                warn localtime().": [$who] git-server: Unable to load JSON.pm?\n";
+            elsif ($info =~ /^\s*\{/) {
                 $body = "$info\n";
+            }
+            else {
+                logger "Unable to load JSON.pm? $@\n$info";
+                next;
             }
         }
         else {
-            die localtime().": [$who] git-server: Unimplemented transport [$cfg->{transport}]\n";
+            logger "Unimplemented transport [$cfg->{transport}]";
+            next;
         }
         if ($cfg->{method} =~ /^post$/i) {
             $method = "POST";
         }
         else {
-            die localtime().": [$who] git-server: Unimplemented method [$cfg->{method}]\n";
+            logger "Unimplemented method [$cfg->{method}]";
+            next;
         }
         require IPC::Open3;
         require Symbol;
@@ -126,7 +160,7 @@ if ($ENV{IPC} and my $dir = $ENV{GIT_DIR}) {
             IPC::Open3::open3($in, $out, $err, qw(curl -k -s -w \n%{http_code} --data-binary @- -X), $method, "-HContent-type:$content_type", $url);
         };
         if (!$pid) {
-            warn localtime().": [$who] webhook failed: ($@) $url\n";
+            logger "webhook failed: ($!) ($@) $url\n";
             next;
         }
         print $in $body;
@@ -139,8 +173,7 @@ if ($ENV{IPC} and my $dir = $ENV{GIT_DIR}) {
         my $webhook_error = "";
         while (<$err>) {
             $webhook_error .= $_;
-            s/\s+$//;
-            warn localtime().": [$who] webhook err: $_\n";
+            logger "webhook err: $_";
         }
         close $err;
         waitpid $pid, 0;
@@ -149,8 +182,11 @@ if ($ENV{IPC} and my $dir = $ENV{GIT_DIR}) {
         if ($webhook_output =~ s/\s*(\d+)\s*$/\n/) {
             $status_code = $1;
         }
+        if ($status_code !~ /^[23]\d\d$/ or $curl_exit_status or $webhook_error) {
+            logger "webhook hiccup: curl_status[$curl_exit_status] http_status[$status_code] output:$webhook_output".($webhook_error ? "\nwebhook errors: $webhook_error" : "");
+        }
         if ($ref->{debug}) {
-            warn localtime().": [$who] DEBUG webhook:\n";
+            warn localtime().": [$who] git-server: DEBUG: webhook details:\n";
             require Data::Dumper;
             $Data::Dumper::Sortkeys=1 if !$Data::Dumper::Sortkeys;
             warn Data::Dumper::Dumper({
