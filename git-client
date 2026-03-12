@@ -8,9 +8,9 @@ git-client - Git Client Wrapper
 
 =head1 DESCRIPTION
 
-Wrapper around the real git provide additional functionality.
+Wrapper around the real git for augmented functionality.
 
-=head2 GIT_CONFIG Override
+=head2 .gitconfig Override
 
 Allows for .gitconfig descent override files up until the $HOME directory.
 All descent .gitconfig files will be honored, although files closest
@@ -27,6 +27,10 @@ These ENV settings will be available to all the server side
 hooks, including the pre-* hooks.
 Note that for this to work, the git ssh server must have
 "AcceptEnv XMODIFIERS" enabled in its sshd_config.
+
+=head2 -v | --version
+
+Shows both git-client version and git version and exits.
 
 =head2 DEBUG
 
@@ -89,6 +93,11 @@ our $real_git = find_real_git();
 
 # By default, silence any error spewages for internal git usage.
 our $HANDLE_STDERR = sub { open STDERR, ">", "/dev/null" };
+
+if ("@ARGV" =~ /^(-v|--version)$/ and $real_git =~ m{^(.*/)}) {
+    print "[git-client v$VERSION] $0 => $1".git("--version");
+    exit;
+}
 
 # Grab special options for XMODIFIERS transport
 pass_options();

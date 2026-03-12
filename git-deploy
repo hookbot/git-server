@@ -23,6 +23,7 @@ instantly after a push is triggered.
     [ --fix-nasty ]
     [ --background ]
     [ --max-delay <seconds> ]
+    [ { -v | --version } ]
 
 =head2 --branch <branch>
 
@@ -100,6 +101,10 @@ By default, max-delay is 7200 seconds (or 2 hours).
 
   Example: git deploy --max-delay 10
 
+=head2 --version
+
+Show git-deploy version.
+
 =head1 INSTALL
 
 As super user:
@@ -145,6 +150,7 @@ my $umask = undef;
 my $fix_nasty = undef;
 my $background = undef;
 my $maxpatience = undef;
+my $ver = undef;
 Getopt::Long::Configure("no_ignore_case");
 GetOptions
     "O|o:s@" => $opts,
@@ -152,10 +158,16 @@ GetOptions
     "umask:s" => \$umask,
     "branch:s" => \$force_branch,
     "chdir|C:s" => \$chdir,
+    "version|v" => \$ver,
     "fix-nasty" => \$fix_nasty,
     "background" => \$background,
     "max-delay:i" => \$maxpatience,
     or exec perldoc => $0;
+
+if ($ver) {
+    print "[git-deploy v$VERSION] ".`git --version`;
+    exit;
+}
 
 sub run_how_cmd {
     my $stderr = shift;
