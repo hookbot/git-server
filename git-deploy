@@ -227,15 +227,17 @@ sub checkout_branch {
 # pull_push_notification()
 # Pull new changes or else block waiting until the next push before updating.
 sub pull_push_notification {
+    my $deploy_branch = checkout_branch();
     # Generate XMODIFIERS based on checkout_branch and $maxpatience and $opts:
     $ENV{XMODIFIERS} = join "\n", @$opts,
-        "pull_branch=".checkout_branch(),
+        "pull_branch=$deploy_branch",
         "client=".abs_path($invoked[0])."\@v$VERSION",
         ($maxpatience ? ("deploy_patience=$maxpatience") : ()),
         ($initial_ENV{XMODIFIERS} ? ($initial_ENV{XMODIFIERS}) : ()),
         ;
     # Generate GIT_SSH_COMMAND to ensure XMODIFIERS is provided to the git server:
     $ENV{GIT_SSH_COMMAND} = ($initial_ENV{GIT_SSH_COMMAND} || "ssh")." -o SendEnv=XMODIFIERS";
+    $0 = "$Script - $cwd: Waiting for push notification [$deploy_branch]";
     # Run "fetch" to call "git-upload-pack" causing the git-server to wait for the "push_notification" to release the update:
     return run_output_include_err(qw[git fetch]);
 }
@@ -278,8 +280,18 @@ if ($background) {
     open STDERR, ">", "/dev/null";
 }
 
+if (!$maxpatience) {
+    $0 = "$Script - $cwd: Searching for other deployers ...";
+    if (getps =~ /(.*\Q$Script - $cwd\E: Waiting.*)/) {
+        my $found = $1;
+        my $stagger = 5+int(rand()*115);
+        $0 = "$Script - $cwd: Waiting $stagger seconds for random stagger ...";
+        warn localtime().": [$$] Waiting random stagger delay $stagger secconds before taking over for other deployer:\n$found\n";
+        print run_output_include_err(sleep => $stagger);
+    }
+}
+
 while (1) {
-    $0 = "$Script - $cwd: Waiting for push notification ...";
     my $update = pull_push_notification;
     my $branch = checkout_branch;
     $update .= run_output_include_err "git", "checkout", $branch;
