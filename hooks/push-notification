@@ -46,7 +46,23 @@ if (my $xmods = $ENV{XMODIFIERS}) {
 }
 my $msg = $deploy_branch ? " [git-deploy --branch $deploy_branch]" : "";
 $0 = "push-notification - $who:$base$msg";
-my $lock_file = "$lock_dir/$ENV{REMOTE_ADDR}-$ENV{REMOTE_USER}.lock";
+my $lock_file = my $kill_glob = "$lock_dir/$ENV{REMOTE_ADDR}-$ENV{REMOTE_USER}.lock";
+my $safe_branch = $deploy_branch ? "-$deploy_branch" : "";
+$safe_branch =~ s/[^\w\-]+/_/g;
+$safe_branch ? ($lock_file=~s/(\.lock)$/$safe_branch$1/) : ($kill_glob=~s/(\.lock)$/-*$1/);
+# If all clients are using at least v0.038 of git-client or git-deploy, then $kill_glob will always be empty.
+# But for backward compatibility, notify ALL sleeping clients instead of only those matching $deploy_branch:
+foreach my $other_lock (glob $kill_glob) {
+    if (open my $fh, "<", $other_lock) {
+        sleep 1 if 0.0007 > -M $other_lock; # Give time for other process to stash the PIDs.
+        if (defined(my $worker = <$fh>) and defined(my $sleeper = <$fh>)) {
+            chomp $worker; chomp $sleeper;
+            $worker and $sleeper and kill 0, $worker and kill 9, $sleeper and
+            warn localtime().": [$who] git-server: PUSH NOTIFICATION: Releasing worker (pid=$worker) by killing sleeper (pid=$sleeper) ...\n";
+        }
+        close $fh;
+    }
+}
 sysopen my $fh, $lock_file, O_CREAT | O_RDWR;
 my $released_worker = 0;
 if (!flock $fh, LOCK_NB | LOCK_EX) {
