@@ -37,7 +37,7 @@ open my $fh, ">", $last_pushed or die "$last_pushed: open: $!";
 print $fh localtime().": [$ENV{REMOTE_ADDR} $ENV{REMOTE_PORT} => $ENV{SERVER_ADDR} $ENV{SERVER_PORT}] Pushed: [@updated_branches] By: $ENV{REMOTE_USER}\n";
 close $fh;
 
-# $lock_file = "$lock_dir/$REMOTE_ADDR-$REMOTE_USER.lock"; # Created by push-notification
+# $lock_file = "$lock_dir/$REMOTE_ADDR-$REMOTE_USER-$deploy_branch.lock"; # Created by push-notification
 foreach my $lock_file (glob "$lock_dir/*.lock") {
     if (open my $fh, "<", $lock_file) {
         if (defined (my $worker = <$fh>) and
@@ -48,6 +48,10 @@ foreach my $lock_file (glob "$lock_dir/*.lock") {
             if (defined (my $deploy_branch = <$fh>)) {
                 chomp $deploy_branch;
                 next if !$deployable->{$deploy_branch};
+            }
+            else {
+                # Older git-deploy versions < 0.038 did not provide the $deploy_branch to the server,
+                # so notify ALL of these just in case they were waiting on a branch that was updated.
             }
             if (kill 0, $worker and kill 9, $sleeper) {
                 warn localtime().": [$who] git-server: Sending push notification to $lockid ...\n";
