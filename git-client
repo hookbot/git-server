@@ -99,6 +99,14 @@ if ("@ARGV" =~ /^(-v|--version)$/ and $real_git =~ m{^(.*/)}) {
     exit;
 }
 
+# Handle [ -C <dir> ] first
+if (eval { require Getopt::Long; 1; } and
+    Getopt::Long::Configure(qw[pass_through no_ignore_case require_order]) and
+    Getopt::Long::GetOptions( "chdir|C=s" => (my $chdir=[] ) ),
+    ) {
+    foreach (@$chdir) { chdir $_ or die "fatal: cannot change to '$_': $!\n"; }
+}
+
 # Grab special options for XMODIFIERS transport
 pass_options();
 
@@ -249,13 +257,8 @@ sub handle_config {
     if (grep {$_ eq "config"} @ARGV and
         # Smells like special "git config" command
         eval { require Getopt::Long; 1; } and
-        Getopt::Long::Configure("pass_through") and
-        Getopt::Long::Configure("no_ignore_case") and
-        Getopt::Long::Configure("require_order") and
-        Getopt::Long::GetOptions(
-            "c=s"          => (my $c=[]),
-            "C=s"          => (my $chdir=[]), # XXX - Do we need to honor chdir (-C) option to locate the right descent config files?
-        ) and
+        Getopt::Long::Configure(qw[pass_through no_ignore_case require_order]) and
+        Getopt::Long::GetOptions( "c=s" => (my $c=[]) ) and # XXX: Is is safe to ignore -c <name>=<value> args?
         $ARGV[0] eq "config" and
         do {
             # Handle naked "git config" case to make sure the usage can be updated before sending it
