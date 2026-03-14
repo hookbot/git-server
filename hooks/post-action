@@ -39,9 +39,9 @@ if (!$ENV{DEBUG}) {
         sysread $rd_wait, my $char, 1;
         # Child let go of the pipe.
         close $rd_wait;
-        open STDIN,  "</dev/null";
-        open STDOUT, ">/dev/null";
-        open STDERR, ">/dev/null";
+        open STDIN,  "<", "/dev/null";
+        open STDOUT, ">", "/dev/null";
+        open STDERR, ">", "/dev/null";
         exit 0;
     }
     else {
@@ -58,9 +58,9 @@ if (!$ENV{DEBUG}) {
             }
         };
         # Middle process doesn't need any inputs nor outputs.
-        open STDIN,  "</dev/null";
-        open STDOUT, ">/dev/null";
-        open STDERR, ">/dev/null";
+        open STDIN,  "<", "/dev/null";
+        open STDOUT, ">", "/dev/null";
+        open STDERR, ">", "/dev/null";
     }
 }
 

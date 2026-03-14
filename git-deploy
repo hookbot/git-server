@@ -273,9 +273,9 @@ if ($background) {
     exit if fork;
     require POSIX;
     POSIX::setsid();
-    close STDIN;
-    close STDOUT;
-    close STDERR;
+    open STDIN,  "<", "/dev/null";
+    open STDOUT, ">", "/dev/null";
+    open STDERR, ">", "/dev/null";
 }
 
 while (1) {
