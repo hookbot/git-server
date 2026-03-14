@@ -153,15 +153,15 @@ my $maxpatience = undef;
 my $ver = undef;
 Getopt::Long::Configure("no_ignore_case");
 GetOptions
-    "O|o:s@" => $opts,
-    "build:s" => \$build,
-    "umask:s" => \$umask,
-    "branch:s" => \$force_branch,
-    "chdir|C:s" => \$chdir,
+    "O|o=s@" => $opts,
+    "build=s" => \$build,
+    "umask=s" => \$umask,
+    "branch=s" => \$force_branch,
+    "chdir|C=s" => \$chdir,
     "version|v" => \$ver,
     "fix-nasty" => \$fix_nasty,
     "background" => \$background,
-    "max-delay:i" => \$maxpatience,
+    "max-delay=i" => \$maxpatience,
     or exec perldoc => $0;
 
 if ($ver) {
