@@ -102,7 +102,7 @@ if ("@ARGV" =~ /^(-v|--version)$/ and $real_git =~ m{^(.*/)}) {
 # Handle [ -C <dir> ] first
 if (eval { require Getopt::Long; 1; } and
     Getopt::Long::Configure(qw[pass_through no_ignore_case require_order]) and
-    Getopt::Long::GetOptions( "chdir|C=s" => (my $chdir=[] ) ),
+    Getopt::Long::GetOptions( "chdir|C=s" => (my $chdir=[]) ),
     ) {
     foreach (@$chdir) { chdir $_ or die "fatal: cannot change to '$_': $!\n"; }
 }
@@ -263,10 +263,8 @@ sub handle_config {
         do {
             # Handle naked "git config" case to make sure the usage can be updated before sending it
             push @_,"--usage" and push @ARGV,"--usage" if 1 == @ARGV;
-            # Also handle new-fangled git > 2.40.x "git config <command_without_dashes>" syntax:
-            $ARGV[1]=~/^([a-z][a-z\-]+)$/ && ($ARGV[1]="--$1") or
-            # If smells like a normal set or update, then default it to replace-all to count the actions.
-            $ARGV[1]=~/^(\w+)\./ && splice @ARGV, 1, 0, "--replace-all" if @ARGV>1;
+            # Also handle new-fangled git >= 2.46.x "git config <command_without_dashes>" syntax:
+            $ARGV[1]=~/^([a-z][a-z\-]+)$/ && ($ARGV[1]="--$1");
             1;
         } and
         Getopt::Long::Configure("no_require_order") and
