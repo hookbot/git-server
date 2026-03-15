@@ -28,7 +28,7 @@ hooks, including the pre-* hooks.
 Note that for this to work, the git ssh server must have
 "AcceptEnv XMODIFIERS" enabled in its sshd_config.
 
-=head2 -v | --version
+=head2 -v | --version | version
 
 Shows both git-client version and git version and exits.
 
@@ -94,7 +94,7 @@ our $real_git = find_real_git();
 # By default, silence any error spewages for internal git usage.
 our $HANDLE_STDERR = sub { open STDERR, ">", "/dev/null" };
 
-if ("@ARGV" =~ /^(-v|--version)$/ and $real_git =~ m{^(.*/)}) {
+if ("@ARGV" =~ /^(-v|(?:--|)version)$/ and $real_git =~ m{^(.*/)}) {
     print "[git-client v$VERSION] $0 => $1".git("--version");
     exit;
 }
