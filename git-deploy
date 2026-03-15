@@ -145,7 +145,7 @@ my $cwd = getcwd();
 my $opts = [];
 my $build = undef;
 my $force_branch = undef;
-my $chdir = undef;
+my $chdir = [];
 my $umask = undef;
 my $fix_nasty = undef;
 my $background = undef;
@@ -157,7 +157,7 @@ GetOptions
     "build=s" => \$build,
     "umask=s" => \$umask,
     "branch=s" => \$force_branch,
-    "chdir|C=s" => \$chdir,
+    "chdir|C=s" => $chdir,
     "version|v" => \$ver,
     "fix-nasty" => \$fix_nasty,
     "background" => \$background,
@@ -249,11 +249,11 @@ if ($force_branch and @ARGV) {
 }
 $force_branch ||= shift;
 
-if ($chdir) {
-    chdir $chdir or die "chdir: $chdir $!\n";
-    # Relative chdir?
-    if ($chdir =~ /^[^\/]/) {
-        # Clear from args to avoid wrongly double jumping
+# Handle [ -C <dir> ] first
+if (@$chdir) {
+    chdir $_ or die "fatal: cannot change to '$_': $!\n" foreach @$chdir;
+    if (grep {/^[^\/]/} @$chdir) {
+        # Relative chdir may fail if re-invoked, so clear it from @invoked
         for (my $i = 1; $i < @invoked; $i++) {
             splice @invoked, --$i, ($2?1:2) if $invoked[$i-1] =~ /^(-C|--chdir)\b(=?).*$/;
         }
