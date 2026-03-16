@@ -104,9 +104,9 @@ if ($ENV{IPC}) {
         system "hooks/push-notify", @$branches if @$branches;
     }
 
-    my $ended = $ref->{git_server_completed} = eval { require Time::HiRes; Time::HiRes::time() } || time();
-    if (my $started = $ref->{git_client_connected}) {
-        $ref->{git_execute_duration} = sprintf "%.3f", $ended-$started;
+    my $ended = $ref->{server_git_completed} = eval { require Time::HiRes; Time::HiRes::time() } || time();
+    if (my $started = $ref->{server_git_connected}) {
+        $ref->{server_git_duration} = sprintf "%.6f", $ended-$started;
     }
 
     # Check for any webhook directives
@@ -231,7 +231,7 @@ if (my $crashed = $ref->{error_code}) {
 else {
     # Operation completed successfully.
     my @refs = map { " $_->{type}:$_->{ref}" } @{ $ref->{refs} };
-    my $duration = $ref->{git_execute_duration} ? " (in $ref->{git_execute_duration} seconds)" : "";
+    my $duration = $ref->{server_git_duration} ? " (in $ref->{server_git_duration} seconds)" : "";
     if ($op eq "pull") {
         my $msg = ($ENV{XMODIFIERS}||"") =~ /\bpull_branch=(\S+)\nclient.*(git-\w+)/ ?
             $2 eq "git-deploy" ? " [git deploy --branch $1]" : " [git checkout $1; git pull]" : "";
