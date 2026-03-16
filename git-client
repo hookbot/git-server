@@ -125,15 +125,17 @@ sub pass_options {
     return if !$op or ($ENV{XMODIFIERS}||"") =~ /\bclient=/;
     # Need to search for special "-o" options for XMODIFERS transport
     my @options = ();
+    my $pull_branch = "";
     push @options, "DEBUG=$ENV{DEBUG}" if defined $ENV{DEBUG};
     if (eval { require Getopt::Long; 1; } and
         Getopt::Long::GetOptions( "O=s" => \@options )) { # Strip stealth -O args from ARGV so the real git doesn't choke on it
         if (my $rest_opt = ($op ne "clone" && "o|")."server-option|push-option=s") { # Ignore -o<origin> for "git clone"
             local @ARGV = @ARGV; # Don't monkey anything. Just peek.
-            Getopt::Long::GetOptions( $rest_opt => \@options );
+            Getopt::Long::GetOptions( $rest_opt => \@options, "branch|b=s" => \$pull_branch ); # Handle "git clone -b <ref> <repo>"
         }
     }
-    push @options, "pull_branch=$1" if $op eq "pull" and git(qw[branch -a]) =~ m{^\* ([\w/\-.@]+)\s*$}m;
+    $pull_branch = $1 if $op eq "pull" and git(qw[branch -a]) =~ m{^\* ([\w/\-.@]+)\s*$}m;
+    push @options, "pull_branch=$pull_branch" if $pull_branch;
     push @options, "client=".abs_path($0)."\@v$VERSION";
     push @options, $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
     $ENV{XMODIFIERS} = join "\n", @options;
