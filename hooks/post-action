@@ -231,15 +231,26 @@ if (my $crashed = $ref->{error_code}) {
 else {
     # Operation completed successfully.
     my @refs = map { " $_->{type}:$_->{ref}" } @{ $ref->{refs} };
-    my $duration = $ref->{server_git_duration} ? " (in $ref->{server_git_duration} seconds)" : "";
-    if ($op eq "pull") {
-        my $msg = ($ENV{XMODIFIERS}||"") =~ /\bpull_branch=(\S+)\nclient.*(git-\w+)/ ?
-            $2 eq "git-deploy" ? " [git deploy --branch $1]" : " [git checkout $1; git pull]" : "";
-        logger "pulled$duration$msg@refs\n";
+    my $pull_branch = ($ENV{XMODIFIERS}||="") =~ /\bpull_branch=(\S+)\n/ ? $1 : "";
+    my $client = $ENV{XMODIFIERS} =~ /^client=.*(git-\w+)(?:|@([\w\.]+))/m ? $1 : "";
+    my $client_version = $2 || "";
+    (my $msg = $op) =~ s/e?$/ed/;
+    $msg .= " (in $ref->{server_git_duration} seconds)" if $ref->{server_git_duration};
+    if ($pull_branch) {
+       $msg .= $op eq "clone" ? " [git clone --branch $pull_branch $ref->{repo}]" :
+           $client eq "git-deploy" ? " [git deploy --branch $pull_branch]" :
+           $op eq "pull" ? " [git checkout $pull_branch; git pull]" : "";
     }
     else {
-        logger "pushed$duration@refs";
+        $msg .= $op eq "clone" ? " [git clone $ref->{repo}]" :
+            $client eq "git-deploy" ? " [git deploy]" :
+            $op eq "pull" ? " [git pull]" :
+            $op eq "push" ? " [git push]" : "";
     }
+    $msg .= " [$client $client_version]" if $client and $client_version;
+    $msg .= " git version $ref->{client_git_version}" if $ref->{client_git_version};
+    $msg .= "@refs" if @refs;
+    logger $msg;
 }
 
 exit;
