@@ -432,7 +432,7 @@ if ($info->{SUCCESS}) {
             }
         }
     }
-    else {
+    elsif ($operation eq "pull") {
         # Did the client PULL anything?
         # Remember all ref tips
         my $tip_of_ref = {};
