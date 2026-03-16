@@ -256,7 +256,7 @@ sub handle_config {
             $ARGV[1]=~/^([a-z][a-z\-]+)$/ && ($ARGV[1]="--$1");
             1;
         } and
-        Getopt::Long::Configure("no_require_order") and
+        Getopt::Long::Configure(qw[no_bundling no_require_order]) and
         Getopt::Long::GetOptions(
             # Scope
             "descent"      => \(my $descent),
