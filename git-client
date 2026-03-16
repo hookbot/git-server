@@ -123,27 +123,14 @@ exec $real_git, @ARGV;
 sub pass_options {
     my ($op) = grep { /^(clone|fetch|pull|ls-remote|push)$/ } @ARGV;
     return if !$op or ($ENV{XMODIFIERS}||"") =~ /\bclient=/;
-    # Need to search for special "-o" options
+    # Need to search for special "-o" options for XMODIFERS transport
     my @options = ();
     push @options, "DEBUG=$ENV{DEBUG}" if defined $ENV{DEBUG};
-    for (my $i = 1; $i < @ARGV; $i++) {
-        my $pre = $ARGV[$i-1];
-        my $option = $ARGV[$i];
-        if ($option =~ /^(--server-option|--push-option)=(.*)$/i) {
-            # Split up the annoying "=" notation, then scan again.
-            splice @ARGV, $i, 1, $1, $2;
-            next;
-        }
-        next if $op eq "clone" and $pre eq "-o"; # Don't brick the "-o <origin>" param for git clone
-        if ($pre =~ /^(-o|--(server|push)-option)$/i) {
-            push @options, $option;
-            if ($pre eq "-O") {
-                # Special Capital -O means only transport via XMOD
-                # So must strip it from the real commandline.
-                splice @ARGV, $i-1, 2;
-                # Roll back to handle the 2 args that have been wiped.
-                $i-=2;
-            }
+    if (eval { require Getopt::Long; 1; } and
+        Getopt::Long::GetOptions( "O=s" => \@options )) { # Strip stealth -O args from ARGV so the real git doesn't choke on it
+        if (my $rest_opt = ($op ne "clone" && "o|")."server-option|push-option=s") { # Ignore -o<origin> for "git clone"
+            local @ARGV = @ARGV; # Don't monkey anything. Just peek.
+            Getopt::Long::GetOptions( $rest_opt => \@options );
         }
     }
     push @options, "pull_branch=$1" if $op eq "pull" and git(qw[branch -a]) =~ m{^\* ([\w/\-.@]+)\s*$}m;
