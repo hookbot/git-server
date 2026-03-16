@@ -340,7 +340,7 @@ $info->{refs} = [];
 
 if ($info->{SUCCESS}) {
     my $refs = $info->{refs};
-    if ($operation eq "push") {
+    if ($info->{operation} eq "push") {
         # Did the client PUSH anything?
         # Sniff out tags and branches from pushinfo.log
         if ($pushinfo and open my $fh, "<", \$pushinfo) {
@@ -432,7 +432,7 @@ if ($info->{SUCCESS}) {
             }
         }
     }
-    elsif ($operation eq "pull") {
+    elsif ($info->{operation} eq "pull") {
         # Did the client PULL anything?
         # Remember all ref tips
         my $tip_of_ref = {};
