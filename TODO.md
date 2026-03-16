@@ -3,8 +3,6 @@ TODO
 
 Some features we need or want, plus some neat ideas that may not be too feasible to implement.
 
- - Once "post" method is sure to run, then move logger step from "pre" to "post".
-
  - Make sure ipc-parse can determine if action was actually performed or else the reason of why not.
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
