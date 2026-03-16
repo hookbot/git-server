@@ -232,7 +232,7 @@ else {
     # Operation completed successfully.
     my @refs = map { " $_->{type}:$_->{ref}" } @{ $ref->{refs} };
     my $pull_branch = ($ENV{XMODIFIERS}||="") =~ /\bpull_branch=(\S+)\n/ ? $1 : "";
-    my $client = $ENV{XMODIFIERS} =~ /^client=.*(git-\w+)(?:|@([\w\.]+))/m ? $1 : "";
+    my $client = $ENV{XMODIFIERS} =~ /^client=.*(git-\w+)(?:@([\w\.]+))?/m ? $1 : "";
     my $client_version = $2 || "";
     (my $msg = $op) =~ s/e?$/ed/;
     $msg .= " (in $ref->{server_git_duration} seconds)" if $ref->{server_git_duration};
