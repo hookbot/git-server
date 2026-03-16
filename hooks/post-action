@@ -248,7 +248,7 @@ else {
             $op eq "push" ? " [git push]" : "";
     }
     $msg .= " [$client $client_version]" if $client and $client_version;
-    $msg .= " git version $ref->{client_git_version}" if $ref->{client_git_version};
+    $msg .= " ($ref->{client_git_version})" if $ref->{client_git_version};
     $msg .= "@refs" if @refs;
     logger $msg;
 }
