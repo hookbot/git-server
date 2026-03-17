@@ -95,7 +95,7 @@ if (@ARGV and local $_ = $ARGV[0] || die "Bad arg\n" and !/^--/) {
             1;
         } or $resolvable = 1; # If IPv6 resolvers are unavailable, then assume it's valid, and just blindly run ssh
         if ($resolvable) {
-            length?$ARGV[0]=$_:shift;
+            length()?$ARGV[0]=$_:shift;
             $ENV{XMODIFIERS}="client=".abs_path($0)."\@v$VERSION";
             exec qw[ssh
                 -o PubKeyAuthentication=yes
