@@ -43,19 +43,19 @@ for my $prog (@filters) { SKIP: {
     # test option: -o <file>
     $run = `$tracer -o $tmp true 2>&1`;
     ok(!$?, "$prog: Runs true with -o");
-    $tmp->seek(0, 0); # SEEK_SET beginning
+    seek($tmp, 0, 0); # SEEK_SET beginning
     chomp ($line = join "", <$tmp>);
     like($line, qr/exited with 0/, "$prog: true case with -o");
-    $tmp->seek(0, 0);
-    $tmp->truncate(0);
+    seek($tmp, 0, 0);
+    truncate($tmp, 0);
     ok(!-s $tmp, "$prog: true case using -o log cleared");
 
     $run = `$tracer -o $tmp false 2>&1`;
     ok (!!$?, "$prog: Runs false with -o");
     chomp ($line = join "", <$tmp>);
     like($line, qr/exited with [1-9]/, "$prog: false case with -o");
-    $tmp->seek(0, 0);
-    $tmp->truncate(0);
+    seek($tmp, 0, 0);
+    truncate($tmp, 0);
     ok(!-s $tmp, "$prog: false case using -o log cleared");
 }}
 my $many = keys %$found_tracer;
