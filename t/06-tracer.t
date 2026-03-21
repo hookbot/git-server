@@ -27,9 +27,12 @@ for my $prog (@filters) { SKIP: {
     ok(!!$?, "$prog: Args required: $run"); # No args is error
     ok(!$!, "$prog: No Errno: $!");
 
-    ($run = `$tracer -V`) =~ s/\s+/ /g;
+    ($run = `$tracer -V 2>&1`) =~ s/\s+/ /g;
     my $v = $run =~ /([\d.]+)/ ? $1 : "";
-    ok($v, "$prog: Version: ".($v?"($v)":"BORKED: $run"));
+    SKIP: {
+        skip "$prog: software too old: $run", 1 if $prog ne "strace" and !$v;
+        ok($v, "$prog: Version: ".($v?"($v)":"BORKED: $run"));
+    }
     my $deficient = $v !~ /^(\d+)\.(\d+)/ || $1<4 || $2<8;
 
     $run = `$tracer -h`; # view help is not error
