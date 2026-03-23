@@ -35,6 +35,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Monkey the core.hooksPath setting on the git server to point to these hooks provided.
 
+ - Investigate making git-deploy setup alias.deploy hook in case it's not in a cron path.
+
  - [webhook] features for callback:
    * Allow for WhiteList or BlackList filters to trigger webhook or ignore webhooks under certain conditions:
      : When specified branches are involved
