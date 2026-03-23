@@ -7,6 +7,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
+ - Trying to do "git config --descent { --unset <name> | --add <name> <value> }" doesn't work as expected.
+
  - Investigate converting get_fork_hash common fork sniffer scan to use "git merge-base --fork-point <ref> <commit>" instead of grinding through the logs.
 
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6.
