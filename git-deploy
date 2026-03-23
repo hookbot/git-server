@@ -103,7 +103,7 @@ next push. By default, max-delay is 7200 seconds (or 2 hours).
 If the repo is NOT run through git-server, then --max-delay specifies
 the interval in between each "git pull" operation in a loop. If no
 --max-delay is specified for this case, then the default is a random
-interval between 1 and 3 minutes.
+interval between 5 and 7 minutes.
 
   Example: git deploy --max-delay 10
 
@@ -399,7 +399,7 @@ while (1) {
     # Get out of here if someone is monkeying a local file "error: cannot rebase: You have unstaged changes."
     warn localtime().": [$$] git-deploy: Deployable git-server v$deploying_version wants me to leave.\n$update" and last if $deploying_version and $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
     if ($update =~ /Current branch.*is up to date/) {
-        my $pause_because_done = $deploying_version ? 5 + int(55 * rand()) : ($maxpatience || (95 + int(55 * rand())));
+        my $pause_because_done = $deploying_version ? 5 + int(55 * rand()) : ($maxpatience || (305 + int(115 * rand())));
         $0 = "$Script - $cwd: Waiting $pause_because_done seconds because everything was updated ...";
         print "Everything was already updated perfectly. Sleeping $pause_because_done seconds ...\n";
         print run_output_ignore_err sleep => $pause_because_done;
