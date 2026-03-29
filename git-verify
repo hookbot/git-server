@@ -247,8 +247,8 @@ elsif (local $_ = $ENV{SSH_CONNECTION}) {
                         print "REMOTE_USER: $user: Line $k->[0] should use REMOTE_USER=$user instead of $var=$user: BAD\n";
                     }
                 }
-                elsif ($k->[2] > 0) {
-                    print qq{REMOTE_USER: Confusing preliminary directives [$o] fail to define REMOTE_USER at Line $k->[0] of $keyfile: BAD\n};
+                elsif (length $o) {
+                    print qq{REMOTE_USER: Preliminary directives exist [$o] but fail to define any REMOTE_USER at Line $k->[0] of $keyfile: BAD\n};
                 }
                 else {
                     print "REMOTE_USER: Instead of missing options, try something like this in $keyfile Line $k->[0]:\n";
