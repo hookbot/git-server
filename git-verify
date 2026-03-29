@@ -252,8 +252,8 @@ elsif (local $_ = $ENV{SSH_CONNECTION}) {
                     print qq{REMOTE_USER: Preliminary directives exist [$o] but fail to define any REMOTE_USER at Line $k->[0] of $keyfile: BAD\n};
                 }
                 else {
-                    print "REMOTE_USER: Instead of missing options, try something like this in $keyfile Line $k->[0]:\n";
-                    print qq{command="$bin REMOTE_USER=user" $k->[3]\n};
+                    print "REMOTE_USER: No options found! Think of a key or code word, then try something like this in $keyfile Line $k->[0]:\n";
+                    print qq{command="$bin REMOTE_USER=codeword" $k->[3]\n};
                 }
             }
         }
