@@ -308,7 +308,7 @@ if (@repo_dirs) {
                 push @check, map { "$ENV{HOME}/$_" } @check; # Try with prepended $HOME too
             }
             foreach (@check) {
-                $gitdir = $_ and next if -d;
+                $gitdir = $_ and last if -d;
             }
         }
         next if !$gitdir;
