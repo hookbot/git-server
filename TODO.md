@@ -13,6 +13,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6.
 
+ - Add git-deploy [ -i <IDENTITY_FILE> ] to force a specific ssh identity file when connecting to remote repo.
+
  - Add Support for HTTP protocol git read and write operations using Basic password Authorization (instead of only pubkeys over SSH protocol).
    * Design a way to support "git-deploy" feature via HTTP (through REMOTE_USER or DeployToken or URI flag or Special HTTP Header or PAT [Personal Access Token] or maybe some other mechanism). Allow client to specify max-delay seconds (default 90) in case nothing new is ready since last pull.
 
