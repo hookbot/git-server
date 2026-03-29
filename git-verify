@@ -234,7 +234,7 @@ elsif (local $_ = $ENV{SSH_CONNECTION}) {
         $label ||= "$ENV{USER}\@$ENV{REMOTE_ADDR}";
         if (@matches) {
             foreach my $k (@matches) {
-                my $o = substr($k->[3],0,$k->[2]);
+                my $o = substr($k->[3],0,$k->[1]);
                 if ($o =~ /(?:^|,)command="[^\"]*git-server\b[^\"]*"/i and
                     $o =~ /(?:^|,)command="[^\"]*git-server[^\"]* (KEY|REMOTE_USER)=(\w+)\b[^\"]*"/i ||
                     $o =~ /(?:^|,)environment="(KEY|REMOTE_USER)=(\w+)\b[^\"]*"/i) {
