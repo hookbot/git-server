@@ -147,6 +147,7 @@ our $VERSION = "0.040";
 
 my @invoked = ($0, @ARGV);
 my %initial_ENV = %ENV;
+my $origin = "";
 my $cwd = getcwd();
 my $opts = [];
 my $build = undef;
@@ -214,6 +215,11 @@ sub rebuild {
     }
 }
 
+sub current_origin {
+    (my $r = run_output_ignore_err qw(git remote)) =~ s/\n.*$//s;
+    return $r || "origin";
+}
+
 sub current_branch {
     my $scan = run_output_ignore_err qw(git branch -a);
     return $1 if $scan =~ m{^\* ([\w/\-.@]+)}m;
@@ -269,10 +275,9 @@ if (@$chdir) {
 
 $ENV{GIT_DIR} ||= abs_path(`git rev-parse --git-dir 2>/dev/null` =~ /^(.+)/ && $1 || ".git");
 
-if ($umask and $umask =~ /^(\d+)$/) {
-    umask oct $1;
-}
+umask oct $1 if $umask and $umask =~ /^(\d+)$/;
 
+$origin = current_origin();
 $0 = "$Script - $cwd: Initial checkout [".checkout_branch()."]";
 run_output_ignore_err "git", "checkout", checkout_branch;
 sleep 1;
@@ -302,10 +307,10 @@ my $maxdelayrecommended = 0;
 while (1) {
     my $update = pull_push_notification;
     $deploying_version ||= $update =~ / git-server(?: v([\d.]+):)?.*waiting for notification/ ? $1 || "OLD" : 0 or
-        $maxpatience or $maxdelayrecommended ||= warn localtime().": [$$] git-deploy: Warning: Missing recommended [ --max-delay <INTERVAL_SECONDS> ] for NON-deployable repo: ".run_output_ignore_err("git","config","remote.origin.url");
+        $maxpatience or $maxdelayrecommended ||= warn localtime().": [$$] git-deploy: Warning: Missing recommended [ --max-delay <INTERVAL_SECONDS> ] for NON-deployable repo: ".run_output_ignore_err("git","config","remote.$origin.url");
     my $branch = checkout_branch;
     $update .= run_output_include_err "git", "checkout", $branch;
-    $update .= run_output_include_err "git", "rebase", "origin/$branch";
+    $update .= run_output_include_err "git", "rebase", "$origin/$branch";
     $0 = "$Script - $cwd: Scanning updates";
     $update .= run_output_include_err "git", "rebase", "--abort" if $update =~ /fix conflicts|git rebase.*--continue|you need to resolve your|stop rebasing/;
     if (-M "$Bin/$Script" < 0) {
@@ -346,7 +351,7 @@ while (1) {
         warn localtime().": [$$] Detected local divergence off [$branch] so doing HARD RESET ...\n";
         my $hard = "";
         $hard .= run_output_include_err "git", "checkout", $branch;
-        $hard .= run_output_include_err "git", "reset", "--hard", "origin/$branch";
+        $hard .= run_output_include_err "git", "reset", "--hard", "$origin/$branch";
         my $running = getps;
         last if $running =~ /\Q$Script - $cwd\E: Waiting/;
         $0 = "$Script - $cwd: Waiting because of local divergence";
