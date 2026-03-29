@@ -97,15 +97,20 @@ if (@ARGV and local $_ = $ARGV[0] || die "Bad arg\n" and !/^--/) {
         if ($resolvable) {
             length()?$ARGV[0]=$_:shift;
             $ENV{XMODIFIERS}="client=".abs_path($0)."\@v$VERSION";
+            my $search = q{$_=shift and`(which $_ git-verify|grep . || find . ~ /usr/local/bin /usr/bin /bin -name git-verify) 2>/dev/null`=~m{^(.+)}&&exec $1,@ARGV;warn"Unable to locate git-verify on server ".`hostname`."[$1][$!][$_ @ARGV]\n"};
+            pipe my $FAKE_STDIN, my $prog;
+            print $prog $search;
+            close $prog;
+            open STDIN, "<&", $FAKE_STDIN;
             exec qw[ssh
                 -o PubKeyAuthentication=yes
                 -o KbdInteractiveAuthentication=no
                 -o PasswordAuthentication=no
                 -o SendEnv=XMODIFIERS
                 -p], $remoteport,
-                "$userprefix$remotehost",abs_path($0),(
-                !(grep {m{[^\w/\-.]}} @ARGV) ? @ARGV :   # Unable to find any potentionally stank chars so it's safe to pass @ARGV as is.
-                "--escaperepos",map{unpack"H*",$_}@ARGV  # Otherwise, encode every character for all repos just to be extra safe.
+                "$userprefix$remotehost","perl","-",abs_path($0),(
+                !(grep {m{[^\w/\-.]}} @ARGV) ? @ARGV :     # Unable to find any potentionally stank chars so it's safe to pass @ARGV as is.
+                ("--escaperepos",map{unpack"H*",$_}@ARGV)  # Otherwise, encode every character for all repos just to be extra safe.
             ) or die "$0: remote verification failed.\n";
         }
     };
@@ -114,7 +119,9 @@ if (@ARGV and local $_ = $ARGV[0] || die "Bad arg\n" and !/^--/) {
 my @repo_dirs = @ARGV;
 if (!@repo_dirs) {
     local $_ = $ENV{SSH_ORIGINAL_COMMAND} || "";
-    @repo_dirs = split and $repo_dirs[0] =~ m{(^|/)git-verify$} and shift @repo_dirs;
+    @repo_dirs = split;
+    splice @repo_dirs, 0, 2 if $repo_dirs[0] && $repo_dirs[1] && $repo_dirs[0] eq "perl" && $repo_dirs[1] eq "-";
+    shift @repo_dirs if $repo_dirs[0] && $repo_dirs[0] =~ m{/git-verify$};
 }
 if (@repo_dirs and $repo_dirs[0] eq "--escaperepos") {
     shift @repo_dirs;
