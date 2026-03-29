@@ -298,10 +298,11 @@ if (!$maxpatience) {
 }
 
 my $deploying_version = 0;
+my $maxdelayrecommended = 0;
 while (1) {
     my $update = pull_push_notification;
-    $deploying_version ||= $update =~ / git-server(?: v([\d.]+):)?.*waiting for notification/ ? $1 || "OLD" :
-        ($maxpatience ? 0 : !warn localtime().": [$$] git-deploy: Warning: Missing recommended [ --max-delay <INTERVAL_SECONDS> ] for NON-deployable repo.\n");
+    $deploying_version ||= $update =~ / git-server(?: v([\d.]+):)?.*waiting for notification/ ? $1 || "OLD" : 0 or
+        $maxpatience or $maxdelayrecommended ||= warn localtime().": [$$] git-deploy: Warning: Missing recommended [ --max-delay <INTERVAL_SECONDS> ] for NON-deployable repo: ".run_output_ignore_err("git","config","remote.origin.url");
     my $branch = checkout_branch;
     $update .= run_output_include_err "git", "checkout", $branch;
     $update .= run_output_include_err "git", "rebase", "origin/$branch";
