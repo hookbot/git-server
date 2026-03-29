@@ -97,7 +97,7 @@ if (@ARGV and local $_ = $ARGV[0] || die "Bad arg\n" and !/^--/) {
         if ($resolvable) {
             length()?$ARGV[0]=$_:shift;
             $ENV{XMODIFIERS}="client=".abs_path($0)."\@v$VERSION";
-            my $search = q{$_=shift and`(which $_ git-verify|grep . || find . ~ /usr/local/bin /usr/bin /bin -name git-verify) 2>/dev/null`=~m{^(.+)}&&exec $1,@ARGV;warn"Unable to locate git-verify on server ".`hostname`."[$1][$!][$_ @ARGV]\n"};
+            my $search = q{$_=shift and 1+s/'/'"'"'/g and`(which '$_' git-verify|grep . || find . ~ /usr/local/bin /usr/bin /bin -name git-verify) 2>/dev/null`=~m{^(.+)}&&exec $1,@ARGV;warn"Cannot find git-verify on ".`hostname`."[$1][$!]['$_' @ARGV]\n"};
             pipe my $FAKE_STDIN, my $prog;
             print $prog $search;
             close $prog;
