@@ -361,6 +361,7 @@ while (1) {
         $monkey = ": $1" if $update =~ /^M\s+(\S+)/m;
         $0 = "$Script - $cwd: Waiting because of local modifications$monkey";
         print run_output_ignore_err qw(sleep 10);
+        $0 = "$Script - $cwd: Checking if changes still exist$monkey";
     }
     elsif ($update =~ m{fatal: Unable to create '(.+?)': File exists.}) {
         # Updates cannot work while lock file exists
