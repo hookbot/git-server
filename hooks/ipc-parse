@@ -331,7 +331,17 @@ if ($operation eq "pull" and @$want and !@$have) {
 
 # Example: agent=git/2.39.3.(Apple.Git-146)
 $info->{client_git_version} = $1 if $client_to_server =~ m{(?:^|\s|\b)agent=([\w/\.\-\(\)]+)};
+if (($ENV{XMODIFIERS}||"") =~ /^client=.*(git-?\w*)(?:@([\w\.]+))?/m) {
+    my $client = $1;
+    $client = "git-client" if $client eq "git";
+    my $version = $2 || "unknown";
+    $info->{client_git_version} = $info->{client_git_version} ? "[$client $version] $info->{client_git_version}" : "[$client $version]";
+}
+
 $info->{server_git_version} = $1 if $server_to_client =~ m{(?:^|\s|\b)agent=([\w/\.\-\(\)]+)};
+if (my $version = $ENV{GIT_SERVER_VERSION}) {
+    $info->{server_git_version} = $info->{server_git_version} ? "[git-server $version] $info->{server_git_version}" : "[git-server $version]";
+}
 
 defined ($info->{error_code} = $ENV{GIT_PRE_EXIT_STATUS} || $ENV{GIT_EXIT_STATUS}) or $info->{error_code} = -1;
 $info->{SUCCESS} = $info->{error_code} ? 0 : 1;
