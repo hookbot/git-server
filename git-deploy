@@ -248,7 +248,7 @@ sub pull_push_notification {
         ($initial_ENV{XMODIFIERS} ? ($initial_ENV{XMODIFIERS}) : ()),
         ;
     # Generate GIT_SSH_COMMAND to ensure XMODIFIERS is provided to the git server:
-    $ENV{GIT_SSH_COMMAND} = ($initial_ENV{GIT_SSH_COMMAND} || "ssh")." -o SendEnv=XMODIFIERS";
+    $ENV{GIT_SSH_COMMAND} = ($initial_ENV{GIT_SSH_COMMAND} || (run_output_include_err(qw[git config core.sshCommand]) =~ /^(.+)/ ? $1 : "ssh"))." -o SendEnv=XMODIFIERS";
     $0 = "$Script - $cwd: Waiting for push notification [$deploy_branch]";
     # Run "fetch" to call "git-upload-pack" causing the git-server to wait for the "push_notification" to release the update:
     return run_output_include_err(qw[git fetch]);
