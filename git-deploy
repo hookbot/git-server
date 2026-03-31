@@ -23,6 +23,7 @@ instantly after a push is triggered.
     [ --fix-nasty ]
     [ --background ]
     [ --max-delay <seconds> ]
+    [ { --identity | -i } <identitykeyfile> ]
     [ { -v | --version } ]
 
 =head2 --branch <branch>
@@ -39,6 +40,8 @@ By default, the current branch is used.
 =head2 --chdir <dir>
 
 Jump to <dir> prior to running "git pull".
+If this option is used multiple times,
+then it will chdir in the order speficied.
 By default, the current directory is used.
 
   Example: git deploy --chdir ~/projectx
@@ -107,6 +110,14 @@ interval between 5 and 7 minutes.
 
   Example: git deploy --max-delay 10
 
+=head2 --identity <identitykeyfile>
+
+Specify identity keyfile to be used for SSH repos.
+
+  Example: git-deploy -i ~/.ssh/id_ed25519-repodeploy
+
+  sshCommand = ssh -i ~/.ssh/id_ed25519-repodeploykey -o IdentitiesOnly=yes
+
 =head2 --version
 
 Show git-deploy version.
@@ -157,6 +168,7 @@ my $umask = undef;
 my $fix_nasty = undef;
 my $background = undef;
 my $maxpatience = undef;
+my $identities = [];
 my $ver = undef;
 Getopt::Long::Configure("no_ignore_case");
 GetOptions
@@ -169,6 +181,7 @@ GetOptions
     "fix-nasty" => \$fix_nasty,
     "background" => \$background,
     "max-delay=i" => \$maxpatience,
+    "identity|i=s@" => $identities,
     or exec perldoc => $0;
 
 if ($ver) {
@@ -249,6 +262,11 @@ sub pull_push_notification {
         ;
     # Generate GIT_SSH_COMMAND to ensure XMODIFIERS is provided to the git server:
     $ENV{GIT_SSH_COMMAND} = ($initial_ENV{GIT_SSH_COMMAND} || (run_output_include_err(qw[git config core.sshCommand]) =~ /^(.+)/ ? $1 : "ssh"))." -o SendEnv=XMODIFIERS";
+    if (@$identities) {
+        # Inject --identity files into GIT_SSH_COMMAND:
+        $ENV{GIT_SSH_COMMAND} .= " -o IdentitiesOnly=yes";
+        $ENV{GIT_SSH_COMMAND} .= " -i $_" foreach @$identities;
+    }
     $0 = "$Script - $cwd: Waiting for push notification [$deploy_branch]";
     # Run "fetch" to call "git-upload-pack" causing the git-server to wait for the "push_notification" to release the update:
     return run_output_include_err(qw[git fetch]);
@@ -276,6 +294,21 @@ if (@$chdir) {
 $ENV{GIT_DIR} ||= abs_path(`git rev-parse --git-dir 2>/dev/null` =~ /^(.+)/ && $1 || ".git");
 
 umask oct $1 if $umask and $umask =~ /^(\d+)$/;
+
+if (@$identities) {
+    # Sanity check to verify identity files are ready to go.
+    foreach (@$identities) {
+        s/\.pub$//;
+        -e && -r _ && -s _ or die "$Script: --identity $_: Unable to find key\n";
+        my $pub = run_output_ignore_err "ssh-keygen", "-y", "-P", "", "-f", $_;
+        if ($pub) {
+            warn "$Script: Using identity: $pub";
+        }
+        else {
+            die "$Script: Unable to read identity file without a passphrase: $_\n";
+        }
+    }
+}
 
 $origin = current_origin();
 $0 = "$Script - $cwd: Initial checkout [".checkout_branch()."]";
