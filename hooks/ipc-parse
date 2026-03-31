@@ -274,7 +274,6 @@ while ($client_to_server =~ s/^([0-9a-f]{4})//) {
         $extracted =~ s/\s*$/\n/;
     }
 }
-#$client_to_server = $extracted.$client_to_server;
 $client_to_server = $extracted;
 $extracted = "";
 while ($server_to_client =~ s/^([0-9a-f]{4})//) {
@@ -284,7 +283,6 @@ while ($server_to_client =~ s/^([0-9a-f]{4})//) {
         $extracted =~ s/\s*$/\n/;
     }
 }
-#$server_to_client = $extracted.$server_to_client;
 $server_to_client = $extracted;
 #warn "DEBUG: leftovers=[$log]\n";
 warn "DEBUG: in=[$client_to_server]\n";
