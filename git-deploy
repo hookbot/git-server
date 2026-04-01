@@ -441,7 +441,7 @@ while (1) {
     warn localtime().": [$$] git-deploy: Deployable git-server v$deploying_version wants me to leave.\n$update" and last if $deploying_version and $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
     if ($update =~ /Current branch.*is up to date/) {
         my $pause_because_done = $deploying_version ? 5 + int(55 * rand()) : ($maxpatience || (305 + int(115 * rand())));
-        $0 = "$Script - $cwd: Waiting $pause_because_done seconds because everything was updated ...";
+        $0 = "$Script - $cwd: Waiting $pause_because_done seconds ".($deploying_version ? "since everything was updated ..." : "for NON-deployable repo ...");
         print "Everything was already updated perfectly. Sleeping $pause_because_done seconds ...\n";
         print run_output_ignore_err sleep => $pause_because_done;
     }
