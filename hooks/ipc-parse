@@ -57,16 +57,19 @@ sub unserialize {
     return eval($string) || crash "unserialize [$string] crashed: $@";
 }
 
-# $val = cache { some_painful_munger_to_generate_value() } $key;
+# $val = cache { some_painful_munger_to_generate_value() } $key, $TIME_TO_LIVE;
+# If no $TIME_TO_LIVE is provided, then defaults to 3600, meaning one hour.
 my $dir = $ENV{GIT_DIR} or crash "Unable to determine repo";
 my $cachedir = "$dir/tmp";
 mkdir $cachedir, 0700 if !-d $cachedir;
 my $memoize = {};
-sub cache (&$) {
+sub cache (&$;$) {
     my $generator = shift;
     "CODE" eq ref $generator or crash "cache: generator routine required instead of [$generator]";
     my $key = shift;
     $key =~ /^[\w\-\.]+$/ or crash "cache: key stank [$key]";
+    my $ttl = shift || 3600;
+    $ttl =~ /^\d+$/ or crash "cache: ttl stank [$ttl]";
     if (!keys %$memoize and opendir my $caches, $cachedir) {
         # Clear any stale cache files
         foreach my $node (readdir $caches) {
@@ -79,7 +82,7 @@ sub cache (&$) {
     }
     # Only run the painful $generator if there's no cache
     return $memoize->{$key} ||= do {
-        my $cachefile = "$cachedir/cache-3600-$key.txt";
+        my $cachefile = "$cachedir/cache-$ttl-$key.txt";
         sysopen my $fh, $cachefile, (O_RDWR|O_CREAT), 0600 or crash "$cachefile: open: $!";
         flock $fh, LOCK_EX or crash "$cachefile: flock: $!";
         my $cached = join "", <$fh>;
@@ -154,7 +157,7 @@ sub parents_of {
         # There will be two parents for a merge commit.
         push @$parents, $1 while $pretty =~ s/^parent\s+(\w+)\s*$//m;
         $parents;
-    } "parents_of-$new";
+    } "parents_of-$new", 7200;
 }
 
 # $containers = refs_containing_hash($commit_hash)
@@ -170,7 +173,7 @@ sub refs_containing_hash {
             $refs->{$refname} = 1;
         }
         $refs;
-    } "refs_containing_hash-$hash";
+    } "refs_containing_hash-$hash", 1800;
 }
 
 # get_fork_hash:
@@ -186,7 +189,7 @@ sub get_fork_hash {
     while (@revs) {
         my @prevs = ();
         foreach my $rev (@revs) {
-            my $tip = $seen->{$rev} or crash "Implementation Fatality! Missing seen value for rev=[$rev] ?\n";
+            my $tip = $seen->{$rev} or crash "Implementation Fatality! Missing seen value for rev=[$rev] ?";
             my $parents = parents_of($rev);
             foreach my $prev (@$parents) {
                 if (my $common_tip = $seen->{$prev}) {
@@ -308,7 +311,7 @@ if (open my $log_fh, "<", \$log) {
     close $log_fh;
 }
 
-my $who = ($ENV{REMOTE_USER} || crash "Auth required\n")."\@$ENV{REMOTE_ADDR}";
+my $who = ($ENV{REMOTE_USER} || crash "Auth required")."\@$ENV{REMOTE_ADDR}";
 my $cmd = $ENV{SSH_ORIGINAL_COMMAND} or crash "Unable to determine SSH command";
 my $operation = "";
 if ($cmd =~ /^git-receive-pack\s/) {
