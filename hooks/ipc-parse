@@ -67,6 +67,16 @@ sub cache (&$) {
     "CODE" eq ref $generator or crash "cache: generator routine required instead of [$generator]";
     my $key = shift;
     $key =~ /^[\w\-\.]+$/ or crash "cache: key stank [$key]";
+    if (!keys %$memoize and opendir my $caches, $cachedir) {
+        # Clear any stale cache files
+        foreach my $node (readdir $caches) {
+            my $cachefile = "$cachedir/$node";
+            $node =~ /^cache-(\d+)-/ or next;
+            my $stale = -$1+time;
+            unlink $cachefile if -f $cachefile and [stat _]->[9] < $stale;
+        }
+        closedir $caches;
+    }
     # Only run the painful $generator if there's no cache
     return $memoize->{$key} ||= do {
         my $cachefile = "$cachedir/cache-3600-$key.txt";
