@@ -167,14 +167,16 @@ elsif ($bare =~ /false/) {
             "  Option b) Commit changes: git -C $where commit -a -m 'Keep modifications found on server'\n".
             "$server_monkeys\n";
     }
-    if ($where =~ /^(.*?)\/?\.git$/) {
+    if ($where =~ m{^(.+?[^/])\.git$}) {
         my $gitless = $1;
-        my $recommendation = -e $gitless ? "mv -v $gitless $gitless-CRUSTY-PLEASE-DELETE-\$\$ && " : "";
-        $recommendation .= "git clone --bare $where $gitless";
-        $recommendation .= qq{ && (grep -q "ref: " $gitless/HEAD || grep " refs/heads/" $gitless/packed-refs | head -1 | awk '{print "ref: ", \$2}' > $gitless/HEAD)};
-        $recommendation .= qq{ && mv -v $where $where-CRUSTY-PLEASE-DELETE-\$\$};
+        my $recommendation = -d $gitless && -f "$gitless/config" && -d "$gitless/refs" && -d "$gitless/objects" ? # Great if $gitless is already bare
+            "mv -v $where $where-CRUSTY-PLEASE-DELETE-\$\$" : # Get rid of other "$gitless.git" crusty non-bare repo. Maybe a duplicate of the GOOD bare $gitless repo?
+            (-l $gitless || -e $gitless ? "mv -v $gitless $gitless-CRUSTY-PLEASE-DELETE-\$\$ && " : ""). # Get the other crusty non-bare repo out of the way! Maybe a duplicate?
+            "git clone --bare $where $gitless && ". # Convert non-bare $where into bare $gitless
+            qq{(grep -q "ref: " $gitless/HEAD || grep " refs/heads/" $gitless/packed-refs | head -1 | awk '{print "ref:",\$2}' > $gitless/HEAD)}. # Ensure HEAD exists
+            qq{ && mv -v $where $where-CRUSTY-PLEASE-DELETE-\$\$}; # Get rid of crusty old non-bare $gitless.git now that GOOD bare $gitless was made
         die localtime().": [$who] git-server: Non-bare git folder ending with '.git' is too dangerous for a server repo! Manual intervention required.\n".
-            "  Recommendation: $recommendation\n";
+            "  Recommendation on $ENV{SERVER_ADDR}: $recommendation\n";
     }
     # Make sure NOT to be stuck on any branch just to be safe.
     # Otherwise, if the client attempts to push any changes to that branch, it will crash with the following:
@@ -198,7 +200,7 @@ elsif ($bare =~ /false/) {
     }
 }
 else {
-    die localtime().": [$who] git-server: Broken bare for git repo configuration! $dir/config: ".`git config core.bare 2>&1`."\n";
+    die localtime().": [$who] git-server: Broken bare for git repo configuration! $dir/config: ".`git config core.bare 2>&1`."\n"; # Show any weird config errors
 }
 
 my $hook = $cmd =~ /^(git-[\w\-]+)/ && $git_op_hook->{$1} or die localtime().": [$who] git-server: Unimplemented operation!\n";
