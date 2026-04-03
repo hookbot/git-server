@@ -225,6 +225,7 @@ elsif (local $_ = $ENV{SSH_CONNECTION}) {
         print "REMOTE_USER: ExposeAuthInfo is disabled: POOR! Enable it for hints on how to better configure $keyfile\n";
     }
     elsif (open my $keys, "<", $keyfile) {
+        print "REMOTE_USER: ExposeAuthInfo is enabled: OK\n";
         my $label = "";
         my $line = 0;
         my @matches = ();
@@ -234,11 +235,13 @@ elsif (local $_ = $ENV{SSH_CONNECTION}) {
             if ($pos >= 0) {
                 $label = $1 if substr($_,$pos+length($how)) =~ /^\s*(\S[^\r\n]*)/;
                 next if /^\s*\#/; # Ignore comments
+                s/\s*$//;
                 push @matches, [$line, $pos, $label, $_];
             }
         }
         close $keys;
         $label ||= "$ENV{USER}\@$ENV{REMOTE_ADDR}";
+        (my $hint_user = lc($label =~ /^$ENV{USER}\@(.+)/ || $label =~ /^([^@]+)@/ ? $1 : $label)) =~ s/[^a-z0-9]+/_/g;
         if (@matches) {
             foreach my $k (@matches) {
                 my $o = substr($k->[3],0,$k->[1]);
@@ -249,28 +252,29 @@ elsif (local $_ = $ENV{SSH_CONNECTION}) {
                     my $var = $1;
                     my $user = $2;
                     if ($var eq "REMOTE_USER") {
-                        print qq{REMOTE_USER: $user: Entry appears fine yet still malfunctioned somehow! $keyfile:$k->[0]:$k->[3]};
+                        print qq{REMOTE_USER: $user: Entry appears fine yet still malfunctioned somehow! [$ENV{SERVER_ADDR}:$keyfile] Line $k->[0]:$k->[3]\n};
                     }
                     else {
                         print "REMOTE_USER: $user: Line $k->[0] should use REMOTE_USER=$user instead of $var=$user: BAD\n";
                     }
                 }
                 elsif (length $o) {
-                    print qq{REMOTE_USER: Preliminary directives exist [$o] but fail to define any REMOTE_USER at Line $k->[0] of $keyfile: BAD\n};
+                    print qq{REMOTE_USER: Preliminary directives exist [$o] but fail to define any REMOTE_USER: BAD! Try something like this in $keyfile Line $k->[0]:\n};
+                    print qq{command="$bin REMOTE_USER=$hint_user" $k->[3]\n};
                 }
                 else {
-                    print "REMOTE_USER: No options found! Think of a key or code word, then try something like this in $keyfile Line $k->[0]:\n";
-                    print qq{command="$bin REMOTE_USER=codeword" $k->[3]\n};
+                    print "REMOTE_USER: No options found! Try something like this in $keyfile Line $k->[0]:\n";
+                    print qq{command="$bin REMOTE_USER=$hint_user" $k->[3]\n};
                 }
             }
         }
         else {
             print "REMOTE_USER: [$ENV{SERVER_ADDR}:$keyfile] Unrecognized format allowed key but still not found. Try something like this:\n";
-            print qq{command="$bin REMOTE_USER=user" $how $label\n\n};
+            print qq{command="$bin REMOTE_USER=$hint_user" $how $label\n\n};
         }
     }
     else {
-        print "REMOTE_USER: BROKEN! Unable to read [$keyfile] [$!]\n";
+        print "REMOTE_USER: BROKEN! Unable to read [$ENV{SERVER_ADDR}:$keyfile] [$!]\n";
     }
 }
 else {
