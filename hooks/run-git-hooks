@@ -128,7 +128,8 @@ This library is free software; you can redistribute it and/or modify it under th
 
 use strict;
 use warnings;
-use FindBin qw($Bin);
+use Cwd qw(abs_path);
+use FindBin qw($RealBin);
 
 our $VERSION = "0.040";
 
@@ -205,8 +206,7 @@ else {
 
 my $hook = $cmd =~ /^(git-[\w\-]+)/ && $git_op_hook->{$1} or die localtime().": [$who] git-server: Unimplemented operation!\n";
 
-my $xmods = $ENV{XMODIFIERS} || "";
-if ($xmods) {
+if (my $xmods = $ENV{XMODIFIERS}) {
     $cmd !~ /^git-receive-pack\b/ or
         `git config --list 2>/dev/null` =~ /^receive.advertisePushOptions=/im
         or system qw(git config --global receive.advertisePushOptions true);
@@ -225,28 +225,43 @@ if ($xmods) {
     }
 }
 
-my $base = $0 =~ /([\w\-\.]+)$/ ? $1 : die "$0: Stank base\n";
-if ($0 !~ m{^\Q$dir\E/hooks/} and    # Launched outside of repo/hooks
-    !-x "$dir/hooks/$base" and       # repo is missing hooks/run-git-hooks
-    -e "$dir/config" and             # repo is properly --bare
-    $Bin =~ m{/hooks$} and           # Launched from "hooks" folder somewhere
-    !-l $Bin and                     # Spawned from real "hooks" folder, not a symlink
-    !-l "$dir/hooks"                 # Repo hooks is not a symlink, (so it's probably the original "sample" stock)
-    || !-d _) {                      # Or it's not even a directory (maybe non-existent or plain "hooks" file or a special mknod file or unix socket)
+my $should_hooks = $ENV{GIT_HOOKS_PATH} = $RealBin;
+chomp(my $actual_hooks = `git config core.hooksPath` || "hooks");
+$actual_hooks = "$dir/$actual_hooks" if $actual_hooks !~ m{^/};
+$actual_hooks = abs_path $actual_hooks;
+if ($actual_hooks ne $should_hooks) {
+    # Need to update effective hooksPath
     warn localtime().": [$who] git-server: Automatically configuring repo [$dir] to use hooks properly...\n";
-    # Don't delete stock "hooks" folder in case there is something needed in there. Just move it out of the way to be safe.
-    rename "$dir/hooks","$dir/hooks-CRUSTY-PLEASE-DELETE-$$" and warn "rename: $dir/hooks -> $dir/hooks-CRUSTY-PLEASE-DELETE-$$\n" if lstat "$dir/hooks";
-    symlink $Bin, "$dir/hooks" and warn "symlink: $dir/hooks -> $Bin\n";
-    if (-l "$dir/hooks" and -d "$dir/hooks") {
-        warn localtime().": [$who] git-server: Successfully upgraded hooks to myself.\n";
-        if (!`git config acl.writers`) {
-            warn localtime().": [$who] git-server: No [acl.writers] found? Running: [git config acl.writer $ENV{REMOTE_USER}]\n";
-            system "git config acl.writers $ENV{REMOTE_USER} 1>&2";
-        }
+    if (my $update_err = spawn($dir, "git","config","--global","core.hooksPath",$should_hooks)) {
+        warn localtime().": [$who] git-server: ERROR [$update_err] attempting to update default hooks folder: [$actual_hooks] -> [$should_hooks]\n";
+    }
+    # Final sanity check to ensure it's really fixed now.
+    if (`git rev-parse --path-format=absolute --git-path hooks 2>/dev/null` =~ m{^(/.+)$} and $1 eq $should_hooks) {
+        # Effective hooks folder is now PERFECT
+        warn localtime().": [$who] git-server: Successfully updated default hooksPath folder: [$actual_hooks] -> [$should_hooks]\n";
+    }
+    # Emergency verify git without --git-path support:
+    elsif (local $_ = readlink "$dir/hooks" and $_ eq $actual_hooks) {
+        # Fallback symlink for failed git is pointing correctly to force the correct hooks folder to be used
+        warn localtime().": [$who] git-server: Successfully updated default hooks symlink: [$actual_hooks] -> [$should_hooks]\n";
     }
     else {
-        warn localtime().": [$who] git-server: FAILED configuring repo [$dir/hooks]! Manual intervention required.\n";
+        # This git doesn't seem support hooksPath, so need to force symlink as emergency fallback.
+        # Don't delete stock "hooks" folder in case there is something needed in there. Just move it out of the way to be safe.
+        rename "$dir/hooks","$dir/hooks-CRUSTY-PLEASE-DELETE-$$" and warn "rename: $dir/hooks -> $dir/hooks-CRUSTY-PLEASE-DELETE-$$\n" if lstat "$dir/hooks";
+        symlink $should_hooks, "$dir/hooks" and warn "symlink: $dir/hooks -> $should_hooks\n";
+        if (-l "$dir/hooks" and -d "$dir/hooks") {
+            warn localtime().": [$who] git-server: Successfully upgraded hooks symlink to myself.\n";
+        }
+        else {
+            warn localtime().": [$who] git-server: FAILED configuring [$dir/hooks] -> [$should_hooks]! Manual intervention required.\n";
+        }
     }
+}
+
+if (`git config --list` !~ /^acl\./m) {
+    warn localtime().": [$who] git-server: No [acl] found? Running: [git config acl.writer $ENV{REMOTE_USER}]\n";
+    system "git config acl.writers $ENV{REMOTE_USER} 1>&2";
 }
 
 # Custom hooks are free to read or write in this IPC folder
@@ -257,8 +272,8 @@ mkdir $ENV{IPC}, 0700;
 die localtime().": [$who] git-server: Unable to create [$ENV{IPC}] folder! $!\n" unless -d $ENV{IPC};
 
 my $pre_failure = 0;
-if (-x "$dir/hooks/pre-$hook") {
-    if ($pre_failure = spawn($dir, "hooks/pre-$hook")) {
+if (-x "$ENV{GIT_HOOKS_PATH}/pre-$hook") {
+    if ($pre_failure = spawn($dir, "$ENV{GIT_HOOKS_PATH}/pre-$hook")) {
         warn localtime().": [$who] git-server: pre-$hook failure: $pre_failure\n";
     }
     $ENV{GIT_PRE_EXIT_STATUS} = $pre_failure;
@@ -266,19 +281,19 @@ if (-x "$dir/hooks/pre-$hook") {
 
 my $git_failure = $pre_failure;
 if (!$git_failure) {
-    my $shell = "$dir/hooks/git-shell";
+    my $shell = "$ENV{GIT_HOOKS_PATH}/git-shell";
     $shell = "git-shell" unless -x $shell;
     $git_failure = spawn(".", $shell, "-c", $cmd);
     $ENV{GIT_EXIT_STATUS} = $git_failure;
 }
 
 my $post_failure = 0;
-if (-x "$dir/hooks/post-$hook") {
+if (-x "$ENV{GIT_HOOKS_PATH}/post-$hook") {
     if ($cmd) {
         # Restore SSH_ORIGINAL_COMMAND in case the post hook wants it.
         $ENV{SSH_ORIGINAL_COMMAND} = $cmd;
     }
-    if ($post_failure = spawn($dir, "hooks/post-$hook")) {
+    if ($post_failure = spawn($dir, "$ENV{GIT_HOOKS_PATH}/post-$hook")) {
         warn localtime().": [$who] git-server: post-$hook failure: $pre_failure\n";
     }
 }

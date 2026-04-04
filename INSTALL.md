@@ -115,14 +115,13 @@ You can add unlimited client users and SSH public keys.
 
 5. HOOKS
 
-By default, the entire "hooks" folder will be symlinked
-to utilize these git-server features provided, but you
-may symlink it to wherever you wish. For example:
+By default, the "core.hooksPath" will point to the "hooks" folder
+of this installation to utilize these git-server features,
+but you can set it to wherever you wish. For example:
 
 ```
 [git@gitsrvhost ~]$ cd ProjX
-[git@gitsrvhost ProjX]$ mv -v hooks hooks.SAMPLES_OLD
-[git@gitsrvhost ProjX]$ ln -s -v ~/git-server/hooks .
+[git@gitsrvhost ProjX]$ git config core.hooksPath ~/git-server/hooks
 [git@gitsrvhost ProjX]$ cd
 [git@gitsrvhost ~]$
 ```
