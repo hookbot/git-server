@@ -44,8 +44,8 @@ Then add hooks/run-git-hooks to override the default behavior:
   vi project/hooks/run-git-hooks
   chmod 755 project/hooks/run-git-hooks
 
-If hooks/run-git-hooks exists from within the repository being targeted,
-then this will run with the correct GIT_DIR
+If hooks/run-git-hooks exists from within the targetted repository's
+hooksPath, then this will run with the correct GIT_DIR
 and any other ENV settings defined in authorized_keys.
 If it doesn't exist, then it will look for a way to use
 these git-server hooks with this project.
@@ -143,7 +143,9 @@ else {
 }
 
 # Hand off request to the best handler
-my $handler =
-    -x "$ENV{GIT_DIR}/hooks/run-git-hooks" ? "$ENV{GIT_DIR}/hooks/run-git-hooks" :
-    -x "$Bin/hooks/run-git-hooks" ? "$Bin/hooks/run-git-hooks" : "git-shell";
-exec $handler, "-c", $cmd;
+my @handler = ("$ENV{GIT_DIR}/hooks/run-git-hooks", "$Bin/hooks/run-git-hooks", "git-shell");
+if (`git rev-parse --path-format=absolute --git-path hooks 2>/dev/null` =~ m{^(/.+)$}) {
+    unshift @handler, "$1/run-git-hooks";
+}
+-x || /^\w/ and exec $_, "-c", $cmd foreach @handler;
+die localtime().": [$who] git-server: Failed to spawn handler $!\n";
