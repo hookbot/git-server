@@ -147,5 +147,12 @@ my @handler = ("$ENV{GIT_DIR}/hooks/run-git-hooks", "$Bin/hooks/run-git-hooks", 
 if (`git rev-parse --path-format=absolute --git-path hooks 2>/dev/null` =~ m{^(/.+)$}) {
     unshift @handler, "$1/run-git-hooks";
 }
+# Handle crusty old git versions that don't support "--git-path"
+elsif (my $hooksdir = `git config core.hooksPath`) {
+    chomp($hooksdir);
+    $hooksdir = "$ENV{GIT_DIR}/$hooksdir" if $hooksdir !~ m{^/};
+    $hooksdir = abs_path $hooksdir;
+    unshift @handler, "$hooksdir/run-git-hooks";
+}
 -x || /^\w/ and exec $_, "-c", $cmd foreach @handler;
 die localtime().": [$who] git-server: Failed to spawn handler $!\n";

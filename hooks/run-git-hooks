@@ -225,20 +225,50 @@ if (my $xmods = $ENV{XMODIFIERS}) {
     }
 }
 
+# Compute effective "hooks" directory regardless of git version:
+sub effective_hooks_path { abs_path(`git rev-parse --path-format=absolute --git-path hooks 2>/dev/null` =~ m{^(/.+)$} ? $1 : "$dir/hooks"); }
+
 my $should_hooks = $ENV{GIT_HOOKS_PATH} = $RealBin;
-chomp(my $actual_hooks = `git config core.hooksPath` || "hooks");
-$actual_hooks = "$dir/$actual_hooks" if $actual_hooks !~ m{^/};
-$actual_hooks = abs_path $actual_hooks;
+my $actual_hooks = effective_hooks_path;
 if ($actual_hooks ne $should_hooks) {
     # Need to update effective hooksPath
     warn localtime().": [$who] git-server: Automatically configuring repo [$dir] to use hooks properly...\n";
-    if (my $update_err = spawn($dir, "git","config","--global","core.hooksPath",$should_hooks)) {
-        warn localtime().": [$who] git-server: ERROR [$update_err] attempting to update default hooks folder: [$actual_hooks] -> [$should_hooks]\n";
+    chomp(my $target = `git config core.hooksPath`);
+    if (!$target) {
+        # No core.hooksPath at all, so just create a global default:
+        if (my $update_err = spawn($dir, "git","config","--global","core.hooksPath",$should_hooks)) {
+            warn localtime().": [$who] git-server: ERROR [$update_err] attempting to update default hooks folder: [$actual_hooks] -> [$should_hooks]\n";
+        }
+        else {
+            warn localtime().": [$who] git-server: Updated default hooks folder: [$actual_hooks] -> [$should_hooks]\n";
+        }
+        $target = $should_hooks;
     }
-    # Final sanity check to ensure it's really fixed now.
-    if (`git rev-parse --path-format=absolute --git-path hooks 2>/dev/null` =~ m{^(/.+)$} and $1 eq $should_hooks) {
+    $target = abs_path($target =~ /^\// ? $target : "$dir/$target");
+    if ($target ne $should_hooks) {
+        # Still wrong core.hooksPath set, so override local setting with correct directory:
+        if (my $update_err = spawn($dir, "git","config","--local","core.hooksPath",$should_hooks)) {
+            warn localtime().": [$who] git-server: ERROR [$update_err] attempting to update local hooks folder: [$actual_hooks] -> [$should_hooks]\n";
+        }
+        else {
+            warn localtime().": [$who] git-server: Updated local hooks folder: [$actual_hooks] -> [$should_hooks]\n";
+        }
+        $target = $should_hooks;
+    }
+
+    # Check to verify effective hooks folder is now correct:
+    if (effective_hooks_path ne $should_hooks) {
+        # Older versions of git may not support "--git-path" or do not honor "core.hooksPath" so need to symlink as an emergency fallback to force it to work.
+        # Don't delete old "hooks" folder in case there is something needed in there. Just move it out of the way to be safe.
+        warn localtime().": [$who] git-server: Older git requires hooks symlink to work ...\n";
+        rename "$dir/hooks","$dir/hooks-CRUSTY-PLEASE-DELETE-$$" and warn "rename: $dir/hooks -> $dir/hooks-CRUSTY-PLEASE-DELETE-$$\n" if lstat "$dir/hooks";
+        symlink $should_hooks, "$dir/hooks" and warn "symlink: $dir/hooks -> $should_hooks\n";
+    }
+
+    # Last check to verify effective hooks folder is really fixed:
+    if (effective_hooks_path eq $should_hooks) {
         # Effective hooks folder is now PERFECT
-        warn localtime().": [$who] git-server: Successfully updated default hooksPath folder: [$actual_hooks] -> [$should_hooks]\n";
+        warn localtime().": [$who] git-server: Successfully updated effective hooks folder: [$actual_hooks] -> [$should_hooks]\n";
     }
     else {
         warn localtime().": [$who] git-server: FAILED configuring [$dir/hooks] -> [$should_hooks]! Manual intervention required.\n";
