@@ -16,7 +16,7 @@ if (!exists $ENV{GIT_SERVER_VERSION} and 1 == @ARGV) {
     $ENV{GIT_SERVER_VERSION} = "";
     $ENV{REMOTE_USER} ||= "admin";
     my $gitdir = shift;
-    $gitdir =~ s/'/'"'"'/g,$gitdir = "'$gitdir'" if $gitdir =~ m{[^\w/.\-]};
+    $gitdir =~ s/'/'\\''/g,$gitdir = "'$gitdir'" if $gitdir =~ m{[^\w/.\-]};
     (my $server = abs_path $0) =~ s/\-\w+$/-server/;
     exec $server,"-c","$Script $gitdir" or die "$server: exec failed: $!\n";;
 }
