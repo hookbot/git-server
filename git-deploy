@@ -402,6 +402,17 @@ while (1) {
         print run_output_ignore_err qw(sleep 10);
         $0 = "$Script - $cwd: Checking if changes still exist$monkey";
     }
+    elsif ($update =~ /untracked.*files would be overwritten/) {
+        # Can't create a file if it's already there.
+        warn $update;
+        my $running = getps;
+        last if $running =~ /\Q$Script - $cwd\E: Waiting/;
+        my $monkey = "";
+        $monkey = ": $1" if $update =~ /would be overwritten.*\n\s*(\S.*?)\s*\n/;
+        $0 = "$Script - $cwd: Waiting because file already exists$monkey";
+        $1 and 0 == system "mv","-v","-n",$1,"$1-MANUALLY-CREATED-FILE-MOVED-FOR-DEPLOY-$$" or print run_output_ignore_err qw(sleep 10);
+        $0 = "$Script - $cwd: Checking if file still exist$monkey";
+    }
     elsif ($update =~ m{fatal: Unable to create '(.+?)': File exists.}) {
         # Updates cannot work while lock file exists
         warn $update;
