@@ -69,6 +69,7 @@ This library is free software; you can redistribute it and/or modify it under th
 use strict;
 use warnings;
 use Cwd qw(abs_path);
+use FindBin qw($RealBin);
 
 our $VERSION = "0.040";
 
@@ -128,6 +129,22 @@ if (@repo_dirs and $repo_dirs[0] eq "--escaperepos") {
     foreach (@repo_dirs) {
         $_ = pack "H*",$_;
     }
+}
+if (!@repo_dirs and !$ENV{GIT_SERVER_VERSION} and my $gitdir = $ENV{GIT_DIR}) {
+    # Not running within git-server properly, so use a wrapper to avoid this problem in the future.
+    eval {
+        require File::Spec;
+        my $fixed = 0;
+        foreach my $path (File::Spec->path) {
+            if (-d $path and -w _) { # First writeable directory in $PATH
+                foreach (qw[git-upload-pack git-receive-pack]) {
+                    symlink "$RealBin/git-packer","$path/$_" and ++$fixed and warn "Installed symlink: $path/$_ -> $RealBin/git-packer\n" if !-e "$path/$_";
+                }
+                last if $fixed;
+            }
+        }
+    };
+    @repo_dirs = (abs_path $gitdir);
 }
 
 sub run_how_cmd {
