@@ -350,6 +350,7 @@ while (1) {
         # Myself update detected so need to respawn
         warn localtime().": [$$] Auto-update $Script respawning ...\n";
         sleep 1;
+        %ENV = %initial_ENV;
         exec @invoked or die localtime().": [$$] $Bin/$Script: RESPAWN FATAL CRASH\n";
     }
     if ($update =~ /POSSIBLE.*SOMEONE.*DOING.*NASTY/) {
