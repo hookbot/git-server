@@ -80,12 +80,8 @@ my $cmd = $ENV{SSH_ORIGINAL_COMMAND} ||= # Standard Method from ~/.ssh/authorize
     @ARGV == 2 && $ARGV[0] eq "-c" && shift && shift || ""; # Advanced Method from /etc/passwd SHELL
 
 while (my $pair = shift) {
-    if ($pair =~ /^(\w+)=(.*)$/) {
-        $ENV{$1} = $2;
-    }
-    else {
-        die "Invalid ENV setting [$pair]\n";
-    }
+    $pair =~ /^(\w+)=(.*)$/ or die "Invalid ENV setting [$pair]\n";
+    $ENV{$1} = $2;
 }
 
 $ENV{REMOTE_USER} ||= $ENV{KEY} || "";
@@ -95,7 +91,7 @@ if (!$ENV{REMOTE_PORT} || !$ENV{SERVER_ADDR} || !$ENV{SERVER_PORT}
     || $cmd =~ m{/git-verify\b}
     || !$ENV{REMOTE_ADDR} || $ENV{REMOTE_ADDR} !~ /^([\da-f\.:]+)$/) {
     (my $v = $0) =~ s{-[^/]+$}{-verify};
-    exec $v or die "Verification failed\n";
+    exec $v or die "git-verify: Verification failed\n";
 }
 $ENV{REMOTE_ADDR} = $1; # Taint cleaner
 $ENV{REMOTE_USER} ||= "MISCONFIGURED_REMOTE_USER";
@@ -107,35 +103,20 @@ my $dir = undef;
 if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
     my $op = $1;
     my $repo = $2;
-    if ($repo =~ /^'(.+)'$/) {
-        $repo = $1;
-        $repo =~ s/\'\\\'\'/\'/g;
-    }
-    $repo =~ s/\.git$//;
-    $repo =~ s/\/+$//;
-    my $home = $ENV{HOME} || (getpwuid $<)[7];
+    $repo = $1, $repo =~ s/'\\''/'/g if $repo =~ /^'(.+)'$/;
+    $repo =~ s%(\.git|/)+$%%;
+    my $home = $ENV{HOME} ||= (getpwuid $<)[7];
     foreach my $try ("$repo.git/.git", "$repo.git", "$repo/.git", $repo) {
-        if (-d $try) {
-            $dir = $try;
-            $ENV{GIT_DIR} = abs_path $dir;
-            last;
-        }
-        if ($try =~ s{^/+}{} and -d $try) {
-            $dir = $try;
-            $ENV{GIT_DIR} = abs_path $dir;
-            last;
-        }
-        if ($try =~ s{^~/}{$home/} and -d $try) {
+        if (-d $try or $try =~ s{^/+}{} && -d $try or $try =~ s{^~/}{$home/} && -d $try) {
             $dir = $try;
             $ENV{GIT_DIR} = abs_path $dir;
             last;
         }
     }
-    # Make sure this looks like a real life sane enough git repo
+    # Repository sanity check:
     die localtime().": [$who] git-server: You can't access '$repo' git repository\n" unless $dir && -f "$dir/config" && -d "$dir/refs" && -d "$dir/objects";
     my $escape_dir = $ENV{GIT_DIR};
-    $escape_dir =~ s/\'/\'\\'\'/g;
-    $escape_dir = "'$escape_dir'";
+    $escape_dir =~ s/'/'\\''/g, $escape_dir = "'$escape_dir'" if $escape_dir =~ m{[^\w/.\-]};
     $cmd = "$op $escape_dir";
 }
 else {
