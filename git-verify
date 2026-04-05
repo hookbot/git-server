@@ -129,6 +129,24 @@ if (@repo_dirs and $repo_dirs[0] eq "--escaperepos") {
         $_ = pack "H*",$_;
     }
 }
+if (!@repo_dirs and !$ENV{GIT_SERVER_VERSION} and my $gitdir = $ENV{GIT_DIR} and abs_path($0) =~ m{^(.+)/}) {
+    # Not running within git-server properly, so use a wrapper to avoid this problem in the future.
+    my $dirname = $1;
+    eval {
+        require File::Spec;
+        foreach my $path (File::Spec->path) {
+            if (-d $path and -w _) { # First writeable directory in $PATH
+                foreach (qw[git-upload-pack git-receive-pack]) {
+                    warn "Installing symlink: $path/$_ -> $dirname/git-packer\n";
+                    symlink "$dirname/git-packer","$path/$_" if !-e "$path/$_";
+                }
+                last;
+            }
+        }
+    };
+    $gitdir = abs_path($gitdir);
+    @repo_dirs = ($gitdir);
+}
 
 sub run_how_cmd {
     my $stderr = shift;
