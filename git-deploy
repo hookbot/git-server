@@ -240,7 +240,7 @@ sub current_branch {
         $scan = run_output_ignore_err("git", "branch", "-a", "--contains", $1).$scan;
     }
     return $1 if $scan =~ m{^\s+([\w/\-.@]+)}m;
-    die localtime().": [$$] Unable to determine which branch to deploy.\n$scan\n";
+    die localtime().": [$$] $Script: Unable to determine which branch to deploy.\n$scan\n";
 }
 
 # checkout_branch()
@@ -302,10 +302,10 @@ if (@$identities) {
         -e && -r _ && -s _ or die "$Script: --identity $_: Unable to find key\n";
         my $pub = run_output_ignore_err "ssh-keygen", "-y", "-P", "", "-f", $_;
         if ($pub) {
-            warn "$Script: Using identity: $pub";
+            warn localtime().": [$$] $Script: Using identity: $pub";
         }
         else {
-            die "$Script: Unable to read identity file without a passphrase: $_\n";
+            die localtime().": [$$] $Script: Unable to read identity file without using a passphrase: $_\n";
         }
     }
 }
@@ -330,7 +330,7 @@ if (!$maxpatience) {
         my $found = $1;
         my $stagger = 5+int(rand()*115);
         $0 = "$Script - $cwd: Waiting $stagger seconds for random stagger ...";
-        warn localtime().": [$$] Waiting random stagger delay $stagger secconds before taking over for other deployer:\n$found\n";
+        warn localtime().": [$$] $Script: Waiting random stagger delay $stagger secconds before taking over for other deployer:\n$found\n";
         print run_output_include_err(sleep => $stagger);
     }
 }
@@ -340,7 +340,7 @@ my $maxdelayrecommended = 0;
 while (1) {
     my $update = pull_push_notification;
     $deploying_version ||= $update =~ / git-server(?: v([\d.]+):)?.*waiting for notification/ ? $1 || "OLD" : 0 or
-        $maxpatience or $maxdelayrecommended ||= warn localtime().": [$$] git-deploy: Warning: Missing recommended [ --max-delay <INTERVAL_SECONDS> ] for NON-deploy repo: ".run_output_ignore_err("git","config","remote.$origin.url");
+        $maxpatience or $maxdelayrecommended ||= warn localtime().": [$$] $Script: Warning: Missing recommended [ --max-delay <INTERVAL_SECONDS> ] for NON-deploy repo: ".run_output_ignore_err("git","config","remote.$origin.url");
     my $branch = checkout_branch;
     $update .= run_output_include_err "git", "checkout", $branch;
     $update .= run_output_include_err "git", "rebase", "$origin/$branch";
@@ -348,7 +348,7 @@ while (1) {
     $update .= run_output_include_err "git", "rebase", "--abort" if $update =~ /fix conflicts|git rebase.*--continue|you need to resolve your|stop rebasing/;
     if (-M "$Bin/$Script" < 0) {
         # Myself update detected so need to respawn
-        warn localtime().": [$$] Auto-update $Script respawning ...\n";
+        warn localtime().": [$$] $Script: Auto-update $Script respawning ...\n";
         sleep 1;
         %ENV = %initial_ENV;
         exec @invoked or die localtime().": [$$] $Bin/$Script: RESPAWN FATAL CRASH\n";
@@ -382,7 +382,7 @@ while (1) {
     if ($update =~ /Your branch.*diverged/) {
         # Rebase can't work if there are local divergents.
         warn $update;
-        warn localtime().": [$$] Detected local divergence off [$branch] so doing HARD RESET ...\n";
+        warn localtime().": [$$] $Script: Detected local divergence off [$branch] so doing HARD RESET ...\n";
         my $hard = "";
         $hard .= run_output_include_err "git", "checkout", $branch;
         $hard .= run_output_include_err "git", "reset", "--hard", "$origin/$branch";
@@ -449,9 +449,9 @@ while (1) {
         }
     }
     # If repo isn't via git-server, then we can't rely on the server to regulate any other git-deploy running, so we have to take care of everything ourselves. So either he goes, or I go.
-    warn localtime().": [$$] git-deploy: Aborting other git-deploy process still running on NON-deploy repo:\n$1\n" and kill TERM => $2 or last if !$deploying_version and getps() =~ /^(\w+\s+(\d+).*\Q$Script - $cwd\E: Waiting.*)/m;
+    warn localtime().": [$$] $Script: Aborting other git-deploy process still running on NON-deploy repo:\n$1\n" and kill TERM => $2 or last if !$deploying_version and getps() =~ /^(\w+\s+(\d+).*\Q$Script - $cwd\E: Waiting.*)/m;
     # Get out of here if someone is monkeying a local file "error: cannot rebase: You have unstaged changes."
-    warn localtime().": [$$] git-deploy: Deployable git-server v$deploying_version wants me to leave.\n$update" and last if $deploying_version and $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
+    warn localtime().": [$$] $Script: Deployable git-server v$deploying_version wants me to leave.\n$update" and last if $deploying_version and $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
     if ($update =~ /Current branch.*is up to date/) {
         my $pause_because_done = $deploying_version ? 5 + int(55 * rand()) : ($maxpatience || (305 + int(115 * rand())));
         my $why_wait = $deploying_version ? "since everything had already been deployed ..." : "for NON-deploy repo ...";
