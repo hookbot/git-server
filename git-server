@@ -115,8 +115,11 @@ if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
     }
     # Repository sanity check:
     die localtime().": [$who] git-server: You can't access '$repo' git repository\n" unless $dir && -f "$dir/config" && -d "$dir/refs" && -d "$dir/objects";
+
+    # To avoid "fatal: bad argument" crash, git-shell mandates that repo dir be shell-escaped with single quotes even if it seems like it's not needed. i.e., "git-upload-pack 'project'"
     my $escape_dir = $ENV{GIT_DIR};
-    $escape_dir =~ s/'/'\\''/g, $escape_dir = "'$escape_dir'" if $escape_dir =~ m{[^\w/.\-]};
+    $escape_dir =~ s/'/'\\''/g;
+    $escape_dir = "'$escape_dir'";
     $cmd = "$op $escape_dir";
 }
 else {
