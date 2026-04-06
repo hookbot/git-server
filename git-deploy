@@ -330,7 +330,7 @@ if (!$maxpatience) {
         my $found = $1;
         my $stagger = 5+int(rand()*115);
         $0 = "$Script - $cwd: Waiting $stagger seconds for random stagger ...";
-        warn localtime().": [$$] $Script: Waiting random stagger delay $stagger secconds before taking over for other deployer:\n$found\n";
+        warn localtime().": [$$] $Script: Since no --max-delay option was provided, waiting $stagger seconds random stagger delay before taking over for other deployer:\n$found\n";
         print run_output_include_err(sleep => $stagger);
     }
 }
