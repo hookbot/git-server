@@ -39,14 +39,12 @@ Some features we need or want, plus some neat ideas that may not be too feasible
      1. For example, the ability to export ENV variables from a PRE* hook to a POST* hook.
      2. Allow data in $git->stash to persist among all hooks where the $git object is the first argument passed to each custom block hook.
 
- - Monkey the core.hooksPath setting on the git server to point to these hooks provided.
-
  - Investigate making git-deploy setup alias.deploy hook in case it's not in a cron path.
 
  - [webhook] features for callback:
    * Allow for WhiteList or BlackList filters to trigger webhook or ignore webhooks under certain conditions:
      : When specified branches are involved
-     : When certain KEY users are involved
+     : When certain REMOTE_USER is involved
      : When coming from a specific IP or Network CIDR
      : When certain files are affected (tricky for pull reads)
      : When certain strings exist in any of the commit comments being pushed. (Tricky for pull reads.)
