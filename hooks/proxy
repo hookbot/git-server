@@ -266,8 +266,9 @@ if (1) {
     else {
         unlink ".git/SYNCED";
         if ($refs->{here} eq $refs->{$pick}) {
-            warn localtime().": [$who] git-server: DEBUG: Two-Way Proxy partially synced but not all proxies. Please try again.\n" if $ENV{DEBUG};
-            # XXX: Since "here" and $pick were synced, should we automatically respawn $ENV{GIT_HOOKS_PATH}/hooks/proxy from $base again in order to try to sync other remotes that need it? Or might that accidentally recreate deleted references that may still exist on another remote attempting to do a Three-Way sync? Or would this be too much load? Or take too much time? Or is it too dangerous to cause an infinite sync loop? Or is it safer to spread out the sync process by taking care of any others during the next git operation?
+            # XXX: Will we be able sync accurately enough now that the "SYNCED" file is wiped? Maybe not, but it should be safe enough to try running again. So let's give it a try:
+            warn localtime().": [$who] git-server: DEBUG: Three-Way Proxy partially synced but not all proxies. Trying again ...\n" if $ENV{DEBUG};
+            chdir($ENV{GIT_DIR}=$base) and sleep 1 and exec $0, $how;
         }
         else {
             warn localtime().": [$who] git-server: Proxy sync failed. Manual intervention may be required. Try again later.\n" if $ENV{DEBUG};
