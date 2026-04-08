@@ -116,8 +116,8 @@ if (1) {
         warn localtime().": [$who] git-server: WARNING: Unable to verify synchronization due to temporary remote proxy malfunction. Try again with original setup user?\n";
         exit 0;
     }
+    warn localtime().": [$who] git-server: Proxy Sync required: $partial_sync_ok\n";
 }
-warn localtime().": [$who] git-server: Proxy Sync required.\n";
 
 my $tips = {};
 my $names = {};
@@ -148,7 +148,7 @@ if (my $changes = {}) {
         $pick = shift @sync;
         foreach my $ignore (@sync) {
             # If there are multiple remote proxy mismatches, then just focus on syncing the first one for now.
-            warn localtime().": [$who] git-server: DEBUG: Need Sync (".join(" ",sort keys %{ $changes->{$ignore} }).") with $proxy{$ignore} But ignoring [$ignore] for now. Please try again.\n" if $ENV{DEBUG};
+            warn localtime().": [$who] git-server: DEBUG: Need Sync (".join(" ",sort keys %{ $changes->{$ignore} }).") with $proxy{$ignore} but ignoring [$ignore] for now. Please try again.\n" if $ENV{DEBUG};
         }
     }
     $pick and $diff = $changes->{$pick} or die localtime().": [$who] git-server: Unable to calculate proxy sync requirements. Implementation error!\n";
