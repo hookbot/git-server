@@ -86,7 +86,7 @@ else {
 
 my $remotes = ["here",sort keys %proxy];
 if (1) {
-    my $synced = 1;
+    my $need_sync = "";
     my $partial_sync_ok = 0;
     foreach my $remote (@$remotes) {
         my $url = $proxy{$remote};
@@ -102,10 +102,10 @@ if (1) {
                 warn localtime().qq{: [$who] git-server: WARNING! Proxy remote failed. Did you enable ForwardAgent this time? Hint: "export GIT_SSH_COMMAND='ssh -A'"\n\n$WHY_REMOTE_FAILED\n\n};
             }
         };
-        $partial_sync_ok ||= !$WHY_REMOTE_FAILED && $url;
-        $synced = 0, last if $refs->{here} ne $refs->{$remote};
+        $need_sync ||= $remote, $partial_sync_ok ||= !$? && $url if $refs->{here} ne $refs->{$remote};
+        last if $partial_sync_ok and $need_sync;
     }
-    if ($synced) {
+    if (!$need_sync) {
         warn localtime().": [$who] git-server: DEBUG: Two-Way Proxy already synced for hook: $how\n" if $ENV{DEBUG};
         open my $fh, ">", ".git/SYNCED";
         print $fh $refs->{here};
