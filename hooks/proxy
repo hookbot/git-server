@@ -272,7 +272,9 @@ if (1) {
             chdir($ENV{GIT_DIR}=$base) and sleep 1 and exec $0, $how;
         }
         else {
-            warn localtime().": [$who] git-server: Proxy sync failed. Manual intervention may be required. Try again later.\n" if $ENV{DEBUG};
+            (my $here  = "[here]: $base\n$refs->{here}")           =~ s/\s*$/\n/; $here  =~ s/^/< /gm;
+            (my $there = "[$pick]: $proxy{$pick}\n$refs->{$pick}") =~ s/\s*$/\n/; $there =~ s/^/> /gm;
+            warn localtime().": [$who] git-server: Proxy sync failed. Manual intervention may be required. Try again later.\n\n$here\n$there\n" if $ENV{DEBUG};
         }
     }
 }
