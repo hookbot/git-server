@@ -124,7 +124,7 @@ my $names = {};
 foreach my $remote (@$remotes) {
     system "git fetch $remote --tags"; # Make sure to pull any new remote tags into workingdir
     $refs->{$remote} = remote_refs $remote if !defined $refs->{$remote};
-    while ($refs->{$remote} =~ s{^(\w+)\s+refs/(\w+)/(\S+)}{}m) {
+    while ($refs->{$remote} =~ s{^(\w+)\s+refs/(\w+)/(\S+)\n?}{}m) {
         my $hash = $1;
         my $name = $3;
         my $type = $2 eq "heads" ? "branch" : $2 eq "tags" ? "tag" : die localtime().": [$who] git-server: Unimplemented ref type [$2] for [$name]\n";
@@ -159,7 +159,7 @@ foreach my $n (sort keys %$diff) {
     my $l = $tips->{here}->{$t}->{$n} || "";
     my $r = $tips->{$pick}->{$t}->{$n} || "";
     $l or $r or next;
-    warn localtime().": [$who] git-server: DEBUG: Sync[$n] local[$l] remote[$r] type($t)\n" if $ENV{DEBUG};
+    warn localtime().": [$who] git-server: DEBUG: Sync[$n] local[$l] remote[$r] type($t) SIZE<".(-s ".git/SYNCED" or 0)."> hook: $how\n" if $ENV{DEBUG};
     if ($how =~ /pre/ and !-s ".git/SYNCED") {
         # Pre operation, but it still wasn't even synced before either,
         # so do our best guess to sync Both Ways without deleting anything:
@@ -255,7 +255,8 @@ if (1) {
     my $synced = 1;
     foreach my $remote (@$remotes) {
         $refs->{$remote} = remote_refs $remote; # Now that sync is complete, reload all refs fresh to compare again.
-        $synced = 0, last if $refs->{here} ne $refs->{$remote};
+        warn localtime().": [$who] git-server: ERROR [$?] while proxy remote viewing after sync: ".($proxy{$remote} || "[$remote]")."\n$WHY_REMOTE_FAILED\n========\n" if $? and $ENV{DEBUG};
+        $synced = 0 if $refs->{here} ne $refs->{$remote};
     }
     if ($synced) {
         warn localtime().": [$who] git-server: DEBUG: Two-Way Proxy now synced.\n" if $ENV{DEBUG};
