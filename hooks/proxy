@@ -16,7 +16,7 @@ sub remote_refs {
     my $tmp = File::Temp->new;
     my @list = `git ls-remote $remote 2>$tmp`;
     if (my $why = $?) {
-        $WHY_REMOTE_FAILED = "FAILED VIEWING REMOTE [$why] ".($proxy{$remote} || $remote)."\n";
+        $WHY_REMOTE_FAILED = "FAILED VIEWING REMOTE [$why] ".($proxy{$remote} || $base)."\n";
         seek($tmp, 0, 0);
         $WHY_REMOTE_FAILED .= join "", <$tmp>;
         $WHY_REMOTE_FAILED =~ s/\s*$//;
@@ -42,28 +42,39 @@ if (!-d $working) {
     while (my ($remote,$proxy) = each %proxy) {
         0 == system qw(git remote add), $remote, $proxy or system "rm","-rf",$working or die localtime().": [$who] git-server: Failed to remote add $proxy\n";
         # Make sure known_hosts contains remote server pub keys for SSH style repos
+        my $remotehost = "";
         if ($proxy =~ m{^ssh://(?:|[^/:]+\@)\[([a-z0-9\-\.\:]+)\]:(\d+)/}i or
             $proxy =~ m{^ssh://(?:|[^/:]+\@)\[?([a-z0-9\-\.]+)\]?:\[?(\d+)\]?/}i or
             $proxy =~ m{^ssh://(?:|[^/:]+\@)\[?([a-z0-9\-\.\:]+)\]?/}i or
             $proxy =~ m{^(?:|[^/:]+\@)\[([a-z0-9\-\.]+):(\d+)\]:}i or
             $proxy =~ m{^(?:|[^/:]+\@)\[([a-z0-9\-\.\:]+)\]():}i or
             $proxy =~ m{^(?:|[^/:]+\@)([a-z0-9\-\.]+)():}i) {
-            my $remotehost = $1;
             my $remoteport = $2 || 22;
             warn localtime().": [$who] git-server: DEBUG: Detected remote proxy SSH server [$remotehost] port [$remoteport]\n" if $ENV{DEBUG};
             my $try = `ssh -o BatchMode=yes -o StrictHostKeyChecking=no -T -p $remoteport $remotehost hostname 2>&1`;
         }
-        if (0 == system "git fetch $remote" and $refs->{$remote} = remote_refs $remote and !$WHY_REMOTE_FAILED) {
+        if (0 == system "git fetch $remote" and $refs->{$remote} = remote_refs $remote) {
             warn localtime().": [$who] git-server: Successful access to remote proxy: $proxy\n" if $ENV{DEBUG};
         }
-        elsif (!$? and !$WHY_REMOTE_FAILED) {
+        elsif (!$?) {
             warn localtime().": [$who] git-server: Warning: Detected remote proxy without any commits: $proxy\n";
         }
-        elsif (0 == system "rm","-rf",$working and $ENV{SSH_AUTH_SOCK}) {
-            die localtime().": [$who] git-server: Remote access is required for initial setup, but unable to reach proxy repo: $proxy\n\n$WHY_REMOTE_FAILED\n\n";
+        elsif (0 != system "rm","-rf",$working) {
+            die localtime().": [$who] git-server: [$working] Failed to clear broken merge folder? ERR[$?]\n";
+        }
+        elsif (!$remotehost) {
+            die localtime().": [$who] git-server: Unable to read from non-SSH repo required for initial proxy setup. Manual intervention required!\n\n$WHY_REMOTE_FAILED\n\n";
+        }
+        elsif (!$ENV{SSH_AUTH_SOCK}) {
+            die localtime().qq{: [$who] git-server: SSH forwarding not attempted. Did you enable ForwardAgent? Hint: "export GIT_SSH_COMMAND='ssh -A'"\n\n$WHY_REMOTE_FAILED\n\n};
+        }
+        elsif (my $keys = `ssh-add -l 2>/dev/null`) {
+            my $num = 0;
+            $keys =~ s/^\s*(\d+)\s*/"FINGERPRINT#".++$num." : ($1 bits) "/gem;
+            die localtime().": [$who] git-server: Remote access via $remotehost is required for initial proxy setup, but failed using the following keys:\n$keys\n$WHY_REMOTE_FAILED\n\n";
         }
         else {
-            die localtime().qq{: [$who] git-server: Failed to reach proxy. Did you enable ForwardAgent? Hint: "export GIT_SSH_COMMAND='ssh -A'"\n\n$WHY_REMOTE_FAILED\n\n};
+            die localtime().qq{: [$who] git-server: Remote access to $remotehost failed. Forwarding enabled properly but no SSH keys provided? Hint: "ssh -L" or "ssh-add <identityfile>"\n$WHY_REMOTE_FAILED\n\n};
         }
     }
 }
