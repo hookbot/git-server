@@ -122,7 +122,7 @@ if (!@repo_dirs) {
     local $_ = $ENV{SSH_ORIGINAL_COMMAND} || "";
     @repo_dirs = split;
     splice @repo_dirs, 0, 2 if $repo_dirs[0] && $repo_dirs[1] && $repo_dirs[0] eq "perl" && $repo_dirs[1] eq "-";
-    shift @repo_dirs if $repo_dirs[0] && $repo_dirs[0] =~ m{/git-verify$};
+    shift @repo_dirs if $repo_dirs[0] && $repo_dirs[0] =~ m{(^|/)git-verify$};
 }
 if (@repo_dirs and $repo_dirs[0] eq "--escaperepos") {
     shift @repo_dirs;

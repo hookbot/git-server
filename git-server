@@ -88,7 +88,7 @@ $ENV{REMOTE_USER} ||= $ENV{KEY} || "";
 $ENV{SSH_CONNECTION} ||= "";
 ($ENV{REMOTE_ADDR}, $ENV{REMOTE_PORT}, $ENV{SERVER_ADDR}, $ENV{SERVER_PORT}) = split / /, $ENV{SSH_CONNECTION};
 if (!$ENV{REMOTE_PORT} || !$ENV{SERVER_ADDR} || !$ENV{SERVER_PORT}
-    || $cmd =~ m{/git-verify\b}
+    || $cmd =~ m{(^|/)git-verify\b}
     || !$ENV{REMOTE_ADDR} || $ENV{REMOTE_ADDR} !~ /^([\da-f\.:]+)$/) {
     (my $v = $0) =~ s{-[^/]+$}{-verify};
     exec $v or die "git-verify: Verification failed\n";
