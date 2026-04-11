@@ -95,7 +95,11 @@ our $real_git = find_real_git();
 our $HANDLE_STDERR = sub { open STDERR, ">", "/dev/null" };
 
 if ("@ARGV" =~ /^(-v|(?:--|)version)$/ and $real_git =~ m{^(.*/)}) {
-    print "[git-client v$VERSION] $0 => $1".git("--version");
+    my $nextpath = $1;
+    print "[git-client v$VERSION] $0 => ";
+    my $g;
+    print $nextpath if open $g, "<", $real_git and $g = getc $g and $g ne "#";
+    print git("--version");
     exit;
 }
 
