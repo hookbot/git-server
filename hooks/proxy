@@ -9,14 +9,19 @@ my $base = delete $ENV{GIT_DIR} or die "$0: Unimplemented invocation.\n";
 my %proxy = do { my $i=0; map { ("there".($i++?"-$i":"") => $_) } split /\n/, scalar `git config --get-all proxy.url` } or exit 0;
 my $working = "$base.workingdir";
 
+$ENV{GIT_SSH_COMMAND} = "ssh -A -o SendEnv=XMODIFIERS";
+$ENV{XMODIFIERS} ||= "";
+($ENV{DEBUG} and !warn localtime().": [$who] git-server: DEBUG: [$base] Skipping proxy checks during $how\n") or exit 0 if $ENV{XMODIFIERS} =~ /^skip_proxy=(.*)/m and $1;
+$ENV{XMODIFIERS} = join "\n", "skip_proxy=1", split /\n/, $ENV{XMODIFIERS};
 my $WHY_REMOTE_FAILED = "";
 sub remote_refs {
     my $remote = shift;
     require File::Temp;
     my $tmp = File::Temp->new;
+    warn localtime().": [$who] git-server: DEBUG: [$base] Comparing refs for ".($proxy{$remote} || $base)." ...\n" if $ENV{DEBUG};
     my @list = `git ls-remote $remote 2>$tmp`;
     if (my $why = $?) {
-        $WHY_REMOTE_FAILED = "FAILED VIEWING REMOTE [$why] ".($proxy{$remote} || $base)."\n";
+        $WHY_REMOTE_FAILED = "FAILED [$why] VIEWING REMOTE ".($proxy{$remote} || $base)."\n";
         seek($tmp, 0, 0);
         $WHY_REMOTE_FAILED .= join "", <$tmp>;
         $WHY_REMOTE_FAILED =~ s/\s*$//;
