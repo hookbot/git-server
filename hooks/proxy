@@ -18,6 +18,7 @@ sub remote_refs {
     my $remote = shift;
     require File::Temp;
     my $tmp = File::Temp->new;
+    warn localtime().": [$who] git-server: DEBUG: [$base] Comparing refs for ".($proxy{$remote} || $base)." ...\n" if $ENV{DEBUG};
     my @list = `git ls-remote $remote 2>$tmp`;
     if (my $why = $?) {
         $WHY_REMOTE_FAILED = "FAILED [$why] VIEWING REMOTE ".($proxy{$remote} || $base)."\n";
