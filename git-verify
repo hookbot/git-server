@@ -222,7 +222,7 @@ if (local $_ = $ENV{HOME} and my @s = stat) {
             }
         }
         else {
-            print "REMOTE_USER: ~/.ssh/config does not exist: BAD!\n";
+            print "REMOTE_USER: ~/.ssh/config does not exist: FINE\n";
         }
         $_ = $keyfile;
         if (@s = stat) {
