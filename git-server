@@ -97,7 +97,12 @@ $ENV{REMOTE_ADDR} = $1; # Taint cleaner
 $ENV{REMOTE_USER} ||= "MISCONFIGURED_REMOTE_USER";
 #delete $ENV{$_} foreach (qw[KEY SSH_CLIENT SSH_CONNECTION]); # No cheating
 my $who = "$ENV{REMOTE_USER}\@$ENV{REMOTE_ADDR}";
-die localtime().": [$who] git-server: You don't have shell access!\n" unless $cmd;
+my $how = "";
+if ($ENV{DEBUG} and $ENV{SSH_USER_AUTH} and open my $auth, "<", $ENV{SSH_USER_AUTH}) {
+    $how = $1 if <$auth> =~ /^(?:publickey |)(.+)/;
+    close $auth;
+}
+die localtime().": [$who] git-server: You don't have shell access!\n$how\n" unless $cmd;
 
 my $dir = undef;
 if ($cmd =~ /^(git-[\w\-]+) (.+)$/) {
