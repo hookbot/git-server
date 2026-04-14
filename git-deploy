@@ -389,6 +389,25 @@ sub agentkeys {
         push @found, $agentlist =~ /(.*\Q$pick\E.*)/ig  if !@found;
         push @found, $agentlist =~ /(.*$pick.*)/g       if !@found;
         push @found, $agentlist =~ /(.*$pick.*)/ig      if !@found;
+        (my $clue = $pick) =~ s/\W+//g;
+        if ($clue ne $pick and $clue) {
+            push @found, $agentlist =~ /(.*\Q$clue\E.*)/g   if !@found;
+            push @found, $agentlist =~ /(.*\Q$clue\E.*)/ig  if !@found;
+            push @found, $agentlist =~ /(.*$clue.*)/g       if !@found;
+            push @found, $agentlist =~ /(.*$clue.*)/ig      if !@found;
+        }
+        if (!@found) {
+            # Try really hard to match, ignoring case and even ignoring non-wordspace
+            foreach my $agent_line (split /\n+/, $agentlist) {
+                (my $stripped = $agent_line) =~ s/[^\w\n]+//g;
+                push @found, $agent_line if $agent_line =~ /\Q$pick\E/i;
+                push @found, $agent_line if $agent_line =~ /$pick/i;
+                push @found, $agent_line if $clue and $agent_line =~ /\Q$clue\E/i;
+                push @found, $agent_line if $stripped =~ /\Q$pick/i;
+                push @found, $agent_line if $stripped =~ /$pick/i;
+                push @found, $agent_line if $clue and $stripped =~ /\Q$clue\E/i;
+            }
+        }
         foreach my $m (@found) {
             push @matches, $m if !$pushed->{$m}++;
         }
