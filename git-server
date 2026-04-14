@@ -99,8 +99,12 @@ $ENV{REMOTE_USER} ||= "MISCONFIGURED_REMOTE_USER";
 my $who = "$ENV{REMOTE_USER}\@$ENV{REMOTE_ADDR}";
 if (!$cmd) {
     if ($ENV{SSH_USER_AUTH} and open my $auth, "<", $ENV{SSH_USER_AUTH}) {
-        warn localtime().": [$who] git-server: Successfully Authenticated: $1\n" if (<$auth>||"") =~ /^(?:publickey |)(.+)/;
+        my $how = (<$auth>||"") =~ /^(?:publickey |)(.+)/ ? $1 : "";
         close $auth;
+        if ($how) {
+            my $key = eval { require Digest::SHA; $how =~ /^\S+\s+(\S+)/ && Digest::SHA::sha256_base64($1) };
+            warn localtime().": [$who] git-server: Successfully Authenticated: [".($key ? "FingerPrint SHA256:$key" : "$how")."]\n";
+        }
     }
     die localtime().": [$who] git-server: You don't have shell access!\n";
 }
