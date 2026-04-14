@@ -241,6 +241,15 @@ if ($ver) {
     exit;
 }
 
+my $runner = $$;
+my $cleanup = sub {1};
+END {$cleanup->() if $cleanup}
+$SIG{INT} = $SIG{TERM} = sub {
+    warn localtime().": [$$] $Script: Caught SIG$_[0]: Running cleanup ...\n";
+    $cleanup->() if $cleanup;
+    exit 1;
+};
+
 sub run_how_cmd {
     my $stderr = shift;
     my @cmd = @_;
@@ -507,6 +516,7 @@ if (sleep 1) {
 
 if ($background) {
     exit if fork;
+    $runner = $$;
     require POSIX;
     POSIX::setsid();
     open STDIN,  "<", "/dev/null";
@@ -514,14 +524,12 @@ if ($background) {
     open STDERR, ">", "/dev/null";
 }
 
-my $runner = $$;
-my $cleanup = sub {
+$cleanup = sub {
     $runner == $$ or return 0;
     # Make sure to wipe out any temp files
     foreach my $ident (@$identities) { eval { $ident->isa("File::Temp") } and unlink $ident; }
     return 1;
 };
-END {$cleanup->()}
 
 sleep 1;
 
