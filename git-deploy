@@ -113,14 +113,16 @@ interval between 5 and 7 minutes.
 =head2 --identity <identitykeyfile>
 
 Specify identity keyfile to be used for SSH repos.
+If it's a Private Key, then it should not have a passphrase.
+If it's a Public Key, then Agent Forwarding must be enabled.
 
   Example: git-deploy -i ~/.ssh/id_ed25519-repodeploy
-
-  sshCommand = ssh -i ~/.ssh/id_ed25519-repodeploykey -o IdentitiesOnly=yes
 
 =head2 --version
 
 Show git-deploy version.
+
+  Example: git deploy --version
 
 =head1 INSTALL
 
@@ -300,14 +302,20 @@ umask oct $1 if $umask and $umask =~ /^(\d+)$/;
 if (@$identities) {
     # Sanity check to verify identity files are ready to go.
     foreach (@$identities) {
-        s/\.pub$//;
-        -e && -r _ && -s _ or die "$Script: --identity $_: Unable to find key\n";
+        my $orig = $_;
+        $_ = $1 if /^(.+)\.pub$/ and -e $1;
+        -e && -r _ && -s _ or die localtime().": [$$] $Script: --identity $_: Unable to find key\n";
         my $pub = run_output_ignore_err "ssh-keygen", "-y", "-P", "", "-f", $_;
         if ($pub) {
             warn localtime().": [$$] $Script: Using identity: $pub";
         }
+        elsif ($ENV{SSH_AUTH_SOCK}) {
+            $_ = $orig;
+            warn localtime().": [$$] $Script: --identity '$_': Using Agent Forwarding for Public Key.\n";
+        }
         else {
-            die localtime().": [$$] $Script: Unable to read identity file without using a passphrase: $_\n";
+            $_ = $orig;
+            warn localtime().": [$$] $Script: --identity '$_': Unable to read identity file. Passphrase required?\n";
         }
     }
 }
