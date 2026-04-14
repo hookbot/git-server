@@ -15,6 +15,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Make git-deploy remove temp files eariler so they won't exist during long waits for a push notification.
 
+ - Make git-deploy brick over "local modified" files if the end target version is exactly the same.
+
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6.
 
  - Add Support for HTTP protocol git read and write operations using Basic password Authorization (instead of only pubkeys over SSH protocol).
