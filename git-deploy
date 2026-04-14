@@ -353,7 +353,7 @@ sub agentkeys {
             }
             my @keys = map { chomp; [split /\s+/, $_, 3] } `ssh-add -L 2>/dev/null`;
             for my $alg (qw[md5 sha256]) {
-                my @fp = map { [split /\s+/, $_, 3] } `ssh-add -l -E $alg 2>/dev/null`;
+                my @fp = map { chomp; [split /\s+/, $_, 3] } `ssh-add -l -E $alg 2>/dev/null`;
                 next unless @fp == @keys; # Sanity check to reduce chances of race-condition where a key was added and/or removed in between the "-L" and the "-l"
                 for (my $i=0; $i<@keys; $i++) {
                     # Insert its fingerprint before the final comment
