@@ -469,6 +469,7 @@ if (@$identities) {
     # Sanity check to verify identity files are ready to go, and expand relative paths if needed.
     my $verified_identities = [];
     my $public_key_file = {};
+    my $private_key_file = {};
     foreach my $ident (@$identities) {
         if (my @found = agentkeys($ident)) {
             foreach (@found) {
@@ -479,6 +480,7 @@ if (@$identities) {
             my $pub = run_output_ignore_err "ssh-keygen", "-y", "-P", "", "-f", $_;
             if ($pub) {
                 warn localtime().": [$$] $Script: Using private key identity: $pub";
+                push @$verified_identities, $_ if !$private_key_file->{$_}++;
             }
             else {
                 warn localtime().": [$$] $Script: --identity '$ident': Unable to read identity file. Passphrase required?\n";
@@ -488,6 +490,7 @@ if (@$identities) {
             warn localtime().": [$$] $Script: --identity '$ident': Ignoring non-existent key\n";
         }
     }
+    $identities = $verified_identities;
 }
 
 $ENV{GIT_DIR} ||= abs_path(`git rev-parse --git-dir 2>/dev/null` =~ /^(.+)/ && $1 || ".git");
