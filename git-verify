@@ -35,11 +35,9 @@ for any directory that smells like a git repo.
 
 =head1 TODO
 
-    * Only allow safe read-only operations appropriate for REMOTE_USER powers
     * Validate scripts installation: git-server git-client git-deploy git-verify
     * Validate core.hooksPath
     * Validate ./hooks symlink for each repo if hooksPath not set
-    * Files and Directories chmod permissions
     * Secured ~/.ssh/authorized_keys format, including "REMOTE_USER" settings
     * Make sure ~/.ssh/authorized_keys has at least one ADMIN user
     * ADMIN and ACL Management (if "ADMIN")
@@ -48,11 +46,13 @@ for any directory that smells like a git repo.
 
 =head1 SUPPORTED
 
+    * Only allow safe read-only operations appropriate for REMOTE_USER powers.
     * Validate git-server installation.
     * Verify AllowAgentForwarding setting for two-way sync feature.
     * Verify AcceptEnv setting.
     * Check ExposeAuthInfo functionality to be able to determine key info, if desired.
     * List accessible repos specified or scanned.
+    * Files and Directories and ~/.ssh/authorized_keys chmod permissions.
 
 =head1 AUTHOR
 
