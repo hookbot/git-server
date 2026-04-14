@@ -322,7 +322,7 @@ sub pull_push_notification {
         ($initial_ENV{XMODIFIERS} ? ($initial_ENV{XMODIFIERS}) : ()),
         ;
     # Generate GIT_SSH_COMMAND to ensure XMODIFIERS is provided to the git server:
-    $ENV{GIT_SSH_COMMAND} = ($initial_ENV{GIT_SSH_COMMAND} || (run_output_include_err(qw[git config core.sshCommand]) =~ /^(.+)/ ? $1 : "ssh"))." -o SendEnv=XMODIFIERS";
+    $ENV{GIT_SSH_COMMAND} = ($initial_ENV{GIT_SSH_COMMAND} || (run_output_ignore_err(qw[git config core.sshCommand]) =~ /^(.+)/ ? $1 : "ssh"))." -o SendEnv=XMODIFIERS";
     if (@$identities) {
         # Inject --identity files into GIT_SSH_COMMAND:
         $ENV{GIT_SSH_COMMAND} .= " -o IdentitiesOnly=yes";
