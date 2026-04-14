@@ -5,6 +5,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - If running hooks/proxy shows 100% perfectly clean during the pre-write hook, then for the post-write hook, hooks/proxy is safe to rudely "--force" jam the sync to push to the remote $there repo every single branch and tag from $here, even if it rewrites history.
 
+ - If proxy fails with the default Forwarding Agent, try each public key individually to see if any of them work any better.
+
  - Make sure ipc-parse can determine if action was actually performed or else the reason of why not.
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
