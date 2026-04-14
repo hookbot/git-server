@@ -140,14 +140,27 @@ It must match a key available by the Agent or it will be ignored.
 
   --OR--
 
+  # Match MD5 Fingerprint
+  Example: git deploy -i MD5:7d:5d:fe:e7:07:51:d2:bc:a8:65:aa:17:8a:8a:50:fd
+  Example: git deploy -i 7d5dfee70751d2bca8
+
+  --OR--
+
+  # Match SHA256 Fingerprint or partial
+  Example: git deploy -i SwSJkugJviX1WXVE6L8XMR/NT3S+xAufeMOsTPH0Aac
+  Example: git deploy -i SwSJkugJviX
+
+  --OR--
+
   # RegExp
   Example: git deploy -i 'ssh-ed25519.*AAAA.*hookbot@'
 
-It's possible that multiple keys available within the SSH Agent
-will match the substring or comment or RegExp specified.
+It's possible that multiple keys available within the SSH Agent will
+match the substring or fingerprint or comment or RegExp specified.
 If so, then all will be tried in the order they appear.
 
 HINT: To list current keys available, run "ssh-add -L".
+To view fingerprints, run "ssh-add -l" or "ssh-add -l -E md5".
 
 If no --identity option is used, then the default behavior is
 to only use those public keys available in the agent and
@@ -315,7 +328,7 @@ my $cache_agent_pub_file = {};
 my $agentlist = undef;
 # @files = agentkeys( [ { <pubkeyfile> | <pubkey_pattern_or_substring> } ] )
 # Searches SSH Agent Forwarder for currently available keys.
-# Returns a file or filenames containing matching keys of the requested public key file or regexp pattern or substring of the key.
+# Returns a file or filenames containing matching keys of the requested public key file or regexp pattern or substring of the key or the MD5 or SHA256 fingerprint.
 sub agentkeys {
     if (!defined $agentlist) {
         $agentlist = "";
@@ -325,6 +338,14 @@ sub agentkeys {
                     (lstat $sock ? "Broken symlink [$sock]\n" : "Missing SSH_AUTH_SOCK [$sock]\n");
             }
             my @keys = map { chomp; [split /\s+/, $_, 3] } `ssh-add -L 2>/dev/null`;
+            for my $alg (qw[md5 sha256]) {
+                my @fp = map { chomp; [split /\s+/, $_, 3] } `ssh-add -l -E $alg 2>/dev/null`;
+                next unless @fp == @keys; # Sanity check to reduce chances of race-condition where a key was added and/or removed in between the "-L" and the "-l"
+                for (my $i=0; $i<@keys; $i++) {
+                    # Insert its fingerprint before the final comment
+                    splice @{$keys[$i]},2,0,$fp[$i]->[1] if $fp[$i]->[1] and @{ $keys[$i] }>1;
+                }
+            }
             $agentlist = join "", map { join(" ",@$_)."\n" } @keys;
         }
     }
