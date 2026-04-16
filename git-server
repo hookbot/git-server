@@ -91,7 +91,8 @@ if (!$ENV{REMOTE_PORT} || !$ENV{SERVER_ADDR} || !$ENV{SERVER_PORT}
     || $cmd =~ m{(^|/)git-verify\b}
     || !$ENV{REMOTE_ADDR} || $ENV{REMOTE_ADDR} !~ /^([\da-f\.:]+)$/) {
     (my $v = $0) =~ s{-[^/]+$}{-verify};
-    exec $v or die "git-verify: Verification failed\n";
+    -x $v or ($v = abs_path $0) =~ s{-[^/]+$}{-verify};
+    -x $v && exec $v or die "git-verify: Verification failed\n";
 }
 $ENV{REMOTE_ADDR} = $1; # Taint cleaner
 $ENV{REMOTE_USER} ||= "MISCONFIGURED_REMOTE_USER";
