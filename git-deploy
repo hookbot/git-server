@@ -477,7 +477,7 @@ if (@$identities) {
             }
         }
         elsif (-e $ident && -r _ && -s _) {
-            my $pub = run_output_ignore_err "ssh-keygen", "-y", "-P", "", "-f", $_;
+            my $pub = run_output_ignore_err "ssh-keygen", "-y", "-P", "", "-f", $ident;
             if ($pub) {
                 warn localtime().": [$$] $Script: Using private key identity: $pub";
                 push @$verified_identities, $_ if !$private_key_file->{$_}++;
