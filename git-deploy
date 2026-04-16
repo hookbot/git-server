@@ -482,6 +482,9 @@ if (@$identities) {
                 warn localtime().": [$$] $Script: --identity '$ident': Using private key for: $pub";
                 push @$verified_identities, $ident if !$private_key_file->{$ident}++;
             }
+            elsif ($ident =~ m{^(.+)\.pub$} and -r $1 and $ident = $1) {
+                redo; # Try again with the NON-".pub" file
+            }
             else {
                 warn localtime().": [$$] $Script: --identity '$ident': Unable to read identity file. Passphrase required?\n";
             }
