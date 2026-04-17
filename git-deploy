@@ -284,6 +284,17 @@ sub getps {
     return (run_output_ignore_err qw[ps -eo user,pid,ppid,tty,time,args]);
 }
 
+sub background {
+    $runner = 0; # Don't wipe Temp files yet.
+    exit if fork;
+    $runner = $$; # Now it's okay to wipe Temp files.
+    require POSIX;
+    POSIX::setsid();
+    open STDIN,  "<", "/dev/null";
+    open STDOUT, ">", "/dev/null";
+    open STDERR, ">", "/dev/null";
+}
+
 sub rebuild {
     if (defined $build) {
         $0 = "$Script - $cwd: Waiting for build to finish ...";
@@ -525,16 +536,7 @@ if (sleep 1) {
     die localtime().": [$$] $Script: Fatal crash while attempting to pull from ".run_output_ignore_err("git","config","remote.$origin.url")."\n$update\n\n".localtime().": [$$] $Script: Manual intervention required.\n" if $update =~ /^fatal:/m;
 }
 
-if ($background) {
-    $runner = 0; # Don't wipe Temp files yet.
-    exit if fork;
-    $runner = $$; # Now it's okay to wipe Temp files.
-    require POSIX;
-    POSIX::setsid();
-    open STDIN,  "<", "/dev/null";
-    open STDOUT, ">", "/dev/null";
-    open STDERR, ">", "/dev/null";
-}
+background if $background;
 
 sleep 1;
 
