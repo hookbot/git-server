@@ -23,7 +23,7 @@ sub remote_refs {
     if (my $why = $?) {
         $WHY_REMOTE_FAILED = "FAILED [$why] VIEWING REMOTE ".($proxy{$remote} || $base)."\n";
         seek($tmp, 0, 0);
-        $WHY_REMOTE_FAILED .= join "", <$tmp>;
+        $WHY_REMOTE_FAILED .= join "", map { "! $_" } <$tmp>;
         $WHY_REMOTE_FAILED =~ s/\s*$//;
         $? = $why;
     }
