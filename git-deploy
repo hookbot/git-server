@@ -381,7 +381,7 @@ sub cgi_push_notification {
         my $sleeper_pid = $sleeper_child->{$deployer_pid} or next;
         chdir $deployer_folder->{$deployer_pid} or next;
         my $need_to_notify = 0;
-        if (run_output_ignore_err(qw[git config --list]) =~ /^remote.*url=.*\Q$pushed_repo\E$/m) { # Smells like the right repo so verify the branch.
+        if (run_output_ignore_err(qw[git config --list]) =~ /^remote.*url=.*\Q$pushed_repo\E(|\.git)$/m) { # Smells like the right repo so verify the branch.
             $need_to_notify = !@$pushed_refs; # If no refs found, just wake up the deployer to be safe.
             if (@$pushed_refs and eval { checkout_branch() } =~ m{([^/]+)$} and my $this_branch = $1) {
                 # If a specific branch has been pushed, then only wake up the deployer if it matches
