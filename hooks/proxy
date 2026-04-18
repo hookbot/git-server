@@ -66,7 +66,7 @@ if (!-d $working) {
         elsif (!$?) {
             warn localtime().": [$who] git-server: Warning: Detected remote proxy without any commits: $proxy\n";
         }
-        elsif (0 != system "rm","-rf",$working) {
+        elsif (!chdir $base or 0 != system "rm","-rf",$working) {
             die localtime().": [$who] git-server: [$working] Failed to clear broken merge folder? ERR[$?]\n";
         }
         elsif (!$remotehost) {
