@@ -9,7 +9,7 @@ my $base = delete $ENV{GIT_DIR} or die "$0: Unimplemented invocation.\n";
 my %proxy = do { my $i=0; map { ("there".($i++?"-$i":"") => $_) } split /\n/, scalar `git config --get-all proxy.url` } or exit 0;
 my $working = "$base.workingdir";
 
-$ENV{GIT_SSH_COMMAND} = "ssh -A -o SendEnv=XMODIFIERS";
+$ENV{GIT_SSH_COMMAND} = (`git config core.sshCommand 2>/dev/null` =~ /^(.+)/ ? $1 : "ssh")." -A -o SendEnv=XMODIFIERS";
 $ENV{XMODIFIERS} ||= "";
 ($ENV{DEBUG} and !warn localtime().": [$who] git-server: DEBUG: [$base] Skipping proxy checks during $how\n") or exit 0 if $ENV{XMODIFIERS} =~ /^skip_proxy=(.*)/m and $1;
 $ENV{XMODIFIERS} = join "\n", "skip_proxy=1", split /\n/, $ENV{XMODIFIERS};
