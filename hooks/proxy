@@ -60,7 +60,7 @@ if (!-d $working) {
             warn localtime().": [$who] git-server: DEBUG: Detected remote proxy SSH server [$remotehost] port [$remoteport]\n" if $ENV{DEBUG};
             my $try = `ssh -o BatchMode=yes -o StrictHostKeyChecking=no -T -p $remoteport $remotehost hostname 2>&1`;
         }
-        if (0 == system "git fetch $remote" and $refs->{$remote} = remote_refs $remote) {
+        if ($refs->{$remote} = remote_refs $remote and 0 == system "git fetch $remote") {
             warn localtime().": [$who] git-server: Successful access to remote proxy: $proxy\n" if $ENV{DEBUG};
         }
         elsif (!$?) {
@@ -78,10 +78,10 @@ if (!-d $working) {
         elsif (my $keys = `ssh-add -l 2>/dev/null`) {
             my $num = 0;
             $keys =~ s/^\s*(\d+)\s*/"FINGERPRINT#".++$num." : ($1 bits) "/gem;
-            die localtime().": [$who] git-server: Remote access via $remotehost is required for initial proxy setup, but failed using the following keys:\n$keys\n$WHY_FAILED->{$remote}\n\n";
+            die localtime().": [$who] git-server: Remote access via [$remotehost] is required for initial proxy setup, but failed using the following keys:\n$keys\n$WHY_FAILED->{$remote}\n\n";
         }
         else {
-            die localtime().qq{: [$who] git-server: Remote access to $remotehost failed. Forwarding enabled properly but no SSH keys provided? Hint: "ssh -L" or "ssh-add <identityfile>"\n$WHY_FAILED->{$remote}\n\n};
+            die localtime().qq{: [$who] git-server: Remote access to [$remotehost] failed. Forwarding enabled properly but no SSH keys provided? Hint: "ssh -L" or "ssh-add <identityfile>"\n$WHY_FAILED->{$remote}\n\n};
         }
     }
 }
