@@ -167,11 +167,17 @@ If no --identity option is used, then the default behavior is
 to only use those public keys available in the agent and
 and any efault ~/.ssh/id_* files that ssh normally tries.
 
-=head2 --notify <repo> [ <branch> ... ]
+=head2 --notify [ <repo> [ <branch> ... ] ]
 
-External convenience push notification callback hook intended for
-use with webhooks from NON-deploy servers, (such as github.com).
-Provide which <repo> had a recent in order to wake up git-deploy.
+This option is used by hooks/webhookscallback.cgi but can also
+be called manually to notify another "git-deploy" process that
+it's time to wake up and proceed with the git pull and optional
+--build execution. This is intended to be used in conjuction
+with NON-deploy git hosts, i.e., those without "acl.deploy".
+(If the git-deploy client has "acl.deploy" rights, then this
+--notify option will have no effect since the "wake up" timing
+is all handled on the git server side.)
+
 If no <branch> is provided, then git-deploy will be notified
 regardless of which branch it is waiting on.
 
