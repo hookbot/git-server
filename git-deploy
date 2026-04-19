@@ -24,7 +24,7 @@ instantly after a push is triggered.
     [ --background ]
     [ --max-delay <seconds> ]
     [ { --identity | -i } <identitykeyfile> ]
-    [ --webhook[=0] ]
+    [ --notify <repo> [ <branch> ... ] ]
     [ { -v | --version } ]
 
 =head2 --branch <branch>
@@ -167,25 +167,22 @@ If no --identity option is used, then the default behavior is
 to only use those public keys available in the agent and
 and any efault ~/.ssh/id_* files that ssh normally tries.
 
-=head2 --webhook={0|1}
+=head2 --notify <repo> [ <branch> ... ]
 
-Push notification callback hook.
-Configure a webhook triggered by a "git push" to run this from a
-CGI script, which will invoke "git deploy --webhook" to notify the
-git-deploy process so it will know it's time to run an update now.
-
-If no value is passed to --webhook, then it will default to true
-if $GATEWAY_INTERFACE env is set. False otherwise.
+External convenience push notification callback hook intended for
+use with webhooks from NON-deploy servers, (such as github.com).
+Provide which <repo> had a recent in order to wake up git-deploy.
+If no <branch> is provided, then git-deploy will be notified
+regardless of which branch it is waiting on.
 
   Example:
-  #!/bin/sh
-  # webhook.cgi
-  git deploy --webhook
+  git deploy https://github.com/user/projectx.git beta
 
-Or you can make a symlink to git-deploy and it will act like a CGI.
+If no <repo> is provided, then all git-deploy waiters will be
+notified to "git pull" immediately.
 
-  Example:
-  $ ln -s -v /usr/bin/git-deploy /var/www/html/webhookcallback.cgi
+An example invoker hooks/webhookcallbaack.cgi has been provided
+with this distribution.
 
 =head2 --version
 
@@ -221,7 +218,7 @@ This library is free software; you can redistribute it and/or modify it under th
 
 use strict;
 use Cwd qw(getcwd abs_path);
-use FindBin qw($RealScript $Script $Bin);
+use FindBin qw($Script $Bin);
 use Getopt::Long qw(GetOptions);
 use Fcntl qw(LOCK_EX LOCK_NB);
 
@@ -240,7 +237,7 @@ my $fix_nasty = undef;
 my $background = undef;
 our $maxpatience = undef;
 my $identities = [];
-my $webhook = delete $ENV{GATEWAY_INTERFACE} ? 1 : 0;
+my $notify = undef;
 my $ver = undef;
 my $deploying_version = 0;
 my $maxdelayrecommended = 0;
@@ -252,7 +249,7 @@ GetOptions
     "branch=s" => \$force_branch,
     "chdir|C=s" => $chdir,
     "version|v" => \$ver,
-    "webhook:s" => \$webhook,
+    "notify" => \$notify,
     "fix-nasty" => \$fix_nasty,
     "background" => \$background,
     "max-delay=i" => \$maxpatience,
@@ -277,7 +274,7 @@ $SIG{INT} = $SIG{TERM} = sub {
     $cleanup->() if $cleanup;
     exit 1;
 };
-exit cgi_push_notification() if $webhook;
+exit push_notify(@ARGV) if $notify;
 
 sub run_how_cmd {
     my $stderr = shift;
@@ -350,42 +347,30 @@ sub checkout_branch {
     return $force_branch || current_branch;
 }
 
-sub cgi_push_notification {
-    $0 = "$RealScript - $cwd: Processing Push Notification ...";
-    print "\nOK\n";
+sub push_notify {
+    my $pushed_repo = shift || "";
+    my $pushed_refs = [@_];
+    $0 = "$Script - $cwd: Processing Push Notification ...";
     background();
-    my $pushed_repo = "";
-    my $pushed_refs = [];
-    if ($ENV{CONTENT_LENGTH} and read(STDIN, my $content, $ENV{CONTENT_LENGTH})) {
-        my $json = {};
-        if ($content =~ /\bpush/i and $content =~ /^\s*\{/ and $json = eval { require JSON; JSON->new->decode($content) } and "HASH" eq ref $json) {
-            if (my $repo = $json->{repo} || $json->{repository}) {
-                $repo = $repo->{name} if "HASH" eq ref $repo;
-                $pushed_repo = $repo if $repo and !ref $repo;
-            }
-            if (my $refs = $json->{refs} || $json->{ref}) {
-                $refs = [ $refs ] if !ref $refs;
-                push @$pushed_refs, @$refs if "ARRAY" eq ref $refs;
-            }
-        }
-    }
     $pushed_repo =~ s{.*/}{};
     $pushed_repo =~ s{\.git$}{};
     $pushed_repo or return 0;
     my $deployer_folder = {};
     my $sleeper_child = {};
     my $running = getps; # USER PID PPID TTY TIME COMMAND
-    $deployer_folder->{$1} = $2 while $running =~ s/^\S+\s+(\d+)\s+\d+\s.*\Q$RealScript\E - (.+?): Waiting.*//m;
+    $deployer_folder->{$1} = $2 while $running =~ s/^\S+\s+(\d+)\s+\d+\s.*\Q$Script\E - (.+?): Waiting.*//m;
     $sleeper_child->{$2} = $1 while $running =~ s/^\S+\s+(\d+)\s+(\d+)\s.*\ssleep.*//m;
     foreach my $deployer_pid (keys %$deployer_folder) {
         my $sleeper_pid = $sleeper_child->{$deployer_pid} or next;
-        chdir $deployer_folder->{$deployer_pid} or next;
-        my $need_to_notify = 0;
-        if (run_output_ignore_err(qw[git config --list]) =~ /^remote.*url=.*\Q$pushed_repo\E(|\.git)$/m) { # Smells like the right repo so verify the branch.
-            $need_to_notify = !@$pushed_refs; # If no refs found, just wake up the deployer to be safe.
-            if (@$pushed_refs and eval { checkout_branch() } =~ m{([^/]+)$} and my $this_branch = $1) {
-                # If a specific branch has been pushed, then only wake up the deployer if it matches
-                $need_to_notify = 1 if grep { /\Q$this_branch\E$/ } @$pushed_refs;
+        my $need_to_notify = !$pushed_repo; # If no repo, just wake up every deployer to be safe.
+        if ($pushed_repo) {
+            chdir $deployer_folder->{$deployer_pid} or next;
+            if (run_output_ignore_err(qw[git config --list]) =~ /^remote.*url=.*\Q$pushed_repo\E(|\.git)$/m) { # Smells like the right repo so verify the branch.
+                $need_to_notify = !@$pushed_refs; # If no refs found, just wake up the deployer to be safe.
+                if (@$pushed_refs and eval { checkout_branch() } =~ m{([^/]+)$} and my $this_branch = $1) {
+                    # If a specific branch has been pushed, then only wake up the deployer if it matches
+                    $need_to_notify = 1 if grep { /\Q$this_branch\E$/ } @$pushed_refs;
+                }
             }
         }
         kill $sleeper_pid if $need_to_notify; # WAKE UP!
