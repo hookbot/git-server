@@ -373,7 +373,7 @@ sub push_notify {
                 }
             }
         }
-        kill $sleeper_pid if $need_to_notify; # WAKE UP!
+        kill TERM => $sleeper_pid if $need_to_notify; # WAKE UP!
     }
     return 0;
 }
