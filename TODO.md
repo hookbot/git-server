@@ -7,6 +7,10 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - If proxy fails with the default Forwarding Agent, try each public key individually to see if any of them work any better. (-i PUB -o IdentitiesOnly=yes? Cache winning reader PUBs? Brick over reader PUB with known writer PUBs?).
 
+ - Investigate new feature like proxy.readonly to be used as Read-Only remote sync (instead of the normal proxy.url Two-Way sync).
+
+ - Right now, if proxy.url detects remote changes, then the repo is updated accordingly, even if connected with acl.readers or acl.deploy rights. Should this proxy sync be BLOCKED if {remote_user} does not have acl.writers permissions? Or is this okay to allow the update regardless? And if so, then who will be logged as the "writer" making this change? The NON-"acl.writers" user that ran "git pull"? And should this fire off another webhook with the {operation} "push" with this NON-"acl.writers" {remote_user}? In addition to, or INSTEAD OF, the normal {operation} "pull" webhook? Also, the "push notification" hooks (that are triggered with the normal "git push" operation) are completely skipped when changes are automatically imported from a remote proxy.url. This is definately bad because the git-deploy clients will not be notified right away, as expected, so they will need to wait un to --max-delay seconds.
+
  - Make sure ipc-parse can determine if action was actually performed or else the reason of why not.
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
