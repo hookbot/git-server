@@ -3,6 +3,8 @@ TODO
 
 Some features we need or want, plus some neat ideas that may not be too feasible to implement.
 
+ - The pre-receive hook ought to default to BLOCK any changes if not running through git-server correctly.
+
  - If running hooks/proxy shows 100% perfectly clean during the pre-write hook, then for the post-write hook, hooks/proxy is safe to rudely "--force" jam the sync to push to the remote $there repo every single branch and tag from $here, even if it rewrites history.
 
  - If proxy fails with the default Forwarding Agent, try each public key individually to see if any of them work any better. (-i PUB -o IdentitiesOnly=yes? Cache winning reader PUBs? Brick over reader PUB with known writer PUBs?).
