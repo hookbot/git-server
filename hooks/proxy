@@ -287,6 +287,8 @@ if (1) {
         if ($refs->{here} eq $refs->{$pick}) {
             # XXX: Will we be able sync accurately enough now that the "SYNCED" file is wiped? Maybe not, but it should be safe enough to try running again. So let's give it a try:
             warn localtime().": [$who] git-server: DEBUG: Three-Way Proxy partially synced but not all proxies. Trying again ...\n" if $ENV{DEBUG};
+            $ENV{XMODIFIERS} =~ s/^skip_proxy=.*//gm;
+            1 while $ENV{XMODIFIERS} =~ s/\n\n/\n/g;
             chdir($ENV{GIT_DIR}=$base) and sleep 1 and exec $0, $how;
         }
         else {
