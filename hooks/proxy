@@ -167,7 +167,7 @@ if (my $changes = {}) {
         warn localtime().": [$who] git-server: DEBUG: Need Sync (".join(" ",sort keys %$diff).") with [$pick] $proxy{$pick}\n" if $ENV{DEBUG};
         foreach my $ignore (@sync) {
             # If there are multiple remote proxy mismatches, then just focus on syncing the first one for now.
-            warn localtime().": [$who] git-server: DEBUG: Need Sync (".join(" ",sort keys %{ $changes->{$ignore} }).") with [$ignore] $proxy{$ignore} but ignoring this try.\n" if $ENV{DEBUG};
+            warn localtime().": [$who] git-server: DEBUG: Need Sync (".join(" ",sort keys %{ $changes->{$ignore} }).") with [$ignore] $proxy{$ignore} (ignoring this try)\n" if $ENV{DEBUG};
         }
     }
     $pick and $diff = $changes->{$pick} or die localtime().": [$who] git-server: Unable to calculate proxy sync requirements. Implementation error!\n";
@@ -284,7 +284,7 @@ if (1) {
     }
     elsif ($refs->{here} eq $refs->{$pick}) {
         # One remote was synced successfully, but not all, so it's safe to try again. Do not remove "SYNCED" file in case everything was synced during pre-write phase.
-        warn localtime().": [$who] git-server: DEBUG: Three-Way Proxy partially synced but not all proxies.Trying again ...\n" if $ENV{DEBUG};
+        warn localtime().": [$who] git-server: DEBUG: Three-Way Proxy partially synced but not all proxies. Trying again ...\n" if $ENV{DEBUG};
         $ENV{XMODIFIERS} =~ s/^skip_proxy=.*//gm; # Recursively sync, so do NOT skip_proxy this time.
         1 while $ENV{XMODIFIERS} =~ s/\n\n/\n/g;
         chdir($ENV{GIT_DIR}=$base) and sleep 1 and exec $0, $how;
