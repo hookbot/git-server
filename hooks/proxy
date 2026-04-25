@@ -185,13 +185,13 @@ foreach my $n (sort keys %$diff) {
         my ($older, $newer, $target);
         if ($l and $r) {
             # Both exist but are different
-            if (`git log $l | grep $r`) {
+            if (`git log --format='%H' $l | grep $r`) {
                 # Remote found in local log, so remote is older. Must update remote to catch up to local:
                 $older = $pick;
                 $newer = "here";
                 $target = $l;
             }
-            if (`git log $r | grep $l`) {
+            if (`git log --format='%H' $r | grep $l`) {
                 # Local found in remote log, so local is older. Must update local to catch up to remote:
                 $older = "here";
                 $newer = $pick;
