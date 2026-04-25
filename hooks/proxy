@@ -259,7 +259,7 @@ foreach my $n (sort keys %$diff) {
         elsif ($t eq "branch") {
             # Push local changes on branch $n to remote proxy
             0 == system "(git checkout $n || git checkout --track here/$n) 1>&2" or next;
-            system "(git pull --rebase here $n && git push $pick $n) 1>&2";
+            system "(git pull --rebase here $n && git push $pick $n --force) 1>&2";
         }
     }
     else {
