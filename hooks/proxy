@@ -32,7 +32,7 @@ sub remote_refs {
         $WHY_FAILED->{$remote} = "";
     }
     # Clean up refs list ignoring "HEAD" and ignore everything that isn't a regular branch or tag, such as /pull/ requests.
-    @list = sort { $a cmp $b } grep { m{\srefs/(?:heads|tags)/(?!HEAD)} } @list;
+    @list = sort { my ($a_ref,$b_ref) = "$a$b" =~ /\s(refs.*)\n.*?\s(refs.*)/; $a_ref cmp $b_ref or $a cmp $b } grep { m{\srefs/(?:heads|tags)/(?!HEAD)} } @list;
     return join "", @list;
 }
 
