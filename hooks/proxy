@@ -163,14 +163,13 @@ if (my $changes = {}) {
         }
     }
     if (my @sync = sort keys %$changes) {
-        $pick = shift @sync;
+        $pick = shift @sync and $diff = $changes->{$pick} or die localtime().": [$who] git-server: Unable to calculate proxy sync requirements. Implementation error!\n";
         warn localtime().": [$who] git-server: DEBUG: Need Sync (".join(" ",sort keys %$diff).") with [$pick] $proxy{$pick}\n" if $ENV{DEBUG};
         foreach my $ignore (@sync) {
             # If there are multiple remote proxy mismatches, then just focus on syncing the first one for now.
             warn localtime().": [$who] git-server: DEBUG: Need Sync (".join(" ",sort keys %{ $changes->{$ignore} }).") with [$ignore] $proxy{$ignore} (ignoring this try)\n" if $ENV{DEBUG};
         }
     }
-    $pick and $diff = $changes->{$pick} or die localtime().": [$who] git-server: Unable to calculate proxy sync requirements. Implementation error!\n";
 }
 foreach my $n (sort keys %$diff) {
     my $t = $diff->{$n};
