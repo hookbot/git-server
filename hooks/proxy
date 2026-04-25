@@ -164,13 +164,13 @@ if (my $changes = {}) {
     }
     if (my @sync = sort keys %$changes) {
         $pick = shift @sync;
+        warn localtime().": [$who] git-server: DEBUG: Need Sync (".join(" ",sort keys %$diff).") with [$pick] $proxy{$pick}\n" if $ENV{DEBUG};
         foreach my $ignore (@sync) {
             # If there are multiple remote proxy mismatches, then just focus on syncing the first one for now.
-            warn localtime().": [$who] git-server: DEBUG: Need Sync (".join(" ",sort keys %{ $changes->{$ignore} }).") with [$ignore] $proxy{$ignore} but ignoring for now. Please try again.\n" if $ENV{DEBUG};
+            warn localtime().": [$who] git-server: DEBUG: Need Sync (".join(" ",sort keys %{ $changes->{$ignore} }).") with [$ignore] $proxy{$ignore} but ignoring this try.\n" if $ENV{DEBUG};
         }
     }
     $pick and $diff = $changes->{$pick} or die localtime().": [$who] git-server: Unable to calculate proxy sync requirements. Implementation error!\n";
-    warn localtime().": [$who] git-server: DEBUG: Need Sync (".join(" ",sort keys %$diff).") with $proxy{$pick}\n" if $ENV{DEBUG};
 }
 foreach my $n (sort keys %$diff) {
     my $t = $diff->{$n};
@@ -260,7 +260,7 @@ foreach my $n (sort keys %$diff) {
         elsif ($t eq "branch") {
             # Push local changes on branch $n to remote proxy
             0 == system "(git checkout $n || git checkout --track here/$n) 1>&2" or next;
-            system "(git pull --rebase here $n && git push there) 1>&2";
+            system "(git pull --rebase here $n && git push $pick $n) 1>&2";
         }
     }
     else {
