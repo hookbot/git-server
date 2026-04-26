@@ -399,6 +399,7 @@ if (!@repo_dirs and opendir my $fh, $ENV{HOME}) {
 my @repo_info;
 if (@repo_dirs) {
     my %seen;
+    (my $cfg = $0) =~ s{[^/]+$}{hooks/configs};
     foreach my $repo (@repo_dirs) {
         $repo =~ s{/+$}{}; # Remove trailing slashes.
         next if $repo =~ /\.workingdir$/;
@@ -421,7 +422,7 @@ if (@repo_dirs) {
         (my $nice = $gitdir) =~ s{(?:/|\.git)+$}{};
         $nice =~ s{^\Q$ENV{HOME}\E/}{} if $ENV{REMOTE_USER}; # Hide $HOME if REMOTE
         next if $seen{$nice}++;
-        my $conf = run_output_include_err "git","-C",$gitdir,"config","--list","--local";
+        my $conf = run_output_include_err $cfg,"-C",$gitdir,"--local";
         my $info = { nice => $nice, dir => $gitdir, config => $conf };
         my $include = $ENV{REMOTE_USER} ? 0 : 1;
         foreach my $setting (qw[acl.writers acl.readers acl.deploy core.bare proxy.url]) {
