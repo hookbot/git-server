@@ -392,7 +392,7 @@ else {
 if (!@repo_dirs and opendir my $fh, $ENV{HOME}) {
     my @nodes = readdir $fh;
     closedir $fh;
-    foreach my $node (@nodes) {
+    foreach my $node (sort @nodes) {
         push @repo_dirs, "$ENV{HOME}/$node" if -f "$ENV{HOME}/$node/config" && -d "$ENV{HOME}/$node/refs" && -d "$ENV{HOME}/$node/objects" or -f "$ENV{HOME}/$node/.git/config";
     }
 }
