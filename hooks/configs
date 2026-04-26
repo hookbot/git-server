@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 # Program: hooks/configs
+# Usage: hooks/configs [ -C <dir> ] [ --local ] [ --global ] [ --system ]
 # Purpose:
 # This is only a helper utility, not a real hook.
 # Act the same as "git config --list" except:
@@ -11,9 +12,14 @@
 
 use strict;
 use warnings;
+my $opt = "";
+while (local $_ = shift) {
+    $opt .= " $_",next if /^--(local|global|system)$/;
+    chdir($_=shift) or die "configs: chdir($_): $!\n" if /^-C$/ and @ARGV;
+}
 my $conf = "";
 local $/ = "\0"; # --null means each line is: $NAME\n$VAL\0
-foreach (`git config --list --null`) {
+foreach (`git config$opt --list --null`) {
     my ($n, $v) = /([^\n]+)\n([^\0]*)/;
     # Make sure each value remains on a single line for easy parsing
     $v =~ s/\\/\\\\/g; $v =~ s/\n/\\n/g;
