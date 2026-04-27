@@ -11,8 +11,6 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Investigate new feature like proxy.readonly to be used as Read-Only remote sync (instead of the normal proxy.url Two-Way sync).
 
- - Right now, if proxy.url detects remote changes, then the repo is updated accordingly, even if connected with acl.readers or acl.deploy rights. Should this proxy sync be BLOCKED if {remote_user} does not have acl.writers permissions? Or is this okay to allow the update regardless? And if so, then who will be logged as the "writer" making this change? The NON-"acl.writers" user that ran "git pull"? And should this fire off another webhook with the {operation} "push" with this NON-"acl.writers" {remote_user}? In addition to, or INSTEAD OF, the normal {operation} "pull" webhook? Also, the "push notification" hooks (that are triggered with the normal "git push" operation) are completely skipped when changes are automatically imported from a remote proxy.url. This is definately bad because the git-deploy clients will not be notified right away, as expected, so they will need to wait un to --max-delay seconds.
-
  - Debug why multiple proxy.url doesn't completely sync on the first push pass, but then cleans up after another pull afterwards.
 
  - Make sure ipc-parse can determine if action was actually performed or else the reason of why not.
