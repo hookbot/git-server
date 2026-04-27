@@ -17,6 +17,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Investigate converting get_fork_hash common fork sniffer scan to use "git merge-base --fork-point <ref> <commit>" instead of grinding through the logs.
 
+ - Add git-deploy --insecure option to avoid choking with "The authenticity of host can't be established" when running "git fetch" the first time. Use StrictHostKeyChecking=no method instead of sloppy keyscan method. Deprecate --fix-nasty option in favor of new --insecure functionality to encompass both cases.
+
  - Make git-deploy remove temp files eariler so they won't exist during long waits for a push notification. (un~FD_CLOEXEC unlink /dev/fd/3 anonymous handle?)
 
  - Make git-deploy brick over "local modified" files if the end target version is exactly the same. (git diff HEAD? rebase --autostash?)
