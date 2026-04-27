@@ -13,6 +13,19 @@ $ENV{GIT_SSH_COMMAND} = (`git config core.sshCommand 2>/dev/null` =~ /^(.+)/ ? $
 $ENV{XMODIFIERS} ||= "";
 ($ENV{DEBUG} and !warn localtime().": [$who] git-server: DEBUG: [$base] Skipping proxy checks during $how\n") or exit 0 if $ENV{XMODIFIERS} =~ /^skip_proxy=(.*)/m and $1;
 $ENV{XMODIFIERS} = join "\n", "skip_proxy=1", split /\n/, $ENV{XMODIFIERS};
+$ENV{USER} ||= [getpwuid $<]->[0];
+$ENV{HOME} ||= [getpwuid $<]->[7];
+while (my ($remote,$proxy) = each %proxy) {
+    # Ensure no cheater local repo urls.
+    # XXX: Should HTTP URLs be converted to SSH URLs on the fly to be "helpful" for known URLs, such as github.com?
+    next if $proxy =~ m{^(\w+://|[-.@\w]+:)}; # If it has a colon, it's probably a safe enough "remote" git URL
+    my $server = $ENV{SERVER_ADDR} or die "Auth required for proxy.url $proxy\n";
+    $proxy =~ s{^~(/?)}{$ENV{HOME}$1};
+    $proxy =~ s{^\Q$ENV{HOME}\E(/?)}{};
+    $proxy ||= "/";
+    $proxy = "ssh://$ENV{USER}\@$server:$proxy";
+    $proxy{$remote} = $proxy;
+}
 my $WHY_FAILED = {};
 sub remote_refs {
     my $remote = shift;
