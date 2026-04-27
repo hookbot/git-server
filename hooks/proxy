@@ -23,7 +23,7 @@ while (my ($remote,$proxy) = each %proxy) {
     $proxy =~ s{^~(/?)}{$ENV{HOME}$1};
     $proxy =~ s{^\Q$ENV{HOME}\E(/?)}{};
     $proxy ||= "/";
-    $proxy = "ssh://$ENV{USER}\@$server:$proxy";
+    $proxy = "$ENV{USER}\@$server:$proxy";
     $proxy{$remote} = $proxy;
 }
 my $WHY_FAILED = {};
