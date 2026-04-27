@@ -7,9 +7,9 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - If proxy fails with the default Forwarding Agent, try each public key individually to see if any of them work any better. (-i PUB -o IdentitiesOnly=yes? Cache winning reader PUBs? Brick over reader PUB with known writer PUBs?).
 
- - Investigate new feature like proxy.readonly to be used as Read-Only remote sync (instead of the normal proxy.url Two-Way sync).
+ - Investigate new feature like proxy.readonly to be used as Read-Only remote sync, instead of the normal proxy.url Two-Way syncr. This can help with setting up a load balancing cluster of git servers, particularly when used for large deployment systems, which only need read-only access anyways. This can also help when trying to sync with remote repo with read-only access is all that is available, such as a simple public HTTP sytle git URL. Writes directly to the remote proxy.readonly will be synced to the local repo, but not vice versa, so writes to the local repo will not attempt to be pushed to the proxy.readonly remote.
 
- - Make sure ipc-parse can determine if action was actually performed or else the reason of why not.
+ - Make sure ipc-parse can determine if action was actually performed or else the reason of why not. Handle legacy strace 4.5.18 "exit_group(0)" format without any "+++ exited with 0 +++" entry.
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
@@ -21,7 +21,7 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Make git-deploy brick over "local modified" files if the end target version is exactly the same. (git diff HEAD? rebase --autostash?)
 
- - Make git-deploy --notify be able to signal other git-deploy processes running as another user. (Magic Listen Port? or Special ProcTitle?).
+ - Make git-deploy --notify be able to signal other git-deploy processes running as another user. (Magic Listen Port? or Sleep w/ Special ProcTitle?).
 
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6. (~/.ssh/config Host $remotehost "AddressFamily" inet(6)?).
 
