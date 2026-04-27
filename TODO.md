@@ -9,8 +9,6 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Investigate new feature like proxy.readonly to be used as Read-Only remote sync (instead of the normal proxy.url Two-Way sync).
 
- - Debug why multiple proxy.url doesn't completely sync on the first push pass, but then cleans up after another pull afterwards.
-
  - Make sure ipc-parse can determine if action was actually performed or else the reason of why not.
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
