@@ -262,6 +262,37 @@ GetOptions
     "identity|i=s@" => $identities,
     or exec perldoc => $0;
 
+$ENV{HOME} ||= [getpwnuid $<]->[7];
+if (my $sep = eval { require Config; $Config::Config{path_sep} }) {
+    my @paths = ("$ENV{HOME}/.local/bin","$ENV{HOME}/bin",qw[/usr/local/bin /usr/bin /bin], split $sep, ($ENV{PATH}||=""));
+    my @shims = grep { -x "$_/git" && -T _ } @paths;
+    if (@shims) { # Make sure shim wrapper comes first
+        unshift @paths, @shims;
+    }
+    elsif (@shims = grep { -x "$_/git-client" } ($0=~m{^(.*)/+[^/]+$}?($1):()), @paths) {
+        my $target = undef; # No shim in PATH but found git-client, so create symlink shim in $target.
+        foreach (@paths) {
+            my @mk;
+            push @mk, $_;
+            if (!-d) {
+                my @mk = ($_);
+                push @mk, $1 while $mk[-1]=~m{^(.+)/} && !-e $1;
+                while (my $d = pop @mk) { mkdir $d, 0755; }
+            }
+            last if -d && -w _ and $target = $_;
+        }
+        if ($target) { # Found a good place for the shim
+            unlink "$target/git" if lstat "$target/git" and !-x _;
+            symlink "$shims[0]/git-client","$target/git";
+            -x "$target/git" or warn "ERROR: Failed writing to $target: $!";
+            unshift @paths, $target;
+        }
+    }
+    chomp(my $gitprefix = run_output_ignore_err("git","--exec-path"));
+    my %seen = ($gitprefix => 1); # Remove --exec-path and any duplicates from $PATH
+    $ENV{PATH} = join $sep, grep { !$seen{$_}++ } map { abs_path $_ or $_ } @paths;
+}
+
 if ($ver) {
     print "[git-deploy v$VERSION] ".`git --version`;
     exit;
