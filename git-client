@@ -89,6 +89,11 @@ use IO::Handle; # For non-blocking
 
 our $VERSION = "0.044";
 
+# Handle Special GIT_SSH Wrapper to emulate GIT_SSH_COMMAND behavior
+!$ENV{DEBUG} || warn "DEBUG: [".abs_path($0)."] GIT_SSH shim running ...\n"
+    and exec sh => -c => $ENV{GIT_SSH_COMMAND}.' "$@"' => ssh => @ARGV or die "exec: $!\n"
+    if $ENV{GIT_SSH} and $0 eq $ENV{GIT_SSH} and $ENV{GIT_SSH_COMMAND} ||= "ssh";
+
 # Locate the real "git" later in the $PATH (after myself)
 our $real_git = find_real_git();
 
@@ -122,6 +127,8 @@ scan_descent_override();
 # but "git-config" will be ignored since /usr/libexec/git-core/git-config will always come first in the PATH.
 # So we must handle all "git config" overrides within this "git" wrapper.
 handle_config(@ARGV);
+
+$ENV{GIT_SSH} = $0 and $ENV{DEBUG} and warn "DEBUG: [$0] Faking GIT_SSH_COMMAND behavior for incompetent git $1.$2.x\n" if !$ENV{GIT_SSH} and $ENV{GIT_SSH_COMMAND} and git("--version") !~ /version\s+(\d+)\.(\d+)/ || $1 < 2 || $1 eq 2 && $2 < 3; # Backward compatible with git < 2.3.x where GIT_SSH_COMMAND is ignored
 
 exec $real_git, @ARGV;
 
