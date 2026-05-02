@@ -247,6 +247,8 @@ my $notify = undef;
 my $ver = undef;
 my $deploying_version = 0;
 my $maxdelayrecommended = 0;
+# If $GIT_SSH is used, then $GIT_SSH_COMMAND was ignored (git < 2.3.x) so emulate it for backward compatibility.
+exec sh => -c => $ENV{GIT_SSH_COMMAND}.' "$@"' => ssh => @ARGV or die "exec: $!\n" if $0 eq($ENV{GIT_SSH}||"") and $ENV{GIT_SSH_COMMAND}||="ssh";
 Getopt::Long::Configure("no_ignore_case");
 GetOptions
     "O|o=s@" => $opts,
@@ -433,6 +435,7 @@ sub pull_push_notification {
         $ENV{GIT_SSH_COMMAND} .= " -o IdentitiesOnly=yes";
         $ENV{GIT_SSH_COMMAND} .= " -i $_" foreach @$identities;
     }
+    local $ENV{GIT_SSH} = $invoked[0]; # Use $GIT_SSH in case $GIT_SSH_COMMAND is ignored.
     $0 = "$Script - $cwd: Waiting for push notification [$deploy_branch]";
     # Run "fetch" to call "git-upload-pack" causing the git-server to wait for the "push_notification" to release the update:
     return run_output_include_err(qw[git fetch]);
