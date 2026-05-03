@@ -322,6 +322,21 @@ if (my $sep = eval { require Config; $Config::Config{path_sep} }) {
     }
 }
 
+if (my $full = abs_path $0) {
+    if ($full !~ m{^(?:|/usr)/bin/+[^/]+$}) {
+        my $alias = `git config --global alias.deploy`;
+        if ($alias ne "!$full") {
+            if (-t STDIN) {
+                warn localtime().qq{: [$$] $Script: Warning: Dangerous invocation [$full] may not work from cron. Hint: To fix this warning, run this: "git config --global alias.deploy '!$full'"\n};
+            }
+            else {
+                warn localtime().qq{: [$$] $Script: Warning: Dangerous invocation [$full] without a TTY may not work from cron. Running "git config --global alias.deploy '!$full'" ...\n};
+                system(qw[git config --global alias.deploy],"!$full");
+            }
+        }
+    }
+}
+
 if ($ver) {
     print "[git-deploy v$VERSION] ".`git --version`;
     exit;
