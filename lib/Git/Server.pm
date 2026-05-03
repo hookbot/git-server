@@ -1,6 +1,6 @@
 package Git::Server;
 
-our $VERSION = "0.044";
+our $VERSION = "0.045";
 
 1;
 
