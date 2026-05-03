@@ -84,8 +84,8 @@ if ($ENV{GATEWAY_INTERFACE}) {
         my $json = {};
         ($content = $1) =~ y/+/ /,$content =~ s/%([0-9a-fA-F]{2})/chr hex $1/eg if $content =~ /^\w+=((?:%20|\+)*(?:%7b|\{)[^&=]+)/i;
         if ($content =~ /\bpush/i and $content =~ /^\s*\{/ and $json = eval { require JSON; JSON->new->decode($content) } and "HASH" eq ref $json) {
-            if (my $repo = $json->{repo} || $json->{repository}) {
-                $repo = $repo->{name} if "HASH" eq ref $repo;
+            if (my $repo = $json->{repository} || $json->{repo}) {
+                $repo = $repo->{url} || $repo->{full_name} || $repo->{name} if "HASH" eq ref $repo;
                 $pushed_repo = $repo if $repo and !ref $repo;
             }
             if (my $refs = $json->{refs} || $json->{ref}) {
