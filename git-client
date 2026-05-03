@@ -128,8 +128,6 @@ scan_descent_override();
 # So we must handle all "git config" overrides within this "git" wrapper.
 handle_config(@ARGV);
 
-$ENV{GIT_SSH} = $0 if $ENV{GIT_SSH_COMMAND}; # Backward compatible in case $GIT_SSH_COMMAND is ignored (git < 2.3.x)
-
 exec $real_git, @ARGV;
 
 # Provide special options through "SendEnv XMODIFIERS" to make available in pre-hooks prior to running the real git command on the server
@@ -154,6 +152,7 @@ sub pass_options {
     $ENV{XMODIFIERS} = join "\n", @options;
     $ENV{GIT_SSH_COMMAND} ||= git(qw[config core.sshCommand]) =~ /^(.+)/ ? $1 : "ssh";
     $ENV{GIT_SSH_COMMAND} = "$ENV{GIT_SSH_COMMAND} -o SendEnv=XMODIFIERS";
+    $ENV{GIT_SSH} ||= $0; # Backward compatible in case $GIT_SSH_COMMAND is ignored (git < 2.3.x)
 }
 
 sub find_real_git {
