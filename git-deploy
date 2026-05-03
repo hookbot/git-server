@@ -337,8 +337,8 @@ if (my $full = abs_path $0) {
 }
 
 if ($ver) {
-    print "[git-deploy v$VERSION] ".`git --version`;
-    exit;
+    print "[git-deploy v$VERSION] ";
+    exec "git --version" or die "Unable to view git --version";
 }
 
 my $runner = $$;
