@@ -266,33 +266,60 @@ GetOptions
 
 $ENV{HOME} ||= [getpwnuid $<]->[7];
 if (my $sep = eval { require Config; $Config::Config{path_sep} }) {
-    my @paths = ("$ENV{HOME}/.local/bin","$ENV{HOME}/bin",qw[/usr/local/bin /usr/bin /bin], split $sep, ($ENV{PATH}||=""));
-    my @shims = grep { -x "$_/git" && -T _ } @paths;
-    if (@shims) { # Make sure shim wrapper comes first
-        unshift @paths, @shims;
-    }
-    elsif (@shims = grep { -x "$_/git-client" } ($0=~m{^(.*)/+[^/]+$}?($1):()), @paths) {
-        my $target = undef; # No shim in PATH but found git-client, so create symlink shim in $target.
-        foreach (@paths) {
-            my @mk;
-            push @mk, $_;
-            if (!-d) {
-                my @mk = ($_);
-                push @mk, $1 while $mk[-1]=~m{^(.+)/} && !-e $1;
-                while (my $d = pop @mk) { mkdir $d, 0755; }
+    my @paths = split $sep, ($ENV{PATH}||="/usr/bin");
+    my @gits = grep { -x "$_/git" } @paths;
+    my @shims = grep { -T "$_/git" } @gits;
+    if (!@gits or !@shims or $gits[0] ne $shims[0]) { # Uh oh, first git is not a nice shim. Changes to $PATH may help.
+        @gits or warn "WARNING: No git found in PATH [$ENV{PATH}]";
+        # If @shims, then Great! Local shim found later in $PATH (i.e., maybe on RHEL7 and older)
+        if (!@shims) {
+            # No shim in entire $PATH (i.e., maybe from cron) so try other directories
+            unshift @paths, "$ENV{HOME}/.local/bin","$ENV{HOME}/bin",qw[/usr/local/bin /usr/bin /bin];
+            @gits = grep { -x "$_/git" } @paths;
+            @shims = grep { -T "$_/git" } @gits;
+            if (!@gits or !@shims or $gits[0] ne $shims[0]) { # Shim is still not first git
+                if (@shims) { # Great! Move it to the front.
+                }
+                # Otherwise, if no shim in $PATH, look for orginal git-client shim:
+                if (@shims = grep { -x "$_/git-client" } @paths, ($0=~m{^(.*)/+[^/]+$}?($1):())) {
+                    my $target = undef; # Try to create symlink shim in first $target with permission:
+                    foreach (@paths) {
+                        last if -d && -w _ and !-x "$_/git" and $target = $_;
+                    }
+                    if (!$target) { # No already-existing writable dir in $PATH yet, so last-ditch effort to try creating one.
+                        foreach (@paths) {
+                            if (!-d) {
+                                my @mk = ($_);
+                                push @mk, $1 while $mk[-1]=~m{^(.+)/} && !-e $1;
+                                while (my $d = pop @mk) { mkdir $d, 0755; }
+                            }
+                            last if -d && -w _ and !-x "$_/git" and $target = $_;
+                        }
+                    }
+                    if ($target) { # Found a good place to try jamming in the shim
+                        unlink "$target/git" if lstat "$target/git";
+                        symlink "$shims[0]/git-client","$target/git";
+                        if (!-x "$target/git") {
+                            warn "ERROR: Failed to create shim $target/git: $!";
+                            $target = undef;
+                        }
+                    }
+                    if ($target) {
+                        @shims = ($target);
+                    }
+                    else {
+                        @shims = ();
+                    }
+                }
             }
-            last if -d && -w _ and $target = $_;
         }
-        if ($target) { # Found a good place for the shim
-            unlink "$target/git" if lstat "$target/git" and !-x _;
-            symlink "$shims[0]/git-client","$target/git";
-            -x "$target/git" or warn "ERROR: Failed writing to $target: $!";
-            unshift @paths, $target;
+        if (@shims) {
+            unshift @paths, $shims[0]; # Make sure shim dir comes first
+            chomp(my $gitprefix = run_output_ignore_err("git","--exec-path"));
+            my %seen = ($gitprefix => 1); # Remove --exec-path (i.e., invoked from "git deploy") and remove any duplicates so $PATH can't keep bloat growing.
+            $ENV{PATH} = join $sep, grep { !$seen{$_}++ } map { abs_path $_ or $_ } @paths;
         }
     }
-    chomp(my $gitprefix = run_output_ignore_err("git","--exec-path"));
-    my %seen = ($gitprefix => 1); # Remove --exec-path and any duplicates from $PATH
-    $ENV{PATH} = join $sep, grep { !$seen{$_}++ } map { abs_path $_ or $_ } @paths;
 }
 
 if ($ver) {
