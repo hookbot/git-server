@@ -1,5 +1,14 @@
 Revision History for Git::Server
 
+0.044  2026-05-02 23:59:00
+ - INSTALL.md doc corrections.
+ - git-deploy enhancements:
+   * Message recommending alias if not in $PATH.
+   * Fix $PATH to let shim work even from cron.
+   * Backward compatibility patch for git < 2.3.x
+ - git-client enhancements:
+   * Backward compatibility patch for git < 2.3.x
+
 0.043  2026-04-27 11:00:00
  - Warn clean distribution for RPM 4.14 thru 4.19.
  - Fix log.logfile refs spacing logging.
