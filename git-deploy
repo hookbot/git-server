@@ -280,8 +280,8 @@ if (my $sep = eval { require Config; $Config::Config{path_sep} }) {
             if (!@gits or !@shims or $gits[0] ne $shims[0]) { # Shim is still not first git
                 if (@shims) { # Great! Move it to the front.
                 }
-                # Otherwise, if no shim in $PATH, look for orginal git-client shim:
-                if (@shims = grep { -x "$_/git-client" } @paths, ($0=~m{^(.*)/+[^/]+$}?($1):())) {
+                # Otherwise, if no shim in $PATH, look for original git-client shim:
+                elsif (@shims = grep { -x "$_/git-client" } @paths, ($0=~m{^(.*)/+[^/]+$}?($1):())) {
                     my $target = undef; # Try to create symlink shim in first $target with permission:
                     foreach (@paths) {
                         last if -d && -w _ and !-x "$_/git" and $target = $_;
