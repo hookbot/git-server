@@ -297,6 +297,7 @@ if (my $sep = eval { require Config; $Config::Config{path_sep} }) {
                         }
                     }
                     if ($target) { # Found a good place to try jamming in the shim
+                        $target = abs_path $target;
                         unlink "$target/git" if lstat "$target/git";
                         symlink "$shims[0]/git-client","$target/git";
                         if (!-x "$target/git") {
