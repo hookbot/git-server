@@ -3,6 +3,13 @@ TODO
 
 Some features we need or want, plus some neat ideas that may not be too feasible to implement.
 
+ - Sometimes, it's hard to discern which repo run-git-hooks is involved with, so it ought to update its proctitle to be something more useful. Right now, it can look something less useful like this:
+    git      3629420  0.9  0.0  36348  7104 ?        Ss   03:49   0:00  |       \_ /usr/bin/perl /usr/src/git-server/hooks/run-git-hooks -c git-upload-pack '/home/git/repo'
+    git      3629917  1.0  0.0  29868  6532 ?        S    03:49   0:00  |           \_ /usr/bin/perl /usr/src/git-server/hooks/pre-read
+    git      3629935  0.0  0.0  26328  5116 ?        S    03:49   0:00  |               \_ /usr/bin/perl /usr/src/git-server/hooks/configs
+    git      3629939  2.5  0.1  33276  7972 ?        S    03:49   0:00  |                   \_ /usr/bin/perl /home/git/bin/git config --list --null
+    git      3630007  6.0  0.1  33164  7956 ?        S    03:49   0:00  |                       \_ /usr/bin/perl /usr/local/bin/git config --list --local --show-origin --null
+
  - The pre-receive hook ought to default to BLOCK any changes if not running through git-server correctly.
 
  - If proxy fails with the default Forwarding Agent, try each public key individually to see if any of them work any better. (-i PUB -o IdentitiesOnly=yes? Cache winning reader PUBs? Brick over reader PUB with known writer PUBs?).
