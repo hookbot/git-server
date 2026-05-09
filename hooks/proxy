@@ -12,7 +12,10 @@ my $working = "$base.workingdir";
 $ENV{GIT_SSH_COMMAND} = (`git config core.sshCommand 2>/dev/null` =~ /^(.+)/ ? $1 : "ssh")." -A -o SendEnv=XMODIFIERS";
 $ENV{XMODIFIERS} ||= "";
 ($ENV{DEBUG} and !warn localtime().": [$who] git-server: DEBUG: [$base] Skipping proxy checks during $how\n") or exit 0 if $ENV{XMODIFIERS} =~ /^skip_proxy=(.*)/m and $1;
-$ENV{XMODIFIERS} = join "\n", "skip_proxy=1", split /\n/, $ENV{XMODIFIERS};
+$ENV{XMODIFIERS} =~ s/^skip_proxy=.*//gm; # Clear any (false) setting
+$ENV{XMODIFIERS} = "skip_proxy=1\n$ENV{XMODIFIERS}";
+while ($ENV{XMODIFIERS} =~ s/\n\n/\n/g) {}
+$ENV{XMODIFIERS} =~ s/\n+$//;
 $ENV{USER} ||= [getpwuid $<]->[0];
 $ENV{HOME} ||= [getpwuid $<]->[7];
 while (my ($remote,$proxy) = each %proxy) {
@@ -297,7 +300,7 @@ if (1) {
     elsif ($refs->{here} eq $refs->{$pick}) {
         # One remote was synced successfully, but not all, so it's safe to try again. Do not remove "SYNCED" file in case everything was synced during pre-write phase.
         warn localtime().": [$who] git-server: DEBUG: Three-Way Proxy partially synced but not all proxies. Trying again ...\n" if $ENV{DEBUG};
-        $ENV{XMODIFIERS} =~ s/^skip_proxy=.*//gm; # Recursively sync, so do NOT skip_proxy this time.
+        $ENV{XMODIFIERS} =~ s/^skip_proxy=.*\n?//gm; # Recursively sync, so do NOT skip_proxy this time.
         1 while $ENV{XMODIFIERS} =~ s/\n\n/\n/g;
         chdir($ENV{GIT_DIR}=$base) and sleep 1 and exec $0, $how;
     }
