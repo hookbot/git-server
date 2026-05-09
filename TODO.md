@@ -39,6 +39,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
  - Add Support for HTTP protocol git read and write operations using Basic password Authorization (instead of only pubkeys over SSH protocol).
    * Design a way to support "git-deploy" feature via HTTP (through REMOTE_USER or DeployToken or URI flag or Special HTTP Header or PAT [Personal Access Token] or maybe some other mechanism). Allow client to specify max-delay seconds (default 90) in case nothing new is ready since last pull.
 
+ - Investigate why git 1.8.2.3 can deadlock and double slap on a network operation if git-client shim is in $PATH and with $DEBUG enabled.
+
  - Pre-Load GIT_OPTION_<optionname> also since GIT_OPTION_<N> is annoying to spin through every time just to find the option you want.
 
  - Integrate or convert to be compatible with Git::Hooks::* plugins.
