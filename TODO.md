@@ -41,6 +41,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Investigate why git 1.8.2.3 can deadlock and double slap on a network operation if git-client shim is in $PATH and with $DEBUG enabled.
 
+ - Investigate why unsynced proxy.url deletes a tag from the side that has the tag, but it ought to copy to the missing side.
+
  - Pre-Load GIT_OPTION_<optionname> also since GIT_OPTION_<N> is annoying to spin through every time just to find the option you want.
 
  - Integrate or convert to be compatible with Git::Hooks::* plugins.
