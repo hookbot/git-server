@@ -185,16 +185,16 @@ sub find_real_git {
 
 # Capture "git" command output
 sub git {
-    return eval {
-        if (my $pid = open my $fh_out, "-|") {
-            # Parent: Read answer and wait for the child zombie to clear.
-            return [join("",<$fh_out>), waitpid($pid,0), close($fh_out)]->[0];
-        }
-        # Child runs the git command
-        $HANDLE_STDERR->();
-        # Secure exec @array method to avoid having to shell escape arguments containing spaces or other dangerous chars
-        exec $real_git, @_ or exit 1;
-    };
+    if (open my $fh_out, "-|") {
+        # Parent: Read answer and wait for the child zombie to clear.
+        local $/;
+        return [scalar(<$fh_out>), close($fh_out)]->[0];
+    }
+
+    # Child runs the git command
+    $HANDLE_STDERR->();
+    # Secure exec @array method to avoid having to shell escape arguments containing spaces or other dangerous chars
+    exec $real_git, @_ or exit 1;
 }
 
 # Jam equivalent "-c" config settings into @ARGV for any descent .gitconfig files and set GIT_CLIENT_OVERRIDE* env.
