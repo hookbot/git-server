@@ -133,11 +133,12 @@ exec $real_git, @ARGV;
 # Provide special options through "SendEnv XMODIFIERS" to make available in pre-hooks prior to running the real git command on the server
 sub pass_options {
     my ($op) = grep { /^(clone|fetch|pull|ls-remote|push)$/ } @ARGV;
-    return if !$op or ($ENV{XMODIFIERS}||"") =~ /\bclient=/;
-    # Need to search for special "-o" options for XMODIFERS transport
+    return if !$op;
+    # Need to search for special "-o" options for XMODIFIERS transport
+    my $xmod = $ENV{XMODIFIERS} || "";
     my @options = ();
     my $pull_branch = "";
-    push @options, "DEBUG=$ENV{DEBUG}" if defined $ENV{DEBUG};
+    push @options, "DEBUG=$ENV{DEBUG}" if defined $ENV{DEBUG} and $xmod !~ /^DEBUG=/m;
     if (eval { require Getopt::Long; 1; } and
         Getopt::Long::GetOptions( "O=s" => \@options )) { # Strip stealth -O args from ARGV so the real git doesn't choke on it
         if (my $rest_opt = ($op ne "clone" && "o|")."server-option|push-option=s") { # Ignore -o<origin> for "git clone"
@@ -145,10 +146,10 @@ sub pass_options {
             Getopt::Long::GetOptions( $rest_opt => \@options, "branch|b=s" => \$pull_branch ); # Handle "git clone -b <ref> <repo>"
         }
     }
-    $pull_branch = $1 if $op eq "pull" and git(qw[branch -a]) =~ m{^\* ([\w/\-.@]+)\s*$}m;
+    $pull_branch = $1 if $op =~ /^(fetch|pull)$/ and $xmod !~ /^pull_branch=/m and git("branch") =~ m{^\* ([\w/\-.@]+)\s*$}m;
     push @options, "pull_branch=$pull_branch" if $pull_branch;
-    push @options, "client=".abs_path($0)."\@v$VERSION";
-    push @options, $ENV{XMODIFIERS} if $ENV{XMODIFIERS};
+    push @options, "client=".abs_path($0)."\@v$VERSION" if $xmod !~ /^client=/m;
+    push @options, $xmod if $xmod;
     $ENV{XMODIFIERS} = join "\n", @options;
     $ENV{GIT_SSH_COMMAND} ||= git(qw[config core.sshCommand]) =~ /^(.+)/ ? $1 : "ssh";
     $ENV{GIT_SSH_COMMAND} = "$ENV{GIT_SSH_COMMAND} -o SendEnv=XMODIFIERS";
