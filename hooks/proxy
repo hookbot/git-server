@@ -112,7 +112,8 @@ if (chdir $working) {
         system "rm","-rf",$working;
         die localtime().": [$who] git-server: Aborting due to proxy repo configuration changes. Please try again.\n";
     }
-    warn localtime().": [$who] git-server: DEBUG: Working directory setup correctly.\n" if $ENV{DEBUG};
+    warn localtime().": [$who] git-server: DEBUG: Working directory setup correctly: $how\n" if $ENV{DEBUG};
+    exit 0 if $how eq "post-read"; # If everything is working properly, there will never be anything to do in the post-read phase. Don't waste time trying.
 }
 else {
     die localtime().": [$who] git-server: chdir $working: $!\n";
