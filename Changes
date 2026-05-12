@@ -1,5 +1,17 @@
 Revision History for Git::Server
 
+0.045  2026-05-12 03:00:00
+ - Update webhookcallback.cgi to handle formats
+   like default GitLab or GitHub or Git-Server.
+ - Compatibility fix for legacy strace <= 4.5.18.
+ - Strip XMODIFIERS nothing lines for proxy.url.
+ - Fix acl.restrictip malformed CIDR message.
+ - Fix git-client DEBUG deadlock on git < 2.3.x.
+ - git-deploy enhancements:
+   * Shim scan fix.
+   * Allow bootstrapped or relative invocation.
+   * Avoid blowing away local modifications.
+
 0.044  2026-05-02 23:59:00
  - INSTALL.md doc corrections.
  - git-deploy enhancements:
