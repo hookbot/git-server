@@ -10,7 +10,7 @@ run-git-hooks - Secure Git Server with more granular hooks capabilities than def
 
   Standard Method:
   With SHELL=/bin/bash, use the following format in ~/.ssh/authorized_keys:
-  command="~/git-server/gitserver REMOTE_USER=user1" ssh-ed25519 AAAA_OAX+blah_pub__ user1@workstation
+  command="/path/to/git-server REMOTE_USER=user1" ssh-ed25519 AAAA_OAX+blah_pub__ user1@workstation
 
    -- OR --
 
@@ -100,8 +100,9 @@ If it does not exist, then the git operation never ran.
 
 This post-write hook will always be executed regardless
 of the exit statuses of pre-write or the git operation.
-The post-write hook is meant primarily for notification
-and cannot affect the outcome of the git operation.
+The post-write hook is intended primarily for logging and
+push notification. But at this poine, the git operation
+has already completed, but it cannot affect or block it.
 
 =head2 hooks/git-shell
 
