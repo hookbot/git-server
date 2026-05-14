@@ -137,6 +137,7 @@ our $VERSION = "0.046";
 my $who = ($ENV{REMOTE_USER} || die "Auth required\n")."\@$ENV{REMOTE_ADDR}";
 $ENV{GIT_CONNECTED_EPOCH} ||= eval { require Time::HiRes; Time::HiRes::time() } || time;
 $ENV{GIT_SERVER_VERSION} = $VERSION;
+$ENV{GIT_SERVER_WEBHOOK_QUEUE} ||= "$ENV{HOME}/.local/share/webhookqueue";
 
 my $git_op_hook = {
     "git-upload-pack" => "read", # i.e., clone, pull, fetch, ls-remote
