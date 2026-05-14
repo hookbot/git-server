@@ -68,7 +68,6 @@ if (!$ENV{DEBUG}) {
 
 my $ref = {};
 my $queue = $ENV{GIT_SERVER_WEBHOOK_QUEUE} || "$ENV{HOME}/.webhooks";
-my $queue_lock = "$queue/.lock";
 if ($ENV{IPC}) {
     my $info = do {
         my $data = "";
@@ -144,7 +143,7 @@ if ($ENV{IPC}) {
         if ($event and open my $fh, ">>", "$queuefile.NEW") {
             print $fh $event;
             close $fh;
-            rename "$queuefile.NEW",$queue;
+            rename "$queuefile.NEW",$queuefile;
         }
         else {
             logger "Freeze queue failure? URL[$url] FILE[$queuefile] ERR[$@][$!]\n$event";
@@ -202,11 +201,13 @@ else {
     logger $msg;
 }
 
+my $lock;
+my $queue_lock = "$queue/.lock";
+!-e $queue_lock and open $lock, ">>", $queue_lock and close $lock; # Create empty "touch" file
 if (!-e $queue_lock) {
-    warn localtime().": [$who] git-server: [$$] DEBUG: WebHooks lock file [$queue_lock] does not exist.\n";
+    warn localtime().": [$who] git-server: [$$] DEBUG: FAILED creating WebHooks lock file! [$queue_lock] $!\n";
     exit;
 }
-my $lock;
 if (!open $lock, "+<", $queue_lock) {
     die localtime().": [$who] git-server: [$$] DEBUG: WebHooks lock file [$queue_lock] could not be opened! [$!]\n";
 }
