@@ -224,8 +224,8 @@ print $lock "$$\n";
 truncate $lock, tell $lock;
 chdir $queue or die localtime().": [$who] git-server: [$$] DEBUG: Exclusively locked but unable to chdir? [$queue] $!\n";
 
-my $sent;
-do {
+my $sent = 1;
+while ($sent) { # If any webhooks were sent, then keep trying until it's clean and quiet.
     $sent = 0;
     my $send_failures = 0;
     opendir my $q, "." or die localtime().": [$who] git-server: [$$] DEBUG: Exclusively locked but unable to read queue directory? [$queue] $!\n";
@@ -348,6 +348,7 @@ do {
     $0 = "$Script - Completed $sent of $total WebHooks".($send_failures ? " and $send_failures failed" : "");
     # XXX: Would it be better to do some kind of better back-off the more times a webhook crashes?
     sleep 2 + $send_failures * 10;
-} while ($sent); # If any webhooks were sent, then keep trying until it's clean and quiet.
+}
+
 close $lock;
 exit;
