@@ -285,7 +285,7 @@ if ($actual_hooks ne $should_hooks) {
 }
 
 if (`git config --list` !~ /^acl\./m) {
-    warn localtime().": [$who] git-server: No [acl] found? Running: [git config acl.writer $ENV{REMOTE_USER}]\n";
+    warn localtime().": [$who] git-server: No [acl] found? Running: [git config acl.writers $ENV{REMOTE_USER}]\n";
     system "git config acl.writers $ENV{REMOTE_USER} 1>&2";
 }
 
