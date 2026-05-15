@@ -280,7 +280,8 @@ while ($sent) { # If any webhooks were sent, then keep trying until it's clean a
                 $body = "$ref\n";
             }
             else {
-                logger "Unable to load JSON.pm? [$p] $@\n$ref";
+                rename $p, $f; # Hopefully JSON will work better later?
+                logger "Unable to load JSON.pm? This is required for transport. Try again later. [$p]\n$@\n";
                 next;
             }
         }
