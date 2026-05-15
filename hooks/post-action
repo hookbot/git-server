@@ -348,7 +348,7 @@ while ($sent) { # If any webhooks were sent, then keep trying until it's clean a
     }
     $0 = "$Script - Completed $sent of $total WebHooks".($send_failures ? " and $send_failures failed" : "");
     # XXX: Would it be better to do some kind of better back-off the more times a webhook crashes?
-    sleep 2 + $send_failures * 10;
+    sleep 2 + $sent + $send_failures * 10;
 }
 
 close $lock;
