@@ -281,8 +281,8 @@ while ($sent) { # If any webhooks were sent, then keep trying until it's clean a
             }
             else {
                 rename $p, $f; # Hopefully JSON will work better later?
-                logger "Unable to load JSON.pm? This is required for transport. Try again later. [$p]\n$@\n";
-                next;
+                logger "Unable to load JSON.pm? Please install JSON and try again later. [$f]\n$@\n";
+                last;
             }
         }
         else {
