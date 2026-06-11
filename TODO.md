@@ -22,6 +22,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Instead of relying on SendEnv, git-verify should also use another mechanism to test the configuration. (Maybe another special commandline arg instead of relying on SendEnv?)
 
+ - The {client_git_version} does not include the actual git client version during most read operations if SSHD on the Git Server Host does not have "AcceptEnv GIT_PROTOCOL" enabled.
+
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
  - It would be nice if log.logfile could log more details about the client in case of ACL permission failures. Right now it just says "ACL pre-failure" but no {client_git_version}, no {server_git_version}, no {repo}, no {git_client_options}, no attempted {pull_branch}. (Would it help to run a dummy git emulator? Just spit back something like "0015agent=git/2.43.7\n0000" and quickly slurp in whatever the client says without allowing much blocking and without actually performing any of the requested operations.)
