@@ -138,6 +138,8 @@ my $who = ($ENV{REMOTE_USER} || die "Auth required\n")."\@$ENV{REMOTE_ADDR}";
 $ENV{GIT_CONNECTED_EPOCH} ||= eval { require Time::HiRes; Time::HiRes::time() } || time;
 $ENV{GIT_SERVER_VERSION} = $VERSION;
 $ENV{GIT_SERVER_WEBHOOK_QUEUE} ||= "$ENV{HOME}/.local/share/webhookqueue";
+# Adjust PATH to look for the real git commands first:
+$ENV{PATH} = "$1$Config::Config{path_sep}$ENV{PATH}" if eval { require Config; `git --exec-path 2>/dev/null` =~ /^(.+)/ };
 
 my $git_op_hook = {
     "git-upload-pack" => "read", # i.e., clone, pull, fetch, ls-remote
