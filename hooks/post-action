@@ -235,6 +235,7 @@ while ($sent) { # If any webhooks were sent, then keep trying until it's clean a
     my $total = @events-3 or last; # Ignore . and .. and .lock
     my $progress = 0;
     foreach my $file (sort @events) {
+        next if $file =~ /^\.(|\.|lock)$/;
         $0 = "$Script - Running WebHooks: ".++$progress."/$total";
         next if $file !~ /^webhook-.*\.queue$/;
         my $f = "$queue/$file";
