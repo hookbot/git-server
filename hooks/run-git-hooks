@@ -341,11 +341,12 @@ if ($ENV{IPC}) {
         while (my $f = readdir $tmp) {
             next if $f !~ /^current-/; # Only wipe stuff that I made
             my $crusty = "$tmpdir/$f";
-            if ($ENV{DEBUG} && -M $crusty > 32) {
+            next if !lstat $crusty;
+            if ($ENV{DEBUG} && -M _ > 32) {
                 warn localtime().": [$who] git-server: Wiping crusty files: [$crusty] ...\n";
                 system "rm", "-rf", $crusty;
             }
-            elsif (-M $crusty > 62) {
+            elsif (-M _ > 62) {
                 # Silently wipe out old IPC files left over from DEBUG mode.
                 system "rm", "-rf", $crusty;
             }
