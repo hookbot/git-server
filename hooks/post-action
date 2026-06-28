@@ -103,7 +103,8 @@ if ($ENV{IPC}) {
 
 my $op = $ref->{operation} || $ENV{SSH_ORIGINAL_COMMAND} || "UNKNOWN OPERATION";
 
-if (my $config = `$Bin/configs 2>/dev/null`) {
+my $config = `$Bin/configs 2>/dev/null`;
+if ($config) {
     # Check if pushed any branches
     if (local $_ = $ref and "HASH" eq ref and $op eq "push" and $_ = $_->{refs}) {
         my $branches = [ eval { map { ($_->{type} || "") eq "branch" && $_->{ref} ? ( $_->{ref} ) : () } @$_ } ];
@@ -190,7 +191,7 @@ if (my $crashed = $ref->{error_code}) {
         logger "$op not attempted : ACL pre-failure! [code=$ENV{GIT_PRE_EXIT_STATUS}]";
     }
 }
-else {
+elsif (grep { $_ eq $op } split /[\|,]+/, ($config =~ /^log\.operation=(.+)/m ? $1 : "push")) {
     # Operation completed successfully.
     my $pull_branch = ($ENV{XMODIFIERS}||="") =~ /\bpull_branch=(\S+)\n/ ? $1 : "";
     my $client = $ENV{XMODIFIERS} =~ /^client=.*(git-?\w*)/m ? $1 : "";
