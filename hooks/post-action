@@ -144,10 +144,7 @@ if ($config) {
         };
         my $do_webhook = 0;
         foreach my $inc (split /[\,\|]+/, $cfg->{operation}) {
-            ++$do_webhook and last if
-                $inc =~ /^(\*|\Q$op\E)$/ or
-                $inc eq "read" && $op =~ /^(pull|clone)$/ or
-                $inc eq "write" && $op eq "push";
+            ++$do_webhook and last if $inc =~ /^(\*|\Q$op\E)$/;
         }
         next unless $do_webhook;
         my $queuefile = "$queue/webhook-".(eval { require Time::HiRes; Time::HiRes::time() } or time())."-$$.queue";
