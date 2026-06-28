@@ -304,6 +304,46 @@ The default is `push` meaning to only log changes to the repo.
 git config log.operation '*' # Log all read and write operations
 ```
 
+### webhook.URL.method
+
+Specify method for webhook callback.
+
+- `post`: Use POST method
+
+The default is `post` if none is specified.
+
+```
+git config webhook."https://site.io/op.cgi".method post
+```
+
+### webhook.URL.transport
+
+Specify transport for webhook callback.
+
+- `json`: Submit information using `application/json` content.
+
+The default is `json` if none is specified.
+
+```
+git config webhook."https://site.io/op.cgi".method post
+```
+
+### webhook.URL.operation
+
+Specify a comma-delimited list of operations to invoke the callback URL for.
+The following are supported:
+
+- `push`: Any write operation
+- `pull`: Non-clone read operations, such as pull, fetch, ls-remote
+- `clone`: Initial clone checkout operation
+- `*`: All operations
+
+The default is `push` meaning to only invoke the callback URL for write operations.
+
+```
+git config webhook."https://site.io/op.cgi".operation '*' # Catch all read and write operations
+```
+
 ### acl.restrictemail
 
 Restrict committer `user.email` address to whitelist specified.
