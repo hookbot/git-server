@@ -155,6 +155,7 @@ ACL settings you wish. For example:
 [git@gitsrvhost ProjX]$ git config log.daily true
 [git@gitsrvhost ProjX]$ git config log.rotate 61
 [git@gitsrvhost ProjX]$ git config log.compress true
+[git@gitsrvhost ProjX]$ git config log.operation pull,clone
 [git@gitsrvhost ProjX]$ git config webhook."https://site.io/op.cgi".method post
 [git@gitsrvhost ProjX]$ git config webhook."https://site.io/op.cgi".operation read,write,push,pull,clone
 [git@gitsrvhost ProjX]$ cd
