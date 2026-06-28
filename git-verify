@@ -399,7 +399,7 @@ if (!@repo_dirs and opendir my $fh, $ENV{HOME}) {
 my @repo_info;
 if (@repo_dirs) {
     my %seen;
-    (my $cfg = $0) =~ s{[^/]+$}{hooks/configs};
+    my $cfg = "$RealBin/hooks/configs";
     foreach my $repo (@repo_dirs) {
         $repo =~ s{/+$}{}; # Remove trailing slashes.
         next if $repo =~ /\.workingdir$/;
