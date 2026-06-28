@@ -59,7 +59,6 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - [webhook] features for callback:
    * Allow for WhiteList or BlackList filters to trigger webhook or ignore webhooks under certain conditions:
-     : When a certain operation is performed, i.e., clone|pull|push
      : When specified branches are involved
      : When certain REMOTE_USER is involved
      : When coming from a specific IP or Network CIDR
