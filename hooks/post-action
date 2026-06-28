@@ -188,7 +188,7 @@ if (my $crashed = $ref->{error_code}) {
         logger "$op not attempted : ACL pre-failure! [code=$ENV{GIT_PRE_EXIT_STATUS}]";
     }
 }
-elsif (grep { $_ eq $op } split /[\|,]+/, ($config =~ /^log\.operation=(.+)/m ? $1 : "push")) {
+elsif (grep { /^(\Q$op\E|\*)$/ } split /[\|,]+/, ($config =~ /^log\.operation=(.+)/m ? $1 : "push")) {
     # Operation completed successfully.
     my $pull_branch = ($ENV{XMODIFIERS}||="") =~ /\bpull_branch=(\S+)\n/ ? $1 : "";
     my $client = $ENV{XMODIFIERS} =~ /^client=.*(git-?\w*)/m ? $1 : "";
