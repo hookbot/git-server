@@ -733,12 +733,26 @@ while (1) {
         $0 = "$Script - $cwd: Checking if changes still exist$monkey";
     }
     elsif ($update =~ /Your branch.*diverged/) {
-        # Rebase can't work if there are local divergents.
+        # Rebase might not work if there are local divergents.
         warn $update;
-        warn localtime().": [$$] $Script: Detected local divergence off [$branch] so doing HARD RESET ...\n";
-        my $hard = "";
-        $hard .= run_output_include_err "git", "checkout", $branch;
-        $hard .= run_output_include_err "git", "reset", "--hard", "$origin/$branch";
+        warn localtime().": [$$] $Script: Detected possible divergence.\n";
+        my $stank = 3;
+        while ($stank-->1) {
+            warn localtime().": [$$] $Script: $stank attempts left to quickly rebase leap frog local commits to the tip ...\n";
+            $0 = "$Script - $cwd: Waiting for $stank attempts to verify local divergence recoverability";
+            $update .= (my $divergent_sniffer = run_output_include_err "git", "pull", "--rebase");
+            warn $divergent_sniffer;
+            if ($divergent_sniffer !~ /diverge/) { $stank = 0; last; }
+        }
+        $0 = "$Script - $cwd: Recovering from diverent monkey corruption";
+        if ($stank) {
+            warn localtime().": [$$] $Script: Detected dangerous local divergence off [$branch] so doing HARD RESET ...\n";
+            my $hard = "";
+            $hard .= run_output_include_err "git", "checkout", $branch;
+            $hard .= run_output_include_err "git", "reset", "--hard", "$origin/$branch";
+            warn $hard;
+            $update .= $hard;
+        }
         my $running = getps;
         last if $running =~ /\Q$Script - $cwd\E: Waiting/;
         $0 = "$Script - $cwd: Waiting because of local divergence";
