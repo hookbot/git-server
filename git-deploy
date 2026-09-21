@@ -477,7 +477,7 @@ sub pull_push_notification {
         $ENV{GIT_SSH_COMMAND} .= " -o IdentitiesOnly=yes";
         $ENV{GIT_SSH_COMMAND} .= " -i $_" foreach @$identities;
     }
-    local $ENV{GIT_SSH} = $invoked[0]; # Use $GIT_SSH in case $GIT_SSH_COMMAND is ignored.
+    $ENV{GIT_SSH} = $invoked[0]; # Use $GIT_SSH in case $GIT_SSH_COMMAND is ignored.
     $0 = "$Script - $cwd: Waiting for push notification [$deploy_branch]";
     # Run "fetch" to call "git-upload-pack" causing the git-server to wait for the "push_notification" to release the update:
     return run_output_include_err(qw[git fetch]);
@@ -736,6 +736,8 @@ while (1) {
         # Rebase might not work if there are local divergents.
         warn $update;
         warn localtime().": [$$] $Script: Detected possible divergence.\n";
+        local $maxpatience = 1; # Prevent "pull --rebase" from hanging too long
+        $update .= pull_push_notification;
         my $stank = 3;
         while ($stank-->1) {
             warn localtime().": [$$] $Script: $stank attempts left to quickly rebase leap frog local commits to the tip ...\n";
