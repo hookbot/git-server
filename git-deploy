@@ -735,27 +735,32 @@ while (1) {
         $0 = "$Script - $cwd: Checking if changes still exist$monkey";
     }
     elsif ($update =~ /Your branch.*diverged/) {
-        # Rebase might not work if there are local divergents.
+        # Rebase may not succeed cleanly if there are local divergents.
         warn $update;
-        warn localtime().": [$$] $Script: Detected possible divergence.\n";
-        local $maxpatience = 1; # Prevent "pull --rebase" from hanging too long
-        $update .= pull_push_notification;
-        my $stank = 3;
-        while ($stank-->1) {
-            warn localtime().": [$$] $Script: $stank attempts left to quickly rebase leap frog local commits to the tip ...\n";
-            $0 = "$Script - $cwd: Waiting for $stank attempts to verify local divergence recoverability";
-            $update .= (my $divergent_sniffer = run_output_include_err "git", "pull", "--rebase");
-            warn $divergent_sniffer;
-            if ($divergent_sniffer !~ /diverge/) { $stank = 0; last; }
+        if ($update =~ /\n(Current.*up.*date|Success.*rebase).*$/im) {
+            warn localtime().": [$$] $Script: Local commits appear to have cleanly leap-frogged to the tip.\n";
+            # Just leave the local commits since they didn't conflict anything. They shouldn't report "diverged" next time.
         }
-        $0 = "$Script - $cwd: Recovering from diverent monkey corruption";
-        if ($stank) {
-            warn localtime().": [$$] $Script: Detected dangerous local divergence off [$branch] so doing HARD RESET ...\n";
+        elsif ($update =~ /^CONFLICT(.*\n)+^error:/im) {
+            warn localtime().": [$$] $Script: Detected dangerous local divergence off [$branch] so waiting a moment in case someone is working on it ...\n";
+            $0 = "$Script - $cwd: Waiting one last time before destroying upstream-conflicting local commits";
+            print run_output_include_err qw(sleep 600);
             my $hard = "";
+            $hard .= run_output_include_err "git", "rebase", "$origin/$branch";
+            if ($hard =~ /^(Current.*up.*date|Success.*rebase)/im and $hard !~ /^CONFLICT(.*\n)+^error:/im) {
+                # Everything suddenly looks clean? Great! Let's give it another try.
+                warn $hard;
+                next;
+            }
+            # STILL spewing even after waiting a few minutes for someone to repair it? Just hard reset!
+            warn localtime().": [$$] $Script: Detected dangerous local divergence off [$branch] so doing HARD RESET ...\n";
             $hard .= run_output_include_err "git", "checkout", $branch;
             $hard .= run_output_include_err "git", "reset", "--hard", "$origin/$branch";
             warn $hard;
             $update .= $hard;
+        }
+        else {
+            warn localtime().": [$$] $Script: Strange local divergence off [$branch] so manual intervention required ...\n";
         }
         my $running = getps;
         last if $running =~ /\Q$Script - $cwd\E: Waiting/;
