@@ -245,7 +245,7 @@ our $maxpatience = undef;
 my $identities = [];
 my $notify = undef;
 my $ver = undef;
-my $deploying_version = 0;
+my $deploying_version = undef;
 my $maxdelayrecommended = 0;
 # If $GIT_SSH is used, then $GIT_SSH_COMMAND was ignored (git < 2.3.x) so emulate it for backward compatibility.
 exec sh => -c => $ENV{GIT_SSH_COMMAND}.' "$@"' => ssh => @ARGV or die "exec: $!\n" if $0 eq($ENV{GIT_SSH}||"") and $ENV{GIT_SSH_COMMAND}||="ssh";
@@ -478,7 +478,9 @@ sub pull_push_notification {
         $ENV{GIT_SSH_COMMAND} .= " -i $_" foreach @$identities;
     }
     $ENV{GIT_SSH} = $invoked[0]; # Use $GIT_SSH in case $GIT_SSH_COMMAND is ignored.
-    $0 = "$Script - $cwd: Waiting for push notification [$deploy_branch]";
+    $0 = "$Script - $cwd: Waiting "
+        .(!defined $deploying_version ? "for git server deploy support pre-check" : $deploying_version ? "for push notification v$deploying_version" : "for NON-deploy repo updates")
+        ." [$deploy_branch]";
     # Run "fetch" to call "git-upload-pack" causing the git-server to wait for the "push_notification" to release the update:
     return run_output_include_err(qw[git fetch]);
 }
@@ -819,7 +821,7 @@ while (1) {
         next;
     }
     # If repo isn't via git-server, then we can't rely on the server to regulate any other git-deploy running, so we have to take care of everything ourselves. So either he goes, or I go.
-    warn localtime().": [$$] $Script: Aborting other git-deploy process still running on NON-deploy repo:\n$1\n" and kill TERM => $2 or last if !$deploying_version and getps() =~ /^(\w+\s+(\d+).*\Q$Script - $cwd\E: Waiting.*)/m;
+    warn localtime().": [$$] $Script: Aborting other git-deploy process still running on NON-deploy repo:\n$1\n" and kill TERM => $2 or last if !$deploying_version and getps() =~ /^(\w+\s+(\d+).*\Q$Script - $cwd\E: Waiting.*NON-deploy repo)/m;
     # Get out of here if someone is monkeying a local file "error: cannot rebase: You have unstaged changes."
     warn localtime().": [$$] $Script: Deployable git-server v$deploying_version wants me to leave.\n$update" and last if $deploying_version and $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
     if ($update =~ /Current branch.*is up to date/) {
