@@ -478,11 +478,14 @@ sub pull_push_notification {
         $ENV{GIT_SSH_COMMAND} .= " -i $_" foreach @$identities;
     }
     $ENV{GIT_SSH} = $invoked[0]; # Use $GIT_SSH in case $GIT_SSH_COMMAND is ignored.
-    $0 = "$Script - $cwd: Waiting "
-        .(!defined $deploying_version ? "for git server deploy support pre-check" : $deploying_version ? "for push notification v$deploying_version" : "for NON-deploy repo updates")
+    $0 = "$Script - $cwd: Waiting for "
+        .(!defined $deploying_version ? "git server deploy support pre-check" : $deploying_version ? "push notification v$deploying_version" : "NON-deploy repo updates")
         ." [$deploy_branch]";
     # Run "fetch" to call "git-upload-pack" causing the git-server to wait for the "push_notification" to release the update:
-    return run_output_include_err(qw[git fetch]);
+    my $update = run_output_include_err(qw[git fetch]);
+    $deploying_version ||= $update =~ / git-server(?: v([\d.]+):)?.*waiting for notification/ ? $1 || "OLD" : 0 or
+        $maxpatience or $maxdelayrecommended ||= warn localtime().": [$$] $Script: Warning: Missing recommended [ --max-delay <INTERVAL_SECONDS> ] for NON-deploy repo: ".run_output_ignore_err("git","config","remote.$origin.url")
+    return $update;
 }
 
 my $cache_agent_pub_file = {};
@@ -682,8 +685,6 @@ sleep 1;
 
 while (1) {
     my $update = pull_push_notification;
-    $deploying_version ||= $update =~ / git-server(?: v([\d.]+):)?.*waiting for notification/ ? $1 || "OLD" : 0 or
-        $maxpatience or $maxdelayrecommended ||= warn localtime().": [$$] $Script: Warning: Missing recommended [ --max-delay <INTERVAL_SECONDS> ] for NON-deploy repo: ".run_output_ignore_err("git","config","remote.$origin.url");
     my $branch = checkout_branch;
     $update .= run_output_include_err "git", "checkout", $branch;
     $update .= run_output_include_err "git", "rebase", "$origin/$branch";
