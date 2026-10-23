@@ -730,9 +730,44 @@ while (1) {
         my $running = getps;
         last if $running =~ /\Q$Script - $cwd\E: Waiting/;
         my $monkey = "";
-        $monkey = ": $1" if $update =~ /^M\s+(\S+)/m;
+        my $clean = [];
+        my $report = $update;
+        while ($report =~ s/^M\s+(\S.*)//m) {
+            my $file = $1;
+            if (-f $file) {
+                # XXX: Would it be better to check if the local modifications avoid any conflicts up to the branch tip, and if it's clean, then "autostash" and UNstash to pop the changes back after updating?
+                # XXX: Or is this lazy exact match check good enough? It would be inappropriate for git-deploy to automatically commit any changes teetering in the working directory, but also inapproriate to have merge conflicts left over from autostash and "git stash pop" leaving ugly "<<<<" ">>>>" markers sprayed all over the files.
+                my $diff_tip = run_output_include_err "git", "diff", "$origin/$branch", $file;
+                if ($diff_tip) {
+                    warn $diff_tip;
+                    $monkey = ": $file";
+                }
+                else {
+                    # Monkey file already matches exactly with upstream tip, so safe to clear any changes.
+                    warn localtime().": [$$] $Script: Local file already matches upstream changes [$file]\n";
+                    push @$clean, $file;
+                }
+            }
+            else {
+                $monkey = ": [NON-FILE] $file";
+            }
+        }
+        if (!$monkey and @$clean) {
+            # Looks like every file is safe to update now. (The files will end up being exactly how they already are, so technically they won't actually be modified except for a few nanoseconds, and then the timestamp will update.)
+            warn localtime().": [$$] $Script: Proceeding with rebase since all files already matched upstream ...\n";
+            $0 = "$Script - $cwd: Clearing local modifications: $clean->[0]";
+            my $clear = "";
+            $clear .= run_output_include_err "git", "restore",  @$clean;
+            $clear .= run_output_include_err "git", "rebase", "$origin/$branch";
+            warn $clear;
+            $update .= $clear;
+            $0 = "$Script - $cwd: Waiting to calm down after restoration: $clean->[0]";
+            print run_output_ignore_err qw(sleep 60);
+            $0 = "$Script - $cwd: Checking to ensure monkey update was clean";
+            next;
+        }
         $0 = "$Script - $cwd: Waiting because of local modifications$monkey";
-        print run_output_ignore_err qw(sleep 10);
+        print run_output_ignore_err qw(sleep 60);
         $0 = "$Script - $cwd: Checking if changes still exist$monkey";
     }
     elsif ($update =~ /Your branch.*diverged/) {
