@@ -27,7 +27,7 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Make git-deploy remove temp files eariler so they won't exist during long waits for a push notification. (un~FD_CLOEXEC unlink /dev/fd/3 anonymous handle?)
 
- - Make git-deploy brick over "local modified" files if the end target version is exactly the same. (git diff HEAD? rebase --autostash?)
+ - Make git-deploy handle deploying "locally modified" files by retaining the changes if not conflicting with upstream changes. (git diff HEAD? rebase --autostash?)
 
  - Make git-deploy --notify be able to signal other git-deploy processes running as another user. (Magic Listen Port? or Sleep w/ Special ProcTitle?).
 
