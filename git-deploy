@@ -245,8 +245,6 @@ our $maxpatience = undef;
 my $identities = [];
 my $notify = undef;
 my $ver = undef;
-my $deploying_version = undef;
-my $maxdelayrecommended = 0;
 # If $GIT_SSH is used, then $GIT_SSH_COMMAND was ignored (git < 2.3.x) so emulate it for backward compatibility.
 exec sh => -c => $ENV{GIT_SSH_COMMAND}.' "$@"' => ssh => @ARGV or die "exec: $!\n" if $0 eq($ENV{GIT_SSH}||"") and $ENV{GIT_SSH_COMMAND}||="ssh";
 Getopt::Long::Configure("no_ignore_case");
@@ -263,6 +261,10 @@ GetOptions
     "max-delay=i" => \$maxpatience,
     "identity|i=s@" => $identities,
     or exec perldoc => $0;
+
+my $deploying_version = undef;
+my $quick_pull = 0;
+my $maxdelayrecommended = 0;
 
 $ENV{HOME} ||= [getpwnuid $<]->[7];
 if (my $sep = eval { require Config; $Config::Config{path_sep} }) {
@@ -463,11 +465,12 @@ sub push_notify {
 # Pull new changes or else block waiting until the next push before updating.
 sub pull_push_notification {
     my $deploy_branch = checkout_branch();
+    my $deploy_patience = $quick_pull ? 1 : $maxpatience;
     # Generate XMODIFIERS based on checkout_branch and $maxpatience and $opts:
     $ENV{XMODIFIERS} = join "\n", @$opts,
         "pull_branch=$deploy_branch",
         "client=".abs_path($invoked[0])."\@v$VERSION",
-        ($maxpatience ? ("deploy_patience=$maxpatience") : ()),
+        ($deploy_patience ? ("deploy_patience=$deploy_patience") : ()),
         ($initial_ENV{XMODIFIERS} ? ($initial_ENV{XMODIFIERS}) : ()),
         ;
     # Generate GIT_SSH_COMMAND to ensure XMODIFIERS is provided to the git server:
@@ -674,7 +677,7 @@ if (!$maxpatience) {
 my $update = "";
 if (sleep 1) {
     # Run quick pre-flight sanity test before entering loop
-    local $maxpatience = 1;
+    $quick_pull++;
     $update = pull_push_notification;
     $0 = "$Script - $cwd: Scanning updates";
     die localtime().": [$$] $Script: Fatal crash while attempting to pull from ".run_output_ignore_err("git","config","remote.$origin.url")."\n$update\n\n".localtime().": [$$] $Script: Manual intervention required.\n" if $update =~ /^fatal:/m;
@@ -864,14 +867,15 @@ while (1) {
     }
     # If repo isn't via git-server, then we can't rely on the server to regulate any other git-deploy running, so we have to take care of everything ourselves. So either he goes, or I go.
     warn localtime().": [$$] $Script: Aborting other git-deploy process still running on NON-deploy repo:\n$1\n" and kill TERM => $2 or last if !$deploying_version and getps() =~ /^(\w+\s+(\d+).*\Q$Script - $cwd\E: Waiting.*NON-deploy repo)/m;
-    # Get out of here if someone is monkeying a local file "error: cannot rebase: You have unstaged changes."
-    warn localtime().": [$$] $Script: Deployable git-server v$deploying_version wants me to leave.\n$update" and last if $deploying_version and $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
+    # Get out of here if nothing was updated after waiting on a deployable server:
+    warn localtime().": [$$] $Script: Deployable git-server v$deploying_version wants me to leave.\n$update" and last if $deploying_version and !$quick_pull and $update !~ /rewinding head to replay|fast-forward|but expected|Unpacking objects|Cannot rebase|ecent commit/;
     if ($update =~ /Current branch.*is up to date/) {
         my $pause_because_done = $deploying_version ? 5 + int(55 * rand()) : ($maxpatience || (305 + int(115 * rand())));
         my $why_wait = $deploying_version ? "since everything had already been deployed ..." : "for NON-deploy repo ...";
         $0 = "$Script - $cwd: Waiting $pause_because_done seconds $why_wait";
         print "Everything was already updated. Sleeping $pause_because_done seconds $why_wait\n";
         print run_output_ignore_err sleep => $pause_because_done;
+        $quick_pull-- if $quick_pull > 0; # Decrement counter, if exists.
     }
     $0 = "$Script - $cwd: Update complete";
     sleep 1;
