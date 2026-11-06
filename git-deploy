@@ -790,6 +790,7 @@ while (1) {
             }
             # STILL spewing even after waiting a few minutes for someone to repair it? Just hard reset!
             warn localtime().": [$$] $Script: Detected dangerous local divergence off [$branch] so doing HARD RESET ...\n";
+            $hard .= run_output_include_err "git", "rebase", "--abort";
             $hard .= run_output_include_err "git", "checkout", $branch;
             $hard .= run_output_include_err "git", "reset", "--hard", "$origin/$branch";
             warn $hard;
