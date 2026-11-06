@@ -29,6 +29,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Make git-deploy handle deploying "locally modified" files by retaining the changes if not conflicting with upstream changes. (git diff HEAD? rebase --autostash?)
 
+ - Make git-deploy gracefully brick over pre-born files that already exist if the end target version is exactly the same. (git diff HEAD? git reset? rm -f?)
+
  - Make git-deploy --notify be able to signal other git-deploy processes running as another user. (Magic Listen Port? or Sleep w/ Special ProcTitle?).
 
  - Fix git-deploy to handle split cheese case where git server uses both IPv4 and IPv6. (~/.ssh/config Host $remotehost "AddressFamily" inet(6)?).
