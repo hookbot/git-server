@@ -340,7 +340,7 @@ if (my $full = abs_path $0) {
 }
 
 if ($ver) {
-    print "[git-deploy v$VERSION] ";
+    print "[$Script v$VERSION] ";
     exec "git --version" or die "Unable to view git --version";
 }
 
@@ -813,7 +813,7 @@ while (1) {
         my $running = getps;
         last if $running =~ /\Q$Script - $cwd\E: Waiting/;
         my $monkey = "";
-        $monkey = ": $1" if $update =~ /would be overwritten.*\n\s*(\S.*?)\s*\n/;
+        $monkey = ": $1" if $update =~ /would be overwritten.*\n\t(\S.*?)\s*\n/;
         $0 = "$Script - $cwd: Waiting because someone created file locally$monkey";
         print run_output_ignore_err qw(sleep 20);
         $monkey =~ s/:\s+// and system "mv","-v","-n",$monkey,"$monkey-PLEASE-REMOVE-MANUALLY-CREATED-FILE-FOR-DEPLOY-$$";
