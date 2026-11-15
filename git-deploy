@@ -761,11 +761,9 @@ while (1) {
             $0 = "$Script - $cwd: Clearing local modifications: $clean->[0]";
             my $clear = "";
             $clear .= run_output_include_err "git", "restore",  @$clean;
-            $clear .= run_output_include_err "git", "rebase", "$origin/$branch";
             warn $clear;
             $update .= $clear;
-            $0 = "$Script - $cwd: Waiting to calm down after restoration: $clean->[0]";
-            print run_output_ignore_err qw(sleep 60);
+            $quick_pull++; # Quickly deploy upstream once "git restore" removes local changes.
             $0 = "$Script - $cwd: Checking to ensure monkey update was clean";
             next;
         }
