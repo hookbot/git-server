@@ -777,11 +777,13 @@ while (1) {
         if ($update =~ /\n(Current.*up.*date|Success.*rebase).*$/im) {
             warn localtime().": [$$] $Script: Local commits appear to have cleanly leap-frogged to the tip.\n";
             # Just leave the local commits since they didn't conflict anything. They shouldn't report "diverged" next time.
+            $quick_pull++;
         }
         elsif ($update =~ /^CONFLICT(.*\n)+^error:/im) {
             warn localtime().": [$$] $Script: Detected dangerous local divergence off [$branch] so waiting a moment in case someone is working on it ...\n";
             $0 = "$Script - $cwd: Waiting one last time before destroying upstream-conflicting local commits";
             print run_output_include_err qw(sleep 600);
+            $quick_pull++;
             my $hard = "";
             $hard .= run_output_include_err "git", "rebase", "$origin/$branch";
             if ($hard =~ /^(Current.*up.*date|Success.*rebase)/im and $hard !~ /^CONFLICT(.*\n)+^error:/im) {
@@ -814,7 +816,7 @@ while (1) {
         $monkey = ": $1" if $update =~ /would be overwritten.*\n\t(\S.*?)\s*\n/;
         $0 = "$Script - $cwd: Waiting because someone created file locally$monkey";
         print run_output_ignore_err qw(sleep 20);
-        $monkey =~ s/:\s+// and system "mv","-v","-n",$monkey,"$monkey-PLEASE-REMOVE-MANUALLY-CREATED-FILE-FOR-DEPLOY-$$";
+        $monkey =~ s/^:\s+// and 0 == system "mv","-v","-n",$monkey,"$monkey-PLEASE-REMOVE-MANUALLY-CREATED-FILE-FOR-DEPLOY-$$" and $quick_pull++;
         $0 = "$Script - $cwd: Checking if file still exist$monkey";
     }
     elsif ($update =~ m{fatal: Unable to create '(.+?)': File exists.}) {
@@ -828,6 +830,7 @@ while (1) {
             # No other conflicting git process running
             # So lock file is safe enough to be removed
             unlink $broken_lock;
+            $quick_pull++;
         }
         else {
             print run_output_include_err qw(sleep 60);
@@ -845,6 +848,7 @@ while (1) {
             # No other conflicting git process running
             # So rebase progress is safe to be removed
             print run_output_include_err "rm","-rfv",$choked_rebase;
+            $quick_pull++;
         }
         else {
             print run_output_include_err qw(sleep 60);
