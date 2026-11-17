@@ -37,6 +37,10 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Trying to do "git config --descent { --unset <name> | --add <name> <value> }" doesn't work as expected.
 
+ - On older git prior to 1.7.2, having --descent .gitconfig files causes "Unknown option: -c" crashes from git-client. Consider converting "git -c ..." to GIT_CONFIG_PARAMETERS. It might be ignored on older git versions, but at least it won't crash.
+
+ - On older git prior to 1.7.4, having --descent .gitconfig files causes "error: unknown option `local'" crashes from git-client. Consider using the deprecated GIT_CONFIG_NOGLOBAL setting.
+
  - Investigate converting get_fork_hash common fork sniffer scan to use "git merge-base --fork-point <ref> <commit>" instead of grinding through the logs.
 
  - Add git-deploy --insecure option to avoid choking with "The authenticity of host can't be established" when running "git fetch" the first time. Use StrictHostKeyChecking=no method instead of sloppy keyscan method. Deprecate --fix-nasty option in favor of new --insecure functionality to encompass both cases.
