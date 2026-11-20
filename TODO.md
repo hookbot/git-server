@@ -5,7 +5,12 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - If proxy fails with the default Forwarding Agent, try each public key individually to see if any of them work any better. (-i PUB -o IdentitiesOnly=yes? Cache winning reader PUBs? Brick over reader PUB with known writer PUBs?).
 
- - Investigate new feature like proxy.readonly to be used as Read-Only remote sync, instead of the normal proxy.url Two-Way syncr. This can help with setting up a load balancing cluster of git servers, particularly when used for large deployment systems, which only need read-only access anyways. This can also help when trying to sync with remote repo where read-only access is all that is available, such as a simple public HTTP sytle git URL. Writes directly to the remote proxy.readonly will be synced to the local repo, but not vice versa, so writes to the local repo will not attempt to be pushed to the proxy.readonly remote.
+ - Investigate more general cluster support for load balancing or high availability or for a more scalable deployment system. Separate Node SSH PubKey Auth and/or SSH Agent Forwarding can be used for communication among the nodes.
+   * proxy.url        - Git URL for normal Two-Way sync. Write access required.
+   * proxy.readonly   - Git URL for Read-Only one-way sync. This can even be a public HTTP style Git URL. Writes should not be allowed because they will not be pushed to the proxy.readonly remote, which could cause an unreconcilable divergence. But writes directly to the proxy.readonly remote (through external means) will be imported into the local repo. Read access required.
+   * cluster.members  - List of node members. i.e.: gitsyncuser@githost1,gitsyncuser@githost2,gitsyncuser@githost3
+     Can be an advanced Symmetric Node design with Quorum Strong Consistency, Push Sequence ID, Dynamic Leader, Followers, HeartBeat HealthCheck support, and Automatic Majority Elections to deterministically migrate Leader in case of failure. (Like Galera Cluster or GitHub Spokes.)
+     Or a simpler hard-coded Primary / Secondary configuration.
 
  - While using "ssh -o SendEnv=..." seems like a convenient method to transport information, many SSH Servers are now defaulting NOT to AcceptEnv, or it might only work for certain magic variables, i.e., LC_TELEPHONE or LANG, thus "SendEnv" may not work as expected.
    * In case "AcceptEnv GIT_PROTOCOL" is not enabled, the Git Server will downgrade READ operations (using "git-upload-pack") from Git V2 to Git V1 protocol, even if both client and server have newer git 2.x. This is less efficient and causes loss of functionality.
