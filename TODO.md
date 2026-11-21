@@ -38,6 +38,8 @@ Some features we need or want, plus some neat ideas that may not be too feasible
 
  - Add [log.verbosity] 0 or 1 or 2 feature to control level of messaging spewage to the git client.
 
+ - When pulling a tag, the webhook log should not show the redundant {forward} commits list if there is also at least one branch pulled that contains the same list. Tags generally don't move anyways, so it's usually misleading and confusing.
+
  - It would be nice if log.logfile could log more details about the client in case of ACL permission failures. Right now it just says "ACL pre-failure" but no {client_git_version}, no {server_git_version}, no {repo}, no {git_client_options}, no attempted {pull_branch}. (Would it help to run a dummy git emulator? Just spit back something like "0015agent=git/2.43.7\n0000" and quickly slurp in whatever the client says without allowing much blocking and without actually performing any of the requested operations.)
 
  - Trying to do "git config --descent { --unset <name> | --add <name> <value> }" doesn't work as expected.
